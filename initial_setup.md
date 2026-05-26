@@ -268,9 +268,11 @@ Dockerfile
 ---
 
 📌 Quick Usage Notes
-1.- Local Dev (Recommended): docker compose up -d db → npm run dev (keeps hot-reloading intact)
-2.- Full Docker: docker compose up --build (uses production build, no hot-reload)
-3.- Prisma in Docker: Run docker compose exec app npx prisma db push if managing schema inside containers.
+1. Local Dev (Recommended): docker compose up -d db → npm run dev (keeps hot-reloading intact)
+
+2. Full Docker: docker compose up --build (uses production build, no hot-reload)
+
+3. Prisma in Docker: Run docker compose exec app npx prisma db push if managing schema inside containers.
 
 
 
