@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "isolatedModules": false,
+    "jsx": "react"
+   },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "__tests__/**/*.ts", "jest.setup.ts"]
+}

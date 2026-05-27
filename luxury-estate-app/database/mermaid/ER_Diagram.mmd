@@ -1,0 +1,190 @@
+erDiagram
+    %% ================= LOOKUP TABLES =================
+    PERSON_TYPES {
+        int id PK
+        varchar name UK
+    }
+    
+    PROPERTY_TYPES {
+        int id PK
+        varchar name UK
+    }
+    
+    PROPERTY_STATUS {
+        int id PK
+        varchar name UK
+    }
+    
+    DISQUALIFICATION_STATUSES {
+        int id PK
+        varchar name UK
+    }
+    
+    DISQUALIFICATION_REASONS {
+        int id PK
+        int status_id FK
+        varchar reason
+        text description
+    }
+    
+    COUNTRIES {
+        int id PK
+        varchar name
+        char(2) code002 UK
+        char(3) code003 UK
+        char(3) codenum UK
+        char(3) tld UK
+    }
+    
+    STATES {
+        int id PK
+        int country_id FK
+        varchar state_code
+        varchar territory
+    }
+    
+    CITIES {
+        int id PK
+        int country_id FK
+        int state_id FK
+        varchar city_name
+    }
+    
+    %% ================= CORE TABLES =================
+    ADDRESSES {
+        int id PK
+        varchar recipient
+        varchar organization
+        varchar streetAddress
+        varchar addressLocality
+        varchar addressRegion
+        varchar postalCode
+        char(2) addressCountry
+        decimal latitude
+        decimal longitude
+        datetime created_at
+        datetime updated_at
+    }
+    
+    PERSON {
+        int id PK
+        int person_type_id FK
+        varchar name
+        varchar phone
+        varchar email UK
+        text description
+        bool is_lead
+        bool is_client
+        bool is_employee
+        bool is_disqualified
+        int dq_status_id FK
+        int dq_reason_id FK
+        int address_id FK
+    }
+    
+    EMPLOYEE {
+        int id PK
+        int person_id FK "UK"
+        int office_id FK
+        int photo_id FK "UK"
+        int video_id FK "UK"
+        varchar department
+        varchar fb_handle
+        varchar ig_handle
+        varchar linkedin_handle
+    }
+    
+    OFFICE {
+        int id PK
+        varchar phone
+        int address_id FK
+    }
+    
+    %% ================= MEDIA TABLES =================
+    IMAGES {
+        int id PK
+        varchar uri
+        bool is_personal
+    }
+    
+    VIDEOS {
+        int id PK
+        varchar uri
+        bool is_personal
+    }
+    
+    PROPERTY_IMAGES {
+        int id PK
+        int property_id FK
+        int image_id FK
+        bool is_banner
+    }
+    
+    PROPERTY_VIDEOS {
+        int id PK
+        int property_id FK
+        int video_id FK
+    }
+    
+    %% ================= MAIN TABLE =================
+    PROPERTIES {
+        int id PK
+        varchar name
+        text description
+        varchar summary
+        int banner_image_id FK
+        varchar seo_url UK
+        datetime publish_date
+        decimal price
+        int bedrooms
+        int bathrooms
+        decimal area_sqft
+        varchar streetAddress
+        varchar addressLocality
+        varchar addressRegion
+        varchar postalCode
+        char(2) addressCountry
+        int garage_spaces
+        int built_year
+        int property_type_id FK
+        int property_status_id FK
+        decimal lot_size
+        decimal hoa_fees
+        varchar mls_id
+        decimal latitude
+        decimal longitude
+        int energy_rating
+        int agent_id FK
+        int address_id FK
+    }
+    
+    %% ================= RELATIONSHIPS =================
+    PERSON_TYPES ||--o{ PERSON : "1:N"
+    PROPERTY_TYPES ||--o{ PROPERTIES : "1:N"
+    PROPERTY_STATUS ||--o{ PROPERTIES : "1:N"
+    DISQUALIFICATION_STATUSES ||--o{ DISQUALIFICATION_REASONS : "1:N"
+    DISQUALIFICATION_STATUSES ||--o{ PERSON : "status"
+    DISQUALIFICATION_REASONS ||--o{ PERSON : "reason"
+    
+    COUNTRIES ||--o{ STATES : "1:N"
+    COUNTRIES ||--o{ CITIES : "1:N"
+    STATES ||--o{ CITIES : "1:N"
+    
+    ADDRESSES ||--o{ PROPERTIES : "1:N"
+    ADDRESSES ||--o{ OFFICE : "1:N"
+    ADDRESSES ||--o{ PERSON : "1:N"
+    
+    PERSON ||--o| EMPLOYEE : "1:1"
+    OFFICE ||--o{ EMPLOYEE : "1:N"
+    
+    IMAGES ||--o{ PROPERTY_IMAGES : "1:N"
+    IMAGES ||--o{ PROPERTY : "1:1 (banner)"
+    IMAGES ||--o| EMPLOYEE : "1:1 (photo)"
+    
+    VIDEOS ||--o{ PROPERTY_VIDEOS : "1:N"
+    VIDEOS ||--o| EMPLOYEE : "1:1 (video)"
+    
+    PROPERTIES ||--o{ PROPERTY_IMAGES : "1:N"
+    PROPERTIES ||--o{ PROPERTY_VIDEOS : "1:N"
+    
+    PERSON ||--o{ PROPERTIES : "agent"

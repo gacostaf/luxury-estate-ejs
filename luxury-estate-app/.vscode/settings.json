@@ -1,0 +1,6 @@
+{
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prisma.showPrismaDataPlatformWarning": false,
+    "typescript.preferences.importModuleSpecifier": "relative"
+}
