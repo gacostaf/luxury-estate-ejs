@@ -52,6 +52,10 @@ export async function seedLookupTables() {
     update: {},
     create: { countryId: usa!.id, stateCode: 'FL', territory: 'Florida' }
   });
+
+  for (const name of ['AGENT', 'BROKER', 'REALTOR', 'ASSISTANT']) {
+    await prisma.associateType.upsert({ where: { name }, update: {}, create: { name } });
+  }
 }
 
 export async function lookupPersonTypeId(name: string) {
@@ -64,6 +68,10 @@ export async function lookupPropertyTypeId(name: string) {
 
 export async function lookupPropertyStatusId(name: string) {
   return (await prisma.propertyStatus.findUniqueOrThrow({ where: { name } })).id;
+}
+
+export async function lookupAssociateTypeId(name: string) {
+  return (await prisma.associateType.findUniqueOrThrow({ where: { name } })).id;
 }
 
 export async function createTestPerson(overrides = {}) {
@@ -81,13 +89,19 @@ export async function createTestPerson(overrides = {}) {
 }
 
 export async function createTestAddress(overrides = {}) {
+  await seedLookupTables();
+  const usa = await prisma.country.findUniqueOrThrow({ where: { codenum: '840' } });
+  const caState = await prisma.state.findFirstOrThrow({ where: { stateCode: 'CA' } });
+  const city = await prisma.city.create({
+    data: { countryId: usa.id, stateId: caState.id, cityName: 'TestCity' },
+  });
   return prisma.address.create({
     data: {
-      streetAddress: '123 Test St',
-      addressLocality: 'TestCity',
-      addressRegion: 'TC',
+      addressStreet: '123 Test St',
+      addressCityId: city.id,
+      addressRegionId: caState.id,
       postalCode: '12345',
-      addressCountry: 'US',
+      addressCountryId: usa.id,
       ...overrides,
     },
   });
@@ -134,6 +148,7 @@ export async function seedAdminUser() {
     'office:read', 'office:create', 'office:update', 'office:delete',
     'image:read', 'image:create', 'image:update', 'image:delete',
     'video:read', 'video:create', 'video:update', 'video:delete',
+    'review:moderate', 'review:delete',
     'admin:access',
   ];
 

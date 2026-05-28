@@ -49,18 +49,20 @@ import { Permissions } from '@/lib/rbac';
  *       401: { description: Unauthorized }
  *       403: { description: Forbidden }
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = parseInt(params.id, 10);
-    const post = await prisma.blogPost.findUnique({ where: { id }, include: { author: true, featuredImage: true } });
+    const { id: idStr } = await params;
+    const id = parseInt(idStr, 10);
+    const post = await prisma.blogPost.findUnique({ where: { id }, include: { authorPerson: true, featuredImage: true } });
     if (!post) return NextResponse.json({ error: 'Blog post not found' }, { status: 404 });
     return successResponse(toBlogPostDTO(post));
   } catch (error) { return handlePrismaError(error); }
 }
 
-export const PATCH = requirePermission(Permissions.BLOG_UPDATE)(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const PATCH = requirePermission(Permissions.BLOG_UPDATE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const id = parseInt(params.id, 10);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr, 10);
     const body = await req.json();
     const data = blogPostSchema.partial().parse(body);
     const post = await prisma.blogPost.update({ where: { id }, data });
@@ -72,9 +74,10 @@ export const PATCH = requirePermission(Permissions.BLOG_UPDATE)(async (req: Next
   }
 });
 
-export const DELETE = requirePermission(Permissions.BLOG_DELETE)(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const DELETE = requirePermission(Permissions.BLOG_DELETE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const id = parseInt(params.id, 10);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr, 10);
     await prisma.blogPost.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

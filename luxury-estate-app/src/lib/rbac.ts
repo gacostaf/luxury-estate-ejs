@@ -33,6 +33,8 @@ export const Permissions = {
   VIDEO_CREATE: 'video:create',
   VIDEO_UPDATE: 'video:update',
   VIDEO_DELETE: 'video:delete',
+  REVIEW_MODERATE: 'review:moderate',
+  REVIEW_DELETE: 'review:delete',
   ADMIN_ACCESS: 'admin:access',
 } as const;
 
@@ -60,6 +62,7 @@ export const RolePermissions: Record<string, Permission[]> = {
     Permissions.OFFICE_READ, Permissions.OFFICE_CREATE, Permissions.OFFICE_UPDATE,
     Permissions.IMAGE_READ, Permissions.IMAGE_CREATE,
     Permissions.VIDEO_READ, Permissions.VIDEO_CREATE,
+    Permissions.REVIEW_MODERATE,
   ],
   AGENT: [
     Permissions.PERSON_READ,

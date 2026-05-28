@@ -28,11 +28,14 @@ export interface AddressDTO {
   id: number;
   recipient: string | null;
   organization: string | null;
-  streetAddress: string;
-  addressLocality: string;
-  addressRegion: string;
+  addressStreet: string;
+  addressCityId: number;
+  addressRegionId: number;
   postalCode: string;
-  addressCountry: string;
+  addressCountryId: number;
+  cityName?: string;
+  regionCode?: string;
+  countryCode?: string;
   latitude: number | null;
   longitude: number | null;
   createdAt: string;
@@ -185,8 +188,8 @@ export interface BlogPostDTO {
   published: boolean;
   featuredImageId: number | null;
   featuredImage?: ImageDTO;
-  authorId: number;
-  author?: PersonDTO;
+  authorPersonId: number;
+  authorPerson?: PersonDTO;
   createdAt: string;
   updatedAt: string;
 }
@@ -200,6 +203,32 @@ export interface AuthAccountDTO {
   lastLoginAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PropertyReviewDTO {
+  id: number;
+  propertyId: number;
+  personId: number;
+  associateId: number | null;
+  moderationStatusId: number | null;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  isVerified: boolean;
+  isPublished: boolean;
+  helpfulCount: number;
+  moderationNote: string | null;
+  moderatedById: number | null;
+  moderatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  person?: PersonDTO;
+  moderationStatus?: { id: number; name: string } | null;
+}
+
+export interface ReviewModerationStatusesDTO {
+  id: number;
+  name: string;
 }
 
 export interface ContactMethodDTO {
@@ -323,11 +352,14 @@ export function toAddressDTO(a: any): AddressDTO {
     id: a.id,
     recipient: a.recipient ?? null,
     organization: a.organization ?? null,
-    streetAddress: a.streetAddress,
-    addressLocality: a.addressLocality,
-    addressRegion: a.addressRegion,
+    addressStreet: a.addressStreet,
+    addressCityId: a.addressCityId,
+    addressRegionId: a.addressRegionId,
     postalCode: a.postalCode,
-    addressCountry: a.addressCountry,
+    addressCountryId: a.addressCountryId,
+    cityName: a.city?.cityName,
+    regionCode: a.region?.stateCode,
+    countryCode: a.country?.code002,
     latitude: toDecimal(a.latitude),
     longitude: toDecimal(a.longitude),
     createdAt: toIsoString(a.createdAt) ?? '',
@@ -518,8 +550,8 @@ export function toBlogPostDTO(bp: any): BlogPostDTO {
     published: bp.published ?? false,
     featuredImageId: bp.featuredImageId ?? null,
     featuredImage: bp.featuredImage ? toImageDTO(bp.featuredImage) : undefined,
-    authorId: bp.authorId,
-    author: bp.author ? toPersonDTO(bp.author) : undefined,
+    authorPersonId: bp.authorPersonId,
+    authorPerson: bp.authorPerson ? toPersonDTO(bp.authorPerson) : undefined,
     createdAt: toIsoString(bp.createdAt) ?? '',
     updatedAt: toIsoString(bp.updatedAt) ?? '',
   };
@@ -547,6 +579,33 @@ export function toContactMethodDTO(cm: any): ContactMethodDTO {
     id: cm.id,
     method: cm.method,
   };
+}
+
+export function toPropertyReviewDTO(pr: any): PropertyReviewDTO {
+  return {
+    id: pr.id,
+    propertyId: pr.propertyId,
+    personId: pr.personId,
+    associateId: pr.associateId ?? null,
+    moderationStatusId: pr.moderationStatusId ?? null,
+    rating: pr.rating,
+    title: pr.title ?? null,
+    comment: pr.comment ?? null,
+    isVerified: pr.isVerified ?? false,
+    isPublished: pr.isPublished ?? false,
+    helpfulCount: pr.helpfulCount ?? 0,
+    moderationNote: pr.moderationNote ?? null,
+    moderatedById: pr.moderatedById ?? null,
+    moderatedAt: pr.moderatedAt ? toIsoString(pr.moderatedAt) : null,
+    createdAt: toIsoString(pr.createdAt) ?? '',
+    updatedAt: toIsoString(pr.updatedAt) ?? '',
+    person: pr.person ? toPersonDTO(pr.person) : undefined,
+    moderationStatus: pr.moderationStatus ? { id: pr.moderationStatus.id, name: pr.moderationStatus.name } : undefined,
+  };
+}
+
+export function toPropertyReviewDTOList(reviews: any[]): PropertyReviewDTO[] {
+  return reviews.map(toPropertyReviewDTO);
 }
 
 export function toPersonTypeDTO(pt: any): PersonTypeDTO {
@@ -615,4 +674,56 @@ export function toPersonPermissionDTO(pp: any): PersonPermissionDTO {
     permissionId: pp.permissionId,
     permission: pp.permission ? toPermissionDTO(pp.permission) : undefined,
   };
+}
+
+// --- Tour Request ---
+
+export interface TourRequestDTO {
+  id: number;
+  propertyId: number;
+  clientPersonId: number | null;
+  clientFirstName: string;
+  clientLastName: string;
+  clientEmail: string;
+  clientPhone: string | null;
+  primaryAssociateId: number;
+  secondaryAssociateId: number | null;
+  scheduledDate: string;
+  clientMessage: string | null;
+  associateNotes: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  property?: PropertyDTO;
+  clientPerson?: PersonDTO;
+  primaryAssociate?: AssociateDTO;
+  secondaryAssociate?: AssociateDTO | null;
+}
+
+export function toTourRequestDTO(tr: any): TourRequestDTO {
+  return {
+    id: tr.id,
+    propertyId: tr.propertyId,
+    clientPersonId: tr.clientPersonId ?? null,
+    clientFirstName: tr.clientFirstName,
+    clientLastName: tr.clientLastName,
+    clientEmail: tr.clientEmail,
+    clientPhone: tr.clientPhone ?? null,
+    primaryAssociateId: tr.primaryAssociateId,
+    secondaryAssociateId: tr.secondaryAssociateId ?? null,
+    scheduledDate: toIsoString(tr.scheduledDate) ?? '',
+    clientMessage: tr.clientMessage ?? null,
+    associateNotes: tr.associateNotes ?? null,
+    status: tr.status,
+    createdAt: toIsoString(tr.createdAt) ?? '',
+    updatedAt: toIsoString(tr.updatedAt) ?? '',
+    property: tr.property ? toPropertyDTO(tr.property) : undefined,
+    clientPerson: tr.clientPerson ? toPersonDTO(tr.clientPerson) : undefined,
+    primaryAssociate: tr.primaryAssociate ? toAssociateDTO(tr.primaryAssociate) : undefined,
+    secondaryAssociate: tr.secondaryAssociate ? toAssociateDTO(tr.secondaryAssociate) : undefined,
+  };
+}
+
+export function toTourRequestDTOList(items: any[]): TourRequestDTO[] {
+  return items.map(toTourRequestDTO);
 }

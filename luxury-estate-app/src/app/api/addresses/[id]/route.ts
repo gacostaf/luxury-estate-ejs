@@ -52,7 +52,10 @@ import { Permissions } from '@/lib/rbac';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const address = await prisma.address.findUnique({ where: { id: parseInt(id) } });
+    const address = await prisma.address.findUnique({
+      where: { id: parseInt(id) },
+      include: { city: true, region: true, country: true },
+    });
     if (!address) return handlePrismaError({ code: 'P2025' });
     return successResponse(toAddressDTO(address));
   } catch (error) { return handlePrismaError(error); }
@@ -66,6 +69,7 @@ export const PUT = requireAuth()(async (req: NextRequest, { params }: { params: 
     const address = await prisma.address.update({
       where: { id: parseInt(id) },
       data,
+      include: { city: true, region: true, country: true },
     });
     return successResponse(toAddressDTO(address));
   } catch (error) {

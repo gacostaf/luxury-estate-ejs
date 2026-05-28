@@ -10,7 +10,7 @@ import { POST as createContactMethod } from '@/app/api/contact-methods/route';
 import { POST as createImage } from '@/app/api/images/route';
 import { POST as createVideo } from '@/app/api/videos/route';
 import { POST as createPropertyImage } from '@/app/api/property-images/route';
-import { clearTestDatabase, seedLookupTables, lookupPersonTypeId } from '../utils/test-helpers';
+import { clearTestDatabase, seedLookupTables, lookupPersonTypeId, lookupAssociateTypeId } from '../utils/test-helpers';
 import { createMockRequest } from '../utils/mock-request';
 import { signToken } from '@/lib/auth/jwt';
 import { Permissions } from '@/lib/rbac';
@@ -21,10 +21,12 @@ describe('RBAC End-to-End Enforcement', () => {
   let adminToken: string;
   let agentPersonId: number;
   let agentToken: string;
+  let associateTypeId: number;
 
   beforeAll(async () => {
     await clearTestDatabase();
     await seedLookupTables();
+    associateTypeId = await lookupAssociateTypeId('AGENT');
 
     // Create permissions needed by actual route handlers
     const perms = [
@@ -177,7 +179,7 @@ describe('RBAC End-to-End Enforcement', () => {
   describe('POST /api/associates (ASSOCIATE_CREATE)', () => {
     it('should return 403 for user without ASSOCIATE_CREATE', async () => {
       const req = createMockRequest(
-        { personId: unauthPersonId, associateTypeId: 1 },
+        { personId: unauthPersonId, associateTypeId },
         'http://localhost/api/associates', 'POST',
         { 'x-user-id': String(agentPersonId) }
       );
@@ -187,7 +189,7 @@ describe('RBAC End-to-End Enforcement', () => {
 
     it('should return 201 for admin with ASSOCIATE_CREATE', async () => {
       const req = createMockRequest(
-        { personId: adminPersonId, associateTypeId: 1 },
+        { personId: adminPersonId, associateTypeId },
         'http://localhost/api/associates', 'POST',
         { authorization: `Bearer ${adminToken}` }
       );
@@ -223,7 +225,7 @@ describe('RBAC End-to-End Enforcement', () => {
   describe('POST /api/blog-posts (BLOG_CREATE)', () => {
     it('should return 403 for agent without BLOG_CREATE', async () => {
       const req = createMockRequest(
-        { title: 'Test', slug: `test-${Date.now()}`, content: 'Content', authorId: agentPersonId },
+        { title: 'Test', slug: `test-${Date.now()}`, content: 'Content', authorPersonId: agentPersonId },
         'http://localhost/api/blog-posts', 'POST',
         { 'x-user-id': String(agentPersonId) }
       );
@@ -233,7 +235,7 @@ describe('RBAC End-to-End Enforcement', () => {
 
     it('should return 201 for admin with BLOG_CREATE', async () => {
       const req = createMockRequest(
-        { title: 'Admin Post', slug: `admin-${Date.now()}`, content: 'Content', authorId: adminPersonId },
+        { title: 'Admin Post', slug: `admin-${Date.now()}`, content: 'Content', authorPersonId: adminPersonId },
         'http://localhost/api/blog-posts', 'POST',
         { authorization: `Bearer ${adminToken}` }
       );

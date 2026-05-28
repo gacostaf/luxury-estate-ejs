@@ -3,11 +3,11 @@ import { z } from 'zod';
 export const addressSchema = z.object({
   recipient: z.string().max(255).optional(),
   organization: z.string().max(255).optional(),
-  streetAddress: z.string().min(1).max(500),
-  addressLocality: z.string().min(1).max(200),
-  addressRegion: z.string().min(1).max(100),
+  addressStreet: z.string().min(1).max(500),
+  addressCityId: z.number().int().positive(),
+  addressRegionId: z.number().int().positive(),
   postalCode: z.string().max(20),
-  addressCountry: z.string().length(2),
+  addressCountryId: z.number().int().positive(),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
 });
@@ -129,7 +129,7 @@ export const blogPostSchema = z.object({
   content: z.string().min(1),
   published: z.boolean().optional().default(false),
   featuredImageId: z.number().int().positive().optional().nullable(),
-  authorId: z.number().int().positive(),
+  authorPersonId: z.number().int().positive(),
 });
 
 export const authAccountSchema = z.object({
@@ -153,6 +153,22 @@ export const contactMethodSchema = z.object({
   method: z.string().min(1),
 });
 
+export const propertyReviewSchema = z.object({
+  propertyId: z.number().int().positive(),
+  personId: z.number().int().positive(),
+  associateId: z.number().int().positive().optional().nullable(),
+  moderationStatusId: z.number().int().positive().optional().nullable(),
+  rating: z.number().int().min(1).max(5),
+  title: z.string().max(255).optional().nullable(),
+  comment: z.string().optional().nullable(),
+  isVerified: z.boolean().optional().default(false),
+  isPublished: z.boolean().optional().default(false),
+  helpfulCount: z.number().int().min(0).optional().default(0),
+  moderationNote: z.string().optional().nullable(),
+  moderatedById: z.number().int().positive().optional().nullable(),
+  moderatedAt: z.string().datetime().optional().nullable(),
+});
+
 export type AddressInput = z.infer<typeof addressSchema>;
 export type OfficeInput = z.infer<typeof officeSchema>;
 export type ImageInput = z.infer<typeof imageSchema>;
@@ -166,3 +182,20 @@ export type AgencyInput = z.infer<typeof agencySchema>;
 export type BlogPostInput = z.infer<typeof blogPostSchema>;
 export type AuthAccountInput = z.infer<typeof authAccountSchema>;
 export type ContactMethodInput = z.infer<typeof contactMethodSchema>;
+export const tourRequestSchema = z.object({
+  propertyId: z.number().int().positive(),
+  clientPersonId: z.number().int().positive().optional().nullable(),
+  clientFirstName: z.string().min(1).max(100),
+  clientLastName: z.string().min(1).max(100),
+  clientEmail: z.string().email().max(255),
+  clientPhone: z.string().max(50).optional().nullable(),
+  primaryAssociateId: z.number().int().positive(),
+  secondaryAssociateId: z.number().int().positive().optional().nullable(),
+  scheduledDate: z.string().datetime(),
+  clientMessage: z.string().optional().nullable(),
+  associateNotes: z.string().optional().nullable(),
+  status: z.enum(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']).optional().default('PENDING'),
+});
+
+export type PropertyReviewInput = z.infer<typeof propertyReviewSchema>;
+export type TourRequestInput = z.infer<typeof tourRequestSchema>;

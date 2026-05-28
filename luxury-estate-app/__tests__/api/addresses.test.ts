@@ -27,8 +27,8 @@ describe('Addresses API', () => {
     });
 
     it('should return all addresses', async () => {
-      await createTestAddress({ addressLocality: 'CityA' });
-      await createTestAddress({ addressLocality: 'CityB' });
+      await createTestAddress();
+      await createTestAddress();
       const res = await listAddresses();
       const json = await res.json();
       expect(res.status).toBe(200);
@@ -37,19 +37,35 @@ describe('Addresses API', () => {
   });
 
   describe('POST /api/addresses', () => {
+    let usaId: number;
+    let caId: number;
+    let cityId: number;
+
+    beforeAll(async () => {
+      await seedLookupTables();
+      const usa = await prisma.country.findUniqueOrThrow({ where: { codenum: '840' } });
+      usaId = usa.id;
+      const ca = await prisma.state.findFirstOrThrow({ where: { stateCode: 'CA' } });
+      caId = ca.id;
+      const city = await prisma.city.create({
+        data: { countryId: usaId, stateId: caId, cityName: 'Miami' },
+      });
+      cityId = city.id;
+    });
+
     it('should create a new address', async () => {
       const payload = {
-        streetAddress: '456 Oak Ave',
-        addressLocality: 'Miami',
-        addressRegion: 'FL',
+        addressStreet: '456 Oak Ave',
+        addressCityId: cityId,
+        addressRegionId: caId,
         postalCode: '33101',
-        addressCountry: 'US',
+        addressCountryId: usaId,
       };
       const req = createMockRequest(payload, 'http://localhost/api/addresses', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createAddress(req);
       const json = await res.json();
       expect(res.status).toBe(201);
-      expect(json.data.streetAddress).toBe('456 Oak Ave');
+      expect(json.data.addressStreet).toBe('456 Oak Ave');
     });
 
     it('should return 400 for missing required fields', async () => {
@@ -75,10 +91,26 @@ describe('Addresses API', () => {
   });
 
   describe('PUT /api/addresses/[id]', () => {
+    let usaId: number;
+    let caId: number;
+    let orlandoCityId: number;
+
+    beforeAll(async () => {
+      const usa = await prisma.country.findUniqueOrThrow({ where: { codenum: '840' } });
+      usaId = usa.id;
+      const ca = await prisma.state.findFirstOrThrow({ where: { stateCode: 'CA' } });
+      caId = ca.id;
+      const fl = await prisma.state.findFirstOrThrow({ where: { stateCode: 'FL' } });
+      const city = await prisma.city.create({
+        data: { countryId: usaId, stateId: fl.id, cityName: 'Orlando' },
+      });
+      orlandoCityId = city.id;
+    });
+
     it('should update an address', async () => {
       const addr = await createTestAddress();
       const req = createMockRequest(
-        { streetAddress: '789 Pine St', addressLocality: 'Orlando', addressRegion: 'FL', postalCode: '32801', addressCountry: 'US' },
+        { addressStreet: '789 Pine St', addressCityId: orlandoCityId, addressRegionId: caId, postalCode: '32801', addressCountryId: usaId },
         'http://localhost/api/addresses/1',
         'PUT',
         { 'x-user-id': String(adminPersonId) }
@@ -86,12 +118,12 @@ describe('Addresses API', () => {
       const res = await updateAddress(req, params(String(addr.id)));
       const json = await res.json();
       expect(res.status).toBe(200);
-      expect(json.data.streetAddress).toBe('789 Pine St');
+      expect(json.data.addressStreet).toBe('789 Pine St');
     });
 
     it('should return 404 for non-existent id', async () => {
       const req = createMockRequest(
-        { streetAddress: 'X', addressLocality: 'Y', addressRegion: 'Z', postalCode: '00000', addressCountry: 'US' },
+        { addressStreet: 'X', addressCityId: orlandoCityId, addressRegionId: caId, postalCode: '00000', addressCountryId: usaId },
         'http://localhost/api/addresses/99999',
         'PUT',
         { 'x-user-id': String(adminPersonId) }

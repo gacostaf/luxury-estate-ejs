@@ -182,8 +182,13 @@ model Person {
   createdBlogPostEntities  BlogPost[] @relation("BlogPostCreatedByRelation")
   updatedBlogPostEntities  BlogPost[] @relation("BlogPostUpdatedByRelation")
 
+  propertyReviews    PropertyReview[] @relation("PropertyReviewPersonRelation")
+  moderatedReviews   PropertyReview[] @relation("ReviewModeratorRelation")
+
   createdContactRequestEntities  ContactRequest[] @relation("ContactRequestCreatedByRelation")
   updatedContactRequestEntities  ContactRequest[] @relation("ContactRequestUpdatedByRelation")
+
+  clientTours  TourRequest[] @relation("ClientTourRelation")
 
   @@index([personTypeId, isLead], name: "idx_person_type_lead")
   @@map("PERSONS")
@@ -288,6 +293,9 @@ model Associate {
   video            Video?         @relation("AssociateVideo", fields: [videoId], references: [id], onDelete: Restrict)
 
   assignedRequests ContactRequest[] @relation("AssignedAssociate")
+  propertyReviews  PropertyReview[]
+  primaryTours     TourRequest[] @relation("PrimaryAssociateTourRelation")
+  secondaryTours   TourRequest[] @relation("SecondaryAssociateTourRelation")
 
   @@index([officeId, department], name: "idx_associate_office_dept")
   @@map("ASSOCIATES")
@@ -528,6 +536,8 @@ model Property {
 
   propertyImages PropertyImage[]
   propertyVideos PropertyVideo[]
+  reviews        PropertyReview[]
+  tourRequests   TourRequest[]
 
   @@index([price], name: "idx_price")
   @@index([bedrooms, bathrooms], name: "idx_room_counts")
@@ -566,6 +576,43 @@ model BlogPost {
 
   @@index([published, createdAt], name: "idx_blog_published_date")
   @@map("BLOG_POSTS")
+}
+
+model ReviewModerationStatuses {
+  id        Int              @id @default(autoincrement()) @map("ID")
+  name      String           @unique @map("NAME")
+  reviews   PropertyReview[]
+
+  @@map("REVIEW_MODERATION_STATUSES")
+}
+
+model PropertyReview {
+  id                  Int                    @id @default(autoincrement()) @map("ID")
+  propertyId          Int                    @map("PROPERTY_ID")
+  personId            Int                    @map("PERSON_ID")
+  associateId         Int?                   @map("ASSOCIATE_ID")
+  moderationStatusId  Int?                   @map("MODERATION_STATUS_ID")
+  rating              Int                    @map("RATING") // 1-5
+  title               String?                @map("TITLE") @db.VarChar(255)
+  comment             String?                @map("COMMENT") @db.Text
+  isVerified          Boolean                @default(false) @map("IS_VERIFIED")
+  isPublished         Boolean                @default(false) @map("IS_PUBLISHED")
+  helpfulCount        Int                    @default(0) @map("HELPFUL_COUNT")
+  moderationNote      String?                @map("MODERATION_NOTE") @db.Text
+  moderatedById       Int?                   @map("MODERATED_BY_ID")
+  moderatedAt         DateTime?              @map("MODERATED_AT")
+  createdAt           DateTime               @default(now()) @map("CREATED_AT")
+  updatedAt           DateTime               @updatedAt @map("UPDATED_AT")
+
+  property  Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  person    Person   @relation("PropertyReviewPersonRelation", fields: [personId], references: [id], onDelete: Cascade)
+  associate Associate? @relation(fields: [associateId], references: [id])
+  moderationStatus ReviewModerationStatuses? @relation(fields: [moderationStatusId], references: [id])
+  moderatedBy Person? @relation("ReviewModeratorRelation", fields: [moderatedById], references: [id])
+
+  @@index([propertyId, rating], name: "idx_review_rating")
+  @@index([personId], name: "idx_review_person")
+  @@map("PROPERTY_REVIEWS")
 }
 
 model ContactMethod {
@@ -635,6 +682,35 @@ model ContactRequest {
   @@map("CONTACT_REQUESTS")
 }
 
+model TourRequest {
+  id                  Int        @id @default(autoincrement()) @map("ID")
+  propertyId          Int        @map("PROPERTY_ID")
+  clientPersonId      Int?       @map("CLIENT_PERSON_ID")
+  clientFirstName     String     @map("CLIENT_FIRST_NAME") @db.VarChar(100)
+  clientLastName      String     @map("CLIENT_LAST_NAME") @db.VarChar(100)
+  clientEmail         String     @map("CLIENT_EMAIL") @db.VarChar(255)
+  clientPhone         String?    @map("CLIENT_PHONE") @db.VarChar(50)
+  primaryAssociateId  Int        @map("PRIMARY_ASSOCIATE_ID")
+  secondaryAssociateId Int?      @map("SECONDARY_ASSOCIATE_ID")
+  scheduledDate       DateTime   @map("SCHEDULED_DATE")
+  clientMessage       String?    @map("CLIENT_MESSAGE") @db.Text
+  associateNotes      String?    @map("ASSOCIATE_NOTES") @db.Text
+  status              TourStatus @default(PENDING) @map("STATUS")
+  createdAt           DateTime   @default(now()) @map("CREATED_AT")
+  updatedAt           DateTime   @updatedAt @map("UPDATED_AT")
+
+  property           Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  clientPerson       Person?    @relation("ClientTourRelation", fields: [clientPersonId], references: [id], onDelete: SetNull)
+  primaryAssociate   Associate  @relation("PrimaryAssociateTourRelation", fields: [primaryAssociateId], references: [id])
+  secondaryAssociate Associate? @relation("SecondaryAssociateTourRelation", fields: [secondaryAssociateId], references: [id])
+
+  @@index([propertyId])
+  @@index([primaryAssociateId])
+  @@index([secondaryAssociateId])
+  @@index([status])
+  @@map("TOUR_REQUESTS")
+}
+
 enum RequestType {
   GENERAL
   SALES
@@ -647,4 +723,12 @@ enum RequestStatus {
   OPEN
   HOLD
   CLOSED
+}
+
+enum TourStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
 }

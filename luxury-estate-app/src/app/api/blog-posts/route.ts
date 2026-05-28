@@ -29,7 +29,7 @@ import { Permissions } from '@/lib/rbac';
 export async function GET() {
   try {
     const posts = await prisma.blogPost.findMany({
-      include: { author: true, featuredImage: true },
+      include: { authorPerson: true, featuredImage: true },
       orderBy: { createdAt: 'desc' },
     });
     return successResponse(toBlogPostDTOList(posts));

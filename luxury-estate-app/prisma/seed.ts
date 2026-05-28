@@ -79,6 +79,14 @@ async function main() {
         )
     );
 
+    const moderationStatuses = await Promise.all(
+        ['PENDING', 'APPROVED', 'REJECTED', 'FLAGGED'].map(name =>
+            prisma.reviewModerationStatuses.upsert({ where: { name }, update: {}, create: { name } })
+        )
+    );
+
+    console.log(`  ✅ ${moderationStatuses.length} review moderation statuses`);
+
     console.log('🌍 Seeding geographic data...');
 
     const usa = await prisma.country.upsert({
@@ -119,14 +127,27 @@ async function main() {
 
     console.log('📍 Seeding addresses...');
 
+    // Look up geographic references
+    const us = await prisma.country.findUniqueOrThrow({ where: { code002: 'US' } });
+    const flState = await prisma.state.findFirstOrThrow({ where: { countryId: us.id, stateCode: 'FL' } });
+
+    const getOrCreateCity = async (stateId: number, cityName: string) => {
+        const existing = await prisma.city.findFirst({ where: { stateId, cityName } });
+        if (existing) return existing;
+        return prisma.city.create({ data: { countryId: us.id, stateId, cityName } });
+    };
+
+    const malibuCity = await getOrCreateCity(caState.id, 'Malibu');
+    const miamiCity = await getOrCreateCity(flState.id, 'Miami');
+
     const officeAddress = await prisma.address.create({
         data: {
             organization: 'Luxury Estate Realty HQ',
-            streetAddress: '1234 Pacific Coast Highway, Suite 500',
-            addressLocality: 'Malibu',
-            addressRegion: 'CA',
+            addressStreet: '1234 Pacific Coast Highway, Suite 500',
+            addressCityId: malibuCity.id,
+            addressRegionId: caState.id,
+            addressCountryId: us.id,
             postalCode: '90265',
-            addressCountry: 'US',
             latitude: 34.0259,
             longitude: -118.7798
         }
@@ -134,11 +155,11 @@ async function main() {
 
     const propertyAddress1 = await prisma.address.create({
         data: {
-            streetAddress: '1234 Ocean Blvd',
-            addressLocality: 'Malibu',
-            addressRegion: 'CA',
+            addressStreet: '1234 Ocean Blvd',
+            addressCityId: malibuCity.id,
+            addressRegionId: caState.id,
+            addressCountryId: us.id,
             postalCode: '90265',
-            addressCountry: 'US',
             latitude: 34.035000,
             longitude: -118.678000
         }
@@ -146,11 +167,11 @@ async function main() {
 
     const propertyAddress2 = await prisma.address.create({
         data: {
-            streetAddress: '5678 Collins Ave, Penthouse A',
-            addressLocality: 'Miami',
-            addressRegion: 'FL',
+            addressStreet: '5678 Collins Ave, Penthouse A',
+            addressCityId: miamiCity.id,
+            addressRegionId: flState.id,
+            addressCountryId: us.id,
             postalCode: '33140',
-            addressCountry: 'US',
             latitude: 25.815000,
             longitude: -80.125000
         }

@@ -28,7 +28,10 @@ import { Permissions } from '@/lib/rbac';
  */
 export async function GET() {
   try {
-    const addresses = await prisma.address.findMany({ orderBy: { createdAt: 'desc' } });
+    const addresses = await prisma.address.findMany({
+      include: { city: true, region: true, country: true },
+      orderBy: { createdAt: 'desc' },
+    });
     return successResponse(toAddressDTOList(addresses));
   } catch (error) { return handlePrismaError(error); }
 }
@@ -37,7 +40,10 @@ export const POST = requireAuth()(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const data = addressSchema.parse(body);
-    const address = await prisma.address.create({ data });
+    const address = await prisma.address.create({
+      data,
+      include: { city: true, region: true, country: true },
+    });
     return successResponse(toAddressDTO(address), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);

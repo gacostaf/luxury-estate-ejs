@@ -49,9 +49,10 @@ import { Permissions } from '@/lib/rbac';
  *       401: { description: Unauthorized }
  *       403: { description: Forbidden }
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = parseInt(params.id, 10);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr, 10);
     const associate = await prisma.associate.findUnique({
       where: { id },
       include: { person: true, associateType: true, agency: true, office: true, supervisor: true, subordinates: true },
@@ -61,9 +62,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   } catch (error) { return handlePrismaError(error); }
 }
 
-export const PATCH = requirePermission(Permissions.ASSOCIATE_UPDATE)(async (req: NextRequest, { params }: { params: { id: string } }) => {
+export const PATCH = requirePermission(Permissions.ASSOCIATE_UPDATE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const id = parseInt(params.id, 10);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr, 10);
     const body = await req.json();
     const data = associateSchema.partial().parse(body);
     const associate = await prisma.associate.update({ where: { id }, data });
@@ -75,9 +77,10 @@ export const PATCH = requirePermission(Permissions.ASSOCIATE_UPDATE)(async (req:
   }
 });
 
-export const DELETE = requirePermission(Permissions.ASSOCIATE_DELETE)(async(req: NextRequest, { params }: { params: { id: string } }) {
+export const DELETE = requirePermission(Permissions.ASSOCIATE_DELETE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const id = parseInt(params.id, 10);
+    const { id: idStr } = await params;
+    const id = parseInt(idStr, 10);
     await prisma.associate.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }
