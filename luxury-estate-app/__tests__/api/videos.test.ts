@@ -3,16 +3,19 @@ import { GET as listVideos, POST as createVideo } from '@/app/api/videos/route';
 import { GET as getVideo, PUT as updateVideo, DELETE as deleteVideo } from '@/app/api/videos/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, createTestVideo } from '../utils/test-helpers';
+import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestVideo } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
 }
 
 describe('Videos API', () => {
+  let adminPersonId: number;
+
   beforeEach(async () => {
     await clearTestDatabase();
     await seedLookupTables();
+    adminPersonId = await seedAdminUser();
   });
 
   describe('GET /api/videos', () => {
@@ -36,7 +39,7 @@ describe('Videos API', () => {
   describe('POST /api/videos', () => {
     it('should create a new video', async () => {
       const payload = { uri: 'https://example.com/new.mp4', isPersonal: false };
-      const req = createMockRequest(payload, 'http://localhost/api/videos', 'POST');
+      const req = createMockRequest(payload, 'http://localhost/api/videos', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createVideo(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -44,7 +47,7 @@ describe('Videos API', () => {
     });
 
     it('should return 400 for missing uri', async () => {
-      const req = createMockRequest({}, 'http://localhost/api/videos', 'POST');
+      const req = createMockRequest({}, 'http://localhost/api/videos', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createVideo(req);
       expect(res.status).toBe(400);
     });
@@ -71,7 +74,8 @@ describe('Videos API', () => {
       const req = createMockRequest(
         { uri: 'https://example.com/updated.mp4', isPersonal: true },
         'http://localhost/api/videos/1',
-        'PUT'
+        'PUT',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateVideo(req, params(String(vid.id)));
       const json = await res.json();
@@ -84,7 +88,8 @@ describe('Videos API', () => {
       const req = createMockRequest(
         { uri: 'https://example.com/x.mp4', isPersonal: false },
         'http://localhost/api/videos/99999',
-        'PUT'
+        'PUT',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateVideo(req, params('99999'));
       expect(res.status).toBe(404);
@@ -94,7 +99,7 @@ describe('Videos API', () => {
   describe('DELETE /api/videos/[id]', () => {
     it('should delete a video', async () => {
       const vid = await createTestVideo();
-      const res = await deleteVideo(createMockRequest(), params(String(vid.id)));
+      const res = await deleteVideo(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(vid.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.video.findUnique({ where: { id: vid.id } });
@@ -102,7 +107,7 @@ describe('Videos API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteVideo(createMockRequest(), params('99999'));
+      const res = await deleteVideo(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
       expect(res.status).toBe(404);
     });
   });

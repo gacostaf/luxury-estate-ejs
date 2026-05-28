@@ -1,6 +1,5 @@
-import { z } from 'zod'; // ✅ Add this line at the very top
+import { z } from 'zod';
 
-// Address Schema
 export const addressSchema = z.object({
   recipient: z.string().max(255).optional(),
   organization: z.string().max(255).optional(),
@@ -13,54 +12,47 @@ export const addressSchema = z.object({
   longitude: z.number().min(-180).max(180).optional(),
 });
 
-// Office Schema
 export const officeSchema = z.object({
   phone: z.string().optional(),
   addressId: z.number().int().positive().optional(),
 });
 
-// Image Schema
 export const imageSchema = z.object({
   uri: z.string().url().max(2048),
   isPersonal: z.boolean().default(false),
 });
 
-// Video Schema
 export const videoSchema = z.object({
   uri: z.string().url().max(2048),
   isPersonal: z.boolean().default(false),
 });
 
-// PropertyImage Junction Schema
 export const propertyImageSchema = z.object({
   propertyId: z.number().int().positive(),
   imageId: z.number().int().positive(),
   isBanner: z.boolean().default(false),
 });
 
-// PropertyVideo Junction Schema
 export const propertyVideoSchema = z.object({
   propertyId: z.number().int().positive(),
   videoId: z.number().int().positive(),
 });
 
-// Person Schema
 export const personSchema = z.object({
-  name: z.string().min(1),
+  firstName: z.string().optional().nullable(),
+  lastName: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
-  description: z.string().optional().nullable(),
   personTypeId: z.number().int().positive(),
   isLead: z.boolean().optional().default(false),
   isClient: z.boolean().optional().default(false),
-  isEmployee: z.boolean().optional().default(false),
+  isAssociate: z.boolean().optional().default(false),
   isDisqualified: z.boolean().optional().default(false),
   disqualificationStatusId: z.number().int().positive().optional().nullable(),
   disqualificationReasonId: z.number().int().positive().optional().nullable(),
   addressId: z.number().int().positive().optional().nullable(),
 });
 
-// Property Schema
 export const propertySchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
@@ -83,48 +75,82 @@ export const propertySchema = z.object({
   mlsId: z.string().optional().nullable(),
   latitude: z.number().min(-90).max(90).optional().nullable(),
   longitude: z.number().min(-180).max(180).optional().nullable(),
-  energyRating: z.number().int().min(0).max(100).optional().nullable(),
   agentId: z.number().int().positive().optional().nullable(),
+  agencyId: z.number().int().positive().optional().nullable(),
   addressId: z.number().int().positive().optional().nullable(),
   bannerImageId: z.number().int().positive().optional().nullable(),
   seoUrl: z.string().max(255).optional().nullable(),
   publishDate: z.string().datetime().optional().nullable(),
 });
 
-// Combined Employee Schema (Person + Employee + Office in one transaction)
-export const combinedEmployeeSchema = z.object({
-  name: z.string().min(1),
-  phone: z.string().optional().nullable(),
-  email: z.string().email().optional().nullable(),
-  description: z.string().optional().nullable(),
-  personTypeId: z.number().int().positive(),
-  isLead: z.boolean().optional().default(false),
-  isClient: z.boolean().optional().default(false),
-  isEmployee: z.boolean().optional().default(true),
-  isDisqualified: z.boolean().optional().default(false),
-  addressId: z.number().int().positive().optional().nullable(),
+export const associateSchema = z.object({
+  personId: z.number().int().positive(),
+  associateTypeId: z.number().int().positive(),
+  personRoleId: z.number().int().positive().optional().nullable(),
+  agencyId: z.number().int().positive().optional().nullable(),
+  officeId: z.number().int().positive().optional().nullable(),
   department: z.string().optional().nullable(),
+  licenseNumber: z.string().optional().nullable(),
+  startDate: z.string().datetime().optional().nullable(),
+  endDate: z.string().datetime().optional().nullable(),
+  supervisorId: z.number().int().positive().optional().nullable(),
+  commissionPlanId: z.number().int().positive().optional().nullable(),
+  bio: z.string().optional().nullable(),
+  isPublicProfile: z.boolean().optional().default(true),
+  contactMethodId: z.number().int().positive().optional().nullable(),
   photoId: z.number().int().positive().optional().nullable(),
   videoId: z.number().int().positive().optional().nullable(),
   fbHandle: z.string().max(2048).optional().nullable(),
   igHandle: z.string().max(2048).optional().nullable(),
   linkedinHandle: z.string().max(2048).optional().nullable(),
-  officeId: z.number().int().positive().optional().nullable(),
-  officeName: z.string().optional().nullable(),
-  officePhone: z.string().optional().nullable(),
-  officeAddressId: z.number().int().positive().optional().nullable(),
 });
 
-// Employee Standard Schema (create employee for existing person)
-export const employeeStandardSchema = z.object({
+export const agencySchema = z.object({
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  description: z.string().optional().nullable(),
+  logoImageId: z.number().int().positive().optional().nullable(),
+  bannerImageId: z.number().int().positive().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  email: z.string().email().optional().nullable(),
+  websiteUrl: z.string().url().max(2048).optional().nullable(),
+  facebookUrl: z.string().url().max(2048).optional().nullable(),
+  instagramUrl: z.string().url().max(2048).optional().nullable(),
+  linkedinUrl: z.string().url().max(2048).optional().nullable(),
+  addressId: z.number().int().positive().optional().nullable(),
+  isFeatured: z.boolean().optional().default(false),
+  isVerified: z.boolean().optional().default(false),
+});
+
+export const blogPostSchema = z.object({
+  title: z.string().min(1),
+  slug: z.string().min(1),
+  excerpt: z.string().optional().nullable(),
+  content: z.string().min(1),
+  published: z.boolean().optional().default(false),
+  featuredImageId: z.number().int().positive().optional().nullable(),
+  authorId: z.number().int().positive(),
+});
+
+export const authAccountSchema = z.object({
   personId: z.number().int().positive(),
-  department: z.string().optional().nullable(),
-  officeId: z.number().int().positive().optional().nullable(),
-  photoId: z.number().int().positive().optional().nullable(),
-  videoId: z.number().int().positive().optional().nullable(),
-  fbHandle: z.string().max(2048).optional().nullable(),
-  igHandle: z.string().max(2048).optional().nullable(),
-  linkedinHandle: z.string().max(2048).optional().nullable(),
+  email: z.string().email(),
+  passwordHash: z.string().optional().nullable(),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+export const registerSchema = z.object({
+  personId: z.number().int().positive(),
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+export const contactMethodSchema = z.object({
+  method: z.string().min(1),
 });
 
 export type AddressInput = z.infer<typeof addressSchema>;
@@ -135,5 +161,8 @@ export type PropertyImageInput = z.infer<typeof propertyImageSchema>;
 export type PropertyVideoInput = z.infer<typeof propertyVideoSchema>;
 export type PersonInput = z.infer<typeof personSchema>;
 export type PropertyInput = z.infer<typeof propertySchema>;
-export type CombinedEmployeeInput = z.infer<typeof combinedEmployeeSchema>;
-export type EmployeeStandardInput = z.infer<typeof employeeStandardSchema>;
+export type AssociateInput = z.infer<typeof associateSchema>;
+export type AgencyInput = z.infer<typeof agencySchema>;
+export type BlogPostInput = z.infer<typeof blogPostSchema>;
+export type AuthAccountInput = z.infer<typeof authAccountSchema>;
+export type ContactMethodInput = z.infer<typeof contactMethodSchema>;

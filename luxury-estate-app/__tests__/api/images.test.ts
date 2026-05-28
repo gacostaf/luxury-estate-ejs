@@ -3,16 +3,19 @@ import { GET as listImages, POST as createImage } from '@/app/api/images/route';
 import { GET as getImage, PUT as updateImage, DELETE as deleteImage } from '@/app/api/images/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, createTestImage } from '../utils/test-helpers';
+import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestImage } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
 }
 
 describe('Images API', () => {
+  let adminPersonId: number;
+
   beforeEach(async () => {
     await clearTestDatabase();
     await seedLookupTables();
+    adminPersonId = await seedAdminUser();
   });
 
   describe('GET /api/images', () => {
@@ -36,7 +39,7 @@ describe('Images API', () => {
   describe('POST /api/images', () => {
     it('should create a new image', async () => {
       const payload = { uri: 'https://example.com/new.jpg', isPersonal: false };
-      const req = createMockRequest(payload, 'http://localhost/api/images', 'POST');
+      const req = createMockRequest(payload, 'http://localhost/api/images', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createImage(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -44,7 +47,7 @@ describe('Images API', () => {
     });
 
     it('should return 400 for missing uri', async () => {
-      const req = createMockRequest({}, 'http://localhost/api/images', 'POST');
+      const req = createMockRequest({}, 'http://localhost/api/images', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createImage(req);
       expect(res.status).toBe(400);
     });
@@ -71,7 +74,8 @@ describe('Images API', () => {
       const req = createMockRequest(
         { uri: 'https://example.com/updated.jpg', isPersonal: true },
         'http://localhost/api/images/1',
-        'PUT'
+        'PUT',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateImage(req, params(String(img.id)));
       const json = await res.json();
@@ -84,7 +88,8 @@ describe('Images API', () => {
       const req = createMockRequest(
         { uri: 'https://example.com/x.jpg', isPersonal: false },
         'http://localhost/api/images/99999',
-        'PUT'
+        'PUT',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateImage(req, params('99999'));
       expect(res.status).toBe(404);
@@ -94,7 +99,7 @@ describe('Images API', () => {
   describe('DELETE /api/images/[id]', () => {
     it('should delete an image', async () => {
       const img = await createTestImage();
-      const res = await deleteImage(createMockRequest(), params(String(img.id)));
+      const res = await deleteImage(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(img.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.image.findUnique({ where: { id: img.id } });
@@ -102,7 +107,7 @@ describe('Images API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteImage(createMockRequest(), params('99999'));
+      const res = await deleteImage(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
       expect(res.status).toBe(404);
     });
   });

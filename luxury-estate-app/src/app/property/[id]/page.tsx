@@ -15,7 +15,7 @@ export default async function PropertyPage({
         where: { id: propertyId },
         include: {
             address: true,
-            agent: { include: { employee: true } },
+            agent: { include: { associate: true } },
             propertyImages: { include: { image: true } },
             propertyVideos: { include: { video: true } },
         },
@@ -54,8 +54,8 @@ export default async function PropertyPage({
         },
         "agent": property.agent ? {
             "@type": "RealEstateAgent",
-            "name": property.agent.name,
-            "jobTitle": property.agent.employee?.department
+            "name": [property.agent.firstName, property.agent.lastName].filter(Boolean).join(' '),
+            "jobTitle": property.agent.associate?.department
         } : undefined
     };
 

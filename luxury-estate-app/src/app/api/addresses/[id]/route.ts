@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { addressSchema } from '@/lib/validation';
 import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-helpers';
+import { toAddressDTO } from '@/lib/dtos';
+import { requireAuth, requirePermission } from '@/lib/auth/middleware';
+import { Permissions } from '@/lib/rbac';
 
 /**
  * @swagger
@@ -19,6 +22,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
  *   put:
  *     tags: [Addresses]
  *     summary: Update address
+ *     security: [{ BearerAuth: [] }]
  *     parameters:
  *       - in: path
  *         name: id
@@ -29,9 +33,12 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
  *       content: { application/json: { schema: { $ref: '#/components/schemas/AddressInput' } } }
  *     responses:
  *       200: { description: Address updated }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
  *   delete:
  *     tags: [Addresses]
  *     summary: Delete address
+ *     security: [{ BearerAuth: [] }]
  *     parameters:
  *       - in: path
  *         name: id
@@ -39,17 +46,19 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
  *         schema: { type: integer }
  *     responses:
  *       204: { description: Address deleted }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const address = await prisma.address.findUnique({ where: { id: parseInt(id) } });
     if (!address) return handlePrismaError({ code: 'P2025' });
-    return successResponse(address);
+    return successResponse(toAddressDTO(address));
   } catch (error) { return handlePrismaError(error); }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const PUT = requireAuth()(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
     const body = await req.json();
@@ -58,17 +67,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id: parseInt(id) },
       data,
     });
-    return successResponse(address);
+    return successResponse(toAddressDTO(address));
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);
     return handlePrismaError(error);
   }
-}
+});
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = requireAuth()(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
     await prisma.address.delete({ where: { id: parseInt(id) } });
     return new Response(null, { status: 204 });
   } catch (error) { return handlePrismaError(error); }
-}
+});

@@ -12,9 +12,9 @@ export default function SwaggerPage() {
     if (!containerRef.current) return;
 
     const ui = SwaggerUIBundle({
-      url: '/api/swagger', // Points to your OpenAPI JSON endpoint
+      url: '/api/swagger',
       dom_id: '#swagger-ui',
-      deepLinking: true,
+      deepLinking: { prefix: '#!/', useBasePath: false },
       presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.presets.standaloneLayout],
     });
 

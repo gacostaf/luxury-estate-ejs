@@ -1,7 +1,10 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { officeSchema } from '@/lib/validation';
 import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-helpers';
+import { toOfficeDTO } from '@/lib/dtos';
+import { requireAuth, requirePermission } from '@/lib/auth/middleware';
+import { Permissions } from '@/lib/rbac';
 
 /**
  * @swagger
@@ -16,9 +19,10 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
  *         schema: { type: integer }
  *     responses:
  *       200: { description: Office details }
- *   put:
+ *   patch:
  *     tags: [Offices]
  *     summary: Update office
+ *     security: [{ BearerAuth: [] }]
  *     parameters:
  *       - in: path
  *         name: id
@@ -29,9 +33,12 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
  *       content: { application/json: { schema: { $ref: '#/components/schemas/OfficeInput' } } }
  *     responses:
  *       200: { description: Office updated }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
  *   delete:
  *     tags: [Offices]
  *     summary: Delete office
+ *     security: [{ BearerAuth: [] }]
  *     parameters:
  *       - in: path
  *         name: id
@@ -39,20 +46,27 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
  *         schema: { type: integer }
  *     responses:
  *       204: { description: Office deleted }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
     const office = await prisma.office.findUnique({
-      where: { id: parseInt(id) },
-      include: { address: true, employees: { include: { person: true } } },
+      where: { id: numId },
+      include: { address: true, associates: { include: { person: true } } },
     });
-    if (!office) return handlePrismaError({ code: 'P2025' });
-    return successResponse(office);
-  } catch (error) { return handlePrismaError(error); }
+    if (!office) return NextResponse.json({ error: 'Office not found' }, { status: 404 });
+    return successResponse(toOfficeDTO(office));
+  } catch (error) {
+    if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);
+    return handlePrismaError(error);
+  }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = requirePermission(Permissions.OFFICE_UPDATE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
     const body = await req.json();
@@ -62,17 +76,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       data,
       include: { address: true },
     });
-    return successResponse(office);
+    return successResponse(toOfficeDTO(office));
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);
     return handlePrismaError(error);
   }
-}
+});
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = requirePermission(Permissions.OFFICE_DELETE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
     await prisma.office.delete({ where: { id: parseInt(id) } });
     return new Response(null, { status: 204 });
   } catch (error) { return handlePrismaError(error); }
-}
+});

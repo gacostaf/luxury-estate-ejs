@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { addressSchema } from '@/lib/validation';
 import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-helpers';
+import { toAddressDTO, toAddressDTOList } from '@/lib/dtos';
+import { requireAuth, requirePermission } from '@/lib/auth/middleware';
+import { Permissions } from '@/lib/rbac';
 
 /**
  * @swagger
@@ -14,27 +17,30 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
  *   post:
  *     tags: [Addresses]
  *     summary: Create a new address
+ *     security: [{ BearerAuth: [] }]
  *     requestBody:
  *       required: true
  *       content: { application/json: { schema: { $ref: '#/components/schemas/AddressInput' } } }
  *     responses:
  *       201: { description: Address created }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
  */
 export async function GET() {
   try {
     const addresses = await prisma.address.findMany({ orderBy: { createdAt: 'desc' } });
-    return successResponse(addresses);
+    return successResponse(toAddressDTOList(addresses));
   } catch (error) { return handlePrismaError(error); }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = requireAuth()(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const data = addressSchema.parse(body);
     const address = await prisma.address.create({ data });
-    return successResponse(address, 201);
+    return successResponse(toAddressDTO(address), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);
     return handlePrismaError(error);
   }
-}
+});

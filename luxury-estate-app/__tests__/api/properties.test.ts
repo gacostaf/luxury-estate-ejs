@@ -2,12 +2,13 @@ import { describe, it, expect, beforeAll, beforeEach } from '@jest/globals';
 import { GET, POST } from '@/app/api/properties/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, lookupPropertyTypeId, lookupPropertyStatusId } from '../utils/test-helpers';
+import { clearTestDatabase, seedLookupTables, seedAdminUser, lookupPropertyTypeId, lookupPropertyStatusId } from '../utils/test-helpers';
 
 describe('Properties API', () => {
   let houseTypeId: number;
   let condoTypeId: number;
   let forSaleStatusId: number;
+  let adminPersonId: number;
 
   beforeAll(async () => {
     houseTypeId = await lookupPropertyTypeId('house');
@@ -18,6 +19,7 @@ describe('Properties API', () => {
   beforeEach(async () => {
     await clearTestDatabase();
     await seedLookupTables();
+    adminPersonId = await seedAdminUser();
   });
 
   it('should create and retrieve a property', async () => {
@@ -36,7 +38,7 @@ describe('Properties API', () => {
       bathrooms: 3,
     };
 
-    const postReq = createMockRequest(payload, 'http://localhost/api/properties', 'POST');
+    const postReq = createMockRequest(payload, 'http://localhost/api/properties', 'POST', { 'x-user-id': String(adminPersonId) });
     const postRes = await POST(postReq);
     const postJson = await postRes.json();
     

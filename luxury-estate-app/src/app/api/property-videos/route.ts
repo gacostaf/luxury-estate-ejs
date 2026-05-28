@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { propertyVideoSchema } from '@/lib/validation';
 import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-helpers';
+import { toPropertyVideoDTO } from '@/lib/dtos';
+import { requireAuth, requirePermission } from '@/lib/auth/middleware';
+import { Permissions } from '@/lib/rbac';
 
 /**
  * @swagger
@@ -18,11 +21,14 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
  *   post:
  *     tags: [PropertyVideos]
  *     summary: Link a video to a property
+ *     security: [{ BearerAuth: [] }]
  *     requestBody:
  *       required: true
  *       content: { application/json: { schema: { $ref: '#/components/schemas/PropertyVideoInput' } } }
  *     responses:
  *       201: { description: Relation created }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
  */
 export async function GET(req: NextRequest) {
   try {
@@ -34,11 +40,11 @@ export async function GET(req: NextRequest) {
       where,
       include: { property: { select: { name: true } }, video: true },
     });
-    return successResponse(relations);
+    return successResponse(relations.map(toPropertyVideoDTO));
   } catch (error) { return handlePrismaError(error); }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = requirePermission(Permissions.VIDEO_CREATE)(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const data = propertyVideoSchema.parse(body);
@@ -54,9 +60,9 @@ export async function POST(req: NextRequest) {
       data,
       include: { video: true },
     });
-    return successResponse(relation, 201);
+    return successResponse(toPropertyVideoDTO(relation), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);
     return handlePrismaError(error);
   }
-}
+});

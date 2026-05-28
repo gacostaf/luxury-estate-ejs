@@ -1,18 +1,21 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { GET as listOffices, POST as createOffice } from '@/app/api/offices/route';
-import { GET as getOffice, PUT as updateOffice, DELETE as deleteOffice } from '@/app/api/offices/[id]/route';
+import { GET as getOffice, PATCH as updateOffice, DELETE as deleteOffice } from '@/app/api/offices/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, createTestOffice } from '../utils/test-helpers';
+import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestOffice } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
 }
 
 describe('Offices API', () => {
+  let adminPersonId: number;
+
   beforeEach(async () => {
     await clearTestDatabase();
     await seedLookupTables();
+    adminPersonId = await seedAdminUser();
   });
 
   describe('GET /api/offices', () => {
@@ -36,7 +39,7 @@ describe('Offices API', () => {
   describe('POST /api/offices', () => {
     it('should create a new office', async () => {
       const payload = { phone: '555-0000' };
-      const req = createMockRequest(payload, 'http://localhost/api/offices', 'POST');
+      const req = createMockRequest(payload, 'http://localhost/api/offices', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createOffice(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -59,13 +62,14 @@ describe('Offices API', () => {
     });
   });
 
-  describe('PUT /api/offices/[id]', () => {
+  describe('PATCH /api/offices/[id]', () => {
     it('should update an office', async () => {
       const office = await createTestOffice();
       const req = createMockRequest(
         { phone: '555-9999' },
         'http://localhost/api/offices/1',
-        'PUT'
+        'PATCH',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateOffice(req, params(String(office.id)));
       const json = await res.json();
@@ -77,7 +81,8 @@ describe('Offices API', () => {
       const req = createMockRequest(
         { phone: '555-0000' },
         'http://localhost/api/offices/99999',
-        'PUT'
+        'PATCH',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateOffice(req, params('99999'));
       expect(res.status).toBe(404);
@@ -87,7 +92,7 @@ describe('Offices API', () => {
   describe('DELETE /api/offices/[id]', () => {
     it('should delete an office', async () => {
       const office = await createTestOffice();
-      const res = await deleteOffice(createMockRequest(), params(String(office.id)));
+      const res = await deleteOffice(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(office.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.office.findUnique({ where: { id: office.id } });
@@ -95,7 +100,7 @@ describe('Offices API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteOffice(createMockRequest(), params('99999'));
+      const res = await deleteOffice(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
       expect(res.status).toBe(404);
     });
   });

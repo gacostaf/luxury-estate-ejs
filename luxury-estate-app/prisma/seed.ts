@@ -8,7 +8,6 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Starting database seed...\n');
 
-    // ================= 1. LOOKUP TABLES =================
     console.log('📋 Seeding lookup tables...');
 
     const personTypes = await Promise.all(
@@ -17,6 +16,13 @@ async function main() {
         )
     );
     const [clientType, agentType, externalAgentType] = personTypes;
+
+    const associateTypes = await Promise.all(
+        ['AGENT', 'BROKER', 'REALTOR', 'VP', 'MANAGER', 'ADMIN'].map(name =>
+            prisma.associateType.upsert({ where: { name }, update: {}, create: { name, description: `${name} role` } })
+        )
+    );
+    const [assocAgentType] = associateTypes;
 
     const propertyTypes = await Promise.all(
         ['house', 'condo', 'villa', 'townhouse', 'penthouse', 'land'].map(name =>
@@ -67,7 +73,12 @@ async function main() {
         });
     }
 
-    // ================= 2. GEOGRAPHIC DATA (for Address table normalization) =================
+    const contactMethods = await Promise.all(
+        ['EMAIL', 'PHONE', 'SMS', 'WHATSAPP', 'TELEGRAM', 'PORTAL'].map(method =>
+            prisma.contactMethod.upsert({ where: { method }, update: {}, create: { method } })
+        )
+    );
+
     console.log('🌍 Seeding geographic data...');
 
     const usa = await prisma.country.upsert({
@@ -82,7 +93,7 @@ async function main() {
         }
     });
 
-    const mexico = await prisma.country.upsert({
+    await prisma.country.upsert({
         where: { codenum: '484' },
         update: {},
         create: {
@@ -100,13 +111,12 @@ async function main() {
         create: { countryId: usa.id, stateCode: 'CA', territory: 'California' }
     });
 
-    const flState = await prisma.state.upsert({
+    await prisma.state.upsert({
         where: { uq_country_state: { countryId: usa.id, stateCode: 'FL' } },
         update: {},
         create: { countryId: usa.id, stateCode: 'FL', territory: 'Florida' }
     });
 
-    // ================= 3. ADDRESSES (Schema.org Compatible) =================
     console.log('📍 Seeding addresses...');
 
     const officeAddress = await prisma.address.create({
@@ -146,23 +156,23 @@ async function main() {
         }
     });
 
-    // ================= 4. PEOPLE & EMPLOYEES =================
-    console.log('👥 Seeding people...');
+    console.log('👥 Seeding people & associates...');
 
     const internalAgent = await prisma.person.create({
         data: {
-            name: 'Sarah Johnson',
+            firstName: 'Sarah',
+            lastName: 'Johnson',
             phone: '+1-555-0198',
             email: 'sarah.j@luxuryrealty.com',
-            description: 'Award-winning luxury property specialist, 10+ years experience',
             personType: { connect: { id: agentType.id } },
             isLead: false,
             isClient: false,
-            isEmployee: true,
+            isAssociate: true,
             isDisqualified: false,
             address: { connect: { id: officeAddress.id } },
-            employee: {
+            associate: {
                 create: {
+                    associateType: { connect: { id: assocAgentType.id } },
                     department: 'Luxury Sales',
                     fbHandle: 'https://facebook.com/sarahjrealty',
                     igHandle: 'https://instagram.com/sarahjrealty',
@@ -174,33 +184,32 @@ async function main() {
 
     const externalAgent = await prisma.person.create({
         data: {
-            name: 'Michael Torres',
+            firstName: 'Michael',
+            lastName: 'Torres',
             phone: '+1-555-0287',
             email: 'mtorres@partnerrealty.com',
-            description: 'Co-broker from Partner Realty - Los Angeles office',
             personType: { connect: { id: externalAgentType.id } },
             isLead: false,
             isClient: false,
-            isEmployee: false,
+            isAssociate: false,
             isDisqualified: false
         }
     });
 
     const client = await prisma.person.create({
         data: {
-            name: 'Marcus Chen',
+            firstName: 'Marcus',
+            lastName: 'Chen',
             phone: '+1-555-0345',
             email: 'marcus.chen@email.com',
-            description: 'High-net-worth client seeking oceanfront properties',
             personType: { connect: { id: clientType.id } },
             isLead: true,
             isClient: true,
-            isEmployee: false,
+            isAssociate: false,
             isDisqualified: false
         }
     });
 
-    // ================= 5. MEDIA =================
     console.log('🖼️  Seeding media...');
 
     const propImg1 = await prisma.image.create({
@@ -245,7 +254,7 @@ async function main() {
         }
     });
 
-    await prisma.employee.update({
+    await prisma.associate.update({
         where: { personId: internalAgent.id },
         data: {
             photo: { connect: { id: empPhoto.id } },
@@ -253,7 +262,6 @@ async function main() {
         }
     });
 
-    // ================= 6. OFFICES (Simplified - only phone + address FK) =================
     console.log('🏢 Seeding offices...');
 
     const mainOffice = await prisma.office.create({
@@ -263,12 +271,11 @@ async function main() {
         }
     });
 
-    await prisma.employee.update({
+    await prisma.associate.update({
         where: { personId: internalAgent.id },
         data: { office: { connect: { id: mainOffice.id } } }
     });
 
-    // ================= 7. PROPERTIES (with Schema.org denormalized fields) =================
     console.log('🏠 Seeding properties...');
 
     const property1 = await prisma.property.create({
@@ -283,7 +290,6 @@ async function main() {
             bathrooms: 3,
             areaSqft: 3200.50,
 
-            // Schema.org compatible denormalized fields
             streetAddress: '1234 Ocean Blvd',
             addressLocality: 'Malibu',
             addressRegion: 'CA',
@@ -299,7 +305,6 @@ async function main() {
             mlsId: 'ML90265A',
             latitude: 34.035000,
             longitude: -118.678000,
-            energyRating: 8,
             agent: { connect: { id: internalAgent.id } },
             address: { connect: { id: propertyAddress1.id } },
             bannerImage: { connect: { id: propImg1.id } },
@@ -328,7 +333,6 @@ async function main() {
             bathrooms: 3,
             areaSqft: 2400.00,
 
-            // Schema.org compatible denormalized fields
             streetAddress: '5678 Collins Ave, Penthouse A',
             addressLocality: 'Miami',
             addressRegion: 'FL',
@@ -344,7 +348,6 @@ async function main() {
             mlsId: 'A11234567',
             latitude: 25.815000,
             longitude: -80.125000,
-            energyRating: 9,
             agent: { connect: { id: internalAgent.id } },
             address: { connect: { id: propertyAddress2.id } }
         }
@@ -362,7 +365,6 @@ async function main() {
             bathrooms: 4,
             areaSqft: 4500.00,
 
-            // Schema.org compatible denormalized fields
             streetAddress: 'Camino del Mar 789',
             addressLocality: 'Cabo San Lucas',
             addressRegion: 'BCN',
@@ -378,27 +380,26 @@ async function main() {
             mlsId: 'CABO-2024-001',
             latitude: 22.890000,
             longitude: -109.912000,
-            energyRating: 7,
             agent: { connect: { id: externalAgent.id } }
         }
     });
 
-    // ================= 8. VERIFICATION =================
     console.log('\n✅ Seed completed! Verification:\n');
 
     const stats = await Promise.all([
         prisma.property.count(),
         prisma.person.count(),
+        prisma.associate.count(),
         prisma.address.count(),
         prisma.office.count()
     ]);
 
     console.log(`  🏠 Properties: ${stats[0]}`);
     console.log(`  👥 People: ${stats[1]}`);
-    console.log(`  📍 Addresses: ${stats[2]}`);
-    console.log(`  🏢 Offices: ${stats[3]}`);
+    console.log(`  🔗 Associates: ${stats[2]}`);
+    console.log(`  📍 Addresses: ${stats[3]}`);
+    console.log(`  🏢 Offices: ${stats[4]}`);
 
-    // Sample Schema.org output
     const sampleProperty = await prisma.property.findFirst({
         include: { address: true }
     });

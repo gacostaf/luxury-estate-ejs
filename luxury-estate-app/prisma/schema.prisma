@@ -1,6 +1,6 @@
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")  // ✅ This works again in Prisma 6
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -10,76 +10,87 @@ generator client {
 // ================= LOOKUP TABLES =================
 
 model PersonType {
-  id      Int      @id @default(autoincrement()) @map("id")
-  name    String   @unique @map("name")
+  id      Int      @id @default(autoincrement()) @map("ID")
+  name    String   @unique @map("NAME")
   persons Person[]
+
   @@map("PERSON_TYPES")
 }
 
 model PropertyType {
-  id         Int        @id @default(autoincrement()) @map("id")
-  name       String     @unique @map("name")
+  id         Int        @id @default(autoincrement()) @map("ID")
+  name       String     @unique @map("NAME")
   properties Property[]
+
   @@map("PROPERTY_TYPES")
 }
 
 model PropertyStatus {
-  id         Int        @id @default(autoincrement()) @map("id")
-  name       String     @unique @map("name")
+  id         Int        @id @default(autoincrement()) @map("ID")
+  name       String     @unique @map("NAME")
   properties Property[]
-  @@map("PROPERTY_STATUS")
+
+  @@map("PROPERTY_STATUSES")
 }
 
 model DisqualificationStatus {
-  id      Int      @id @default(autoincrement()) @map("id")
-  name    String   @unique @db.VarChar(50) @map("NAME")
+  id      Int                      @id @default(autoincrement()) @map("ID")
+  name    String                   @unique @map("NAME") @db.VarChar(50)
   reasons DisqualificationReason[]
-  persons Person[] @relation("PersonDQStatus")
+  persons Person[]                 @relation("PersonDQStatus")
+
   @@map("DISQUALIFICATION_STATUSES")
 }
 
 model DisqualificationReason {
   id          Int                    @id @default(autoincrement()) @map("ID")
   statusId    Int                    @map("ID_DISQUALIFYING_STATUS")
-  reason      String                 @unique @db.VarChar(100) @map("REASON")
-  description String?                @db.Text @map("DESCRIPTION")
+  reason      String                 @unique @map("REASON") @db.VarChar(100)
+  description String?                @map("DESCRIPTION") @db.Text
   status      DisqualificationStatus @relation(fields: [statusId], references: [id])
   persons     Person[]               @relation("PersonDQReason")
+
   @@index([statusId, reason], name: "idx_dq_status_reason")
   @@map("DISQUALIFICATION_REASONS")
 }
 
 model Country {
-  id        Int       @id @default(autoincrement()) @map("id")
-  name      String    @unique @map("Name")
-  code002   String    @unique @db.Char(2) @map("CODE002")
-  code003   String    @unique @db.Char(3) @map("CODE003")
-  codenum   String    @unique @db.Char(3) @map("CODENUM")
+  id        Int       @id @default(autoincrement()) @map("ID")
+  name      String    @unique @map("NAME")
+  code002   String    @unique @map("CODE002") @db.Char(2)
+  code003   String    @unique @map("CODE003") @db.Char(3)
+  codenum   String    @unique @map("CODENUM") @db.Char(3)
   tld       String    @unique @map("TLD")
   states    State[]
   cities    City[]
+  addresses Address[]
+
   @@map("COUNTRIES")
 }
 
 model State {
-  id           Int        @id @default(autoincrement()) @map("id")
-  countryId    Int        @map("country_id")
-  stateCode    String     @db.VarChar(10) @map("STATE_CODE")
-  territory    String     @db.VarChar(30) @map("TERRITORY")
-  country      Country    @relation(fields: [countryId], references: [id])
-  cities       City[]
+  id        Int       @id @default(autoincrement()) @map("ID")
+  countryId Int       @map("COUNTRY_ID")
+  stateCode String    @map("STATE_CODE") @db.VarChar(10)
+  territory String    @map("TERRITORY") @db.VarChar(30)
+  country   Country   @relation(fields: [countryId], references: [id])
+  cities    City[]
+  addresses Address[]
+
   @@unique([countryId, stateCode], name: "uq_country_state")
   @@index([countryId], name: "idx_state_country")
   @@map("STATES")
 }
 
 model City {
-  id           Int        @id @default(autoincrement()) @map("id")
-  countryId    Int        @map("country_id")
-  stateId      Int        @map("state_id")
-  cityName     String     @db.VarChar(200) @map("city_name")
-  country      Country    @relation(fields: [countryId], references: [id])
-  state        State      @relation(fields: [stateId], references: [id])
+  id        Int       @id @default(autoincrement()) @map("ID")
+  countryId Int       @map("COUNTRY_ID")
+  stateId   Int       @map("STATE_ID")
+  cityName  String    @map("CITY_NAME") @db.VarChar(200)
+  country   Country   @relation(fields: [countryId], references: [id])
+  state     State     @relation(fields: [stateId], references: [id])
+  addresses Address[]
+
   @@index([countryId, stateId], name: "idx_city_country_state")
   @@map("CITIES")
 }
@@ -87,24 +98,32 @@ model City {
 // ================= ADDRESS TABLE (Schema.org Compatible) =================
 
 model Address {
-  id               Int           @id @default(autoincrement()) @map("id")
-  recipient        String?       @db.VarChar(255) @map("recipient")
-  organization     String?       @db.VarChar(255) @map("organization")
-  streetAddress    String        @db.VarChar(500) @map("streetAddress")
-  addressLocality  String        @db.VarChar(200) @map("addressLocality")
-  addressRegion    String        @db.VarChar(100) @map("addressRegion")
-  postalCode       String        @db.VarChar(20) @map("postalCode")
-  addressCountry   String        @db.Char(2) @map("addressCountry")
-  latitude         Decimal?      @db.Decimal(9,6) @map("latitude")
-  longitude        Decimal?      @db.Decimal(9,6) @map("longitude")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
+  id               Int      @unique @id @default(autoincrement()) @map("ID")
+  recipient        String?  @map("RECIPIENT") @db.VarChar(255)
+  organization     String?  @map("ORGANIZATION") @db.VarChar(255)
+  addressStreet    String   @map("ADDRESS_STREET") @db.VarChar(500)
+  addressCityId    Int      @map("ADDRESS_CITY_ID")
+  addressRegionId  Int      @map("ADDRESS_REGION_ID")
+  postalCode       String   @map("POSTAL_CODE") @db.VarChar(20)
+  addressCountryId Int      @map("ADDRESS_COUNTRY_ID")
+  latitude         Decimal? @map("LATITUDE") @db.Decimal(9, 6)
+  longitude        Decimal? @map("LONGITUDE") @db.Decimal(9, 6)
+  createdAt        DateTime @default(now()) @map("CREATED_AT")
+  updatedAt        DateTime @updatedAt @map("UPDATED_AT")
 
-  properties       Property[]    @relation("PropertyAddress")
-  offices          Office[]      @relation("OfficeAddress")
-  persons          Person[]      @relation("PersonAddress")
+  city    City    @relation(fields: [addressCityId], references: [id])
+  region  State   @relation(fields: [addressRegionId], references: [id])
+  country Country @relation(fields: [addressCountryId], references: [id])
 
-  @@index([addressCountry, addressRegion, addressLocality], name: "idx_address_location")
+  properties Property[] @relation("PropertyAddress")
+  offices    Office[]   @relation("OfficeAddress")
+
+  agency Agency? @relation("AgencyAddress")
+  agencies Agency[] @relation("AgencyAddresses")  
+
+  persons    Person[]   @relation("PersonAddress")
+
+  @@index([addressCountryId, addressRegionId, addressCityId], name: "idx_address_location")
   @@index([postalCode], name: "idx_address_zip")
   @@index([latitude, longitude], name: "idx_address_coords")
   @@index([recipient, organization], name: "idx_address_entities")
@@ -114,73 +133,293 @@ model Address {
 // ================= CORE ENTITIES =================
 
 model Person {
-  id                       Int                      @id @default(autoincrement()) @map("ID")
-  personTypeId             Int                      @map("PERSON_TYPE")
-  name                     String                   @map("Name")
-  phone                    String?                  @map("Phone")
-  email                    String?                  @db.VarChar(254) @unique @map("email")
-  description              String?                  @db.Text @map("Description")
-  isLead                   Boolean                  @default(false) @map("IS_LEAD")
-  isClient                 Boolean                  @default(false) @map("IS_CLIENT")
-  isEmployee               Boolean                  @default(false) @map("IS_EMPLOYEE")
-  isDisqualified           Boolean                  @default(false) @map("IS_DISQUALIFIED")
-  disqualificationStatusId Int?                     @map("DISQUALIFICATION_STATUS_ID")
-  disqualificationReasonId Int?                     @map("DISQUALIFICATION_REASON_ID")
-  addressId                Int?                     @map("address_id")
+  id                       Int     @id @default(autoincrement()) @map("ID")
+  personTypeId             Int     @map("PERSON_TYPE")
+  firstName                String? @map("FIRST_NAME")
+  lastName                 String? @map("LAST_NAME")
+  phone                    String? @map("PHONE")
+  email                    String? @unique @map("EMAIL") @db.VarChar(254)
+  notes                    String? @map("NOTES") @db.Text
+  isLead                   Boolean @default(false) @map("IS_LEAD")
+  isClient                 Boolean @default(false) @map("IS_CLIENT")
+  isDisqualified           Boolean @default(false) @map("IS_DISQUALIFIED")
+  isAssociate              Boolean @default(false) @map("IS_ASSOCIATE")
+  disqualificationStatusId Int?    @map("DISQUALIFICATION_STATUS_ID")
+  disqualificationReasonId Int?    @map("DISQUALIFICATION_REASON_ID")
+  addressId                Int?    @map("ADDRESS_ID")
 
-  personType               PersonType               @relation(fields: [personTypeId], references: [id])
-  disqualificationStatus   DisqualificationStatus?  @relation("PersonDQStatus", fields: [disqualificationStatusId], references: [id])
-  disqualificationReason   DisqualificationReason?  @relation("PersonDQReason", fields: [disqualificationReasonId], references: [id])
-  address                  Address?                 @relation("PersonAddress", fields: [addressId], references: [id], onDelete: SetNull)
-  employee                 Employee?
-  agentProperties          Property[]               @relation("AgentProperties")
+  personType             PersonType              @relation(fields: [personTypeId], references: [id])
+  disqualificationStatus DisqualificationStatus? @relation("PersonDQStatus", fields: [disqualificationStatusId], references: [id])
+  disqualificationReason DisqualificationReason? @relation("PersonDQReason", fields: [disqualificationReasonId], references: [id])
+  address                Address?                @relation("PersonAddress", fields: [addressId], references: [id], onDelete: SetNull)
+  associate              Associate?
+  authAccount            AuthAccount?
 
-  @@index([isEmployee, isDisqualified], name: "idx_agent_status")
+  images Image[] @relation("PersonImages")
+
+  personRoles            PersonRole[]
+  personPermissions      PersonPermission[]
+
+  managedAgencyEntities  Agency[] @relation("AgencyManagerRelation")
+  createdAgencyEntities  Agency[] @relation("AgencyCreatedByRelation")
+  updatedAgencyEntities  Agency[] @relation("AgencyUpdatedByRelation")
+
+  managedOfficeEntities  Office[] @relation("OfficeManagerRelation")
+  createdOfficeEntities  Office[] @relation("OfficeCreatedByRelation")
+  updatedOfficeEntities  Office[] @relation("OfficeUpdatedByRelation")
+
+  createdImageEntities  Image[] @relation("ImageCreatedByRelation")
+  updatedImageEntities  Image[] @relation("ImageUpdatedByRelation")
+
+  createdVideoEntities  Video[] @relation("VideoCreatedByRelation")
+  updatedVideoEntities  Video[] @relation("VideoUpdatedByRelation")
+
+  agentPropertyEntities    Property[] @relation("PropertyAgentRelation")
+  createdPropertyEntities  Property[] @relation("PropertyCreatedByRelation")
+  updatedPropertyEntities  Property[] @relation("PropertyUpdatedByRelation")
+
+  authorBlogPostEntities   BlogPost[] @relation("BlogPostAuthorRelation")
+  createdBlogPostEntities  BlogPost[] @relation("BlogPostCreatedByRelation")
+  updatedBlogPostEntities  BlogPost[] @relation("BlogPostUpdatedByRelation")
+
+  createdContactRequestEntities  ContactRequest[] @relation("ContactRequestCreatedByRelation")
+  updatedContactRequestEntities  ContactRequest[] @relation("ContactRequestUpdatedByRelation")
+
   @@index([personTypeId, isLead], name: "idx_person_type_lead")
-  @@map("PERSON")
+  @@map("PERSONS")
 }
 
-model Employee {
-  id             Int       @id @default(autoincrement()) @map("id")
-  personId       Int       @unique @map("PERSON_ID")
-  officeId       Int?      @map("OFFICE_ID")
-  department     String?   @map("DEPARTMENT")
-  photoId        Int?      @unique @map("photo_id")
-  videoId        Int?      @unique @map("video_id")
-  fbHandle       String?   @db.VarChar(2048) @map("FB_HANDLE")
-  igHandle       String?   @db.VarChar(2048) @map("IG_HANDLE")
-  linkedinHandle String?   @db.VarChar(2048) @map("LINKEDIN_HANDLE")
+model AuthAccount {
+  id                  Int       @id @default(autoincrement()) @map("ID")
+  personId            Int       @unique @map("PERSON_ID")
+  email               String    @unique @map("EMAIL") @db.VarChar(254)
+  passwordHash        String?   @map("PASSWORD_HASH") @db.VarChar(255)
+  emailVerified       Boolean   @default(false) @map("EMAIL_VERIFIED")
+  failedLoginAttempts Int       @default(0) @map("FAILED_LOGIN_ATTEMPTS")
+  lockedUntil         DateTime? @map("LOCKED_UNTIL")
+  lastLoginAt         DateTime? @map("LAST_LOGIN_AT")
+  passwordChangedAt   DateTime? @map("PASSWORD_CHANGED_AT")
+  isActive            Boolean   @default(true) @map("IS_ACTIVE")
+  person              Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  createdAt           DateTime  @default(now()) @map("CREATED_AT")
+  updatedAt           DateTime  @updatedAt @map("UPDATED_AT")
 
-  person         Person    @relation(fields: [personId], references: [id])
-  office         Office?   @relation(fields: [officeId], references: [id])
+  @@index([email], name: "idx_auth_email")
+  @@map("AUTH_ACCOUNTS")
+}
 
-  photo          Image?    @relation("EmployeePhoto", fields: [photoId], references: [id], onDelete: Restrict)
-  video          Video?    @relation("EmployeeVideo", fields: [videoId], references: [id], onDelete: Restrict)
+model Agency {
+  id            Int     @id @default(autoincrement()) @map("ID")
+  name          String  @unique @map("NAME")
+  slug          String  @unique @map("SLUG")
+  description   String? @map("DESCRIPTION") @db.Text
+  logoImageId   Int?    @map("LOGO_IMAGE_ID")
+  bannerImageId Int?    @map("BANNER_IMAGE_ID")
+  phone         String? @map("PHONE")
+  email         String? @map("EMAIL") @db.VarChar(254)
+  websiteUrl    String? @map("WEBSITE_URL") @db.VarChar(2048)
+  facebookUrl   String? @map("FACEBOOK_URL") @db.VarChar(2048)
+  instagramUrl  String? @map("INSTAGRAM_URL") @db.VarChar(2048)
+  linkedinUrl   String? @map("LINKEDIN_URL") @db.VarChar(2048)
 
-  @@index([officeId, department], name: "idx_employee_office_dept")
-  @@map("EMPLOYEE")
+  addressId Int?   @unique @map("ADDRESS_ID")
+  address Address? @relation("AgencyAddress", fields: [addressId], references: [id])
+  
+  isFeatured Boolean  @default(false) @map("IS_FEATURED")
+  isVerified Boolean  @default(false) @map("IS_VERIFIED")
+  createdAt  DateTime @default(now()) @map("CREATED_AT")
+  updatedAt  DateTime @updatedAt @map("UPDATED_AT")
+
+  logoImage   Image? @relation("AgencyLogo", fields: [logoImageId], references: [id])
+  bannerImage Image? @relation("AgencyBanner", fields: [bannerImageId], references: [id])
+
+  managerAssociateId Int?   @map("MANAGER_ASSOCIATE_ID")
+  createdByPersonId  Int?   @map("CREATED_BY_PERSON_ID")
+  updatedByPersonId  Int?   @map("UPDATED_BY_PERSON_ID")
+  
+  managerPerson Person? @relation("AgencyManagerRelation", fields: [managerAssociateId], references: [id])
+
+  createdPerson Person? @relation("AgencyCreatedByRelation", fields: [createdByPersonId], references: [id])
+
+  updatedPerson Person? @relation("AgencyUpdatedByRelation", fields: [updatedByPersonId], references: [id])
+
+  associates Associate[]
+  addresses Address[] @relation("AgencyAddresses")
+
+  properties Property[] @relation("AgencyProperties")
+
+  @@index([isFeatured], name: "idx_agency_featured")
+  @@index([isVerified], name: "idx_agency_verified")
+  @@index([name], name: "idx_agency_name")
+  @@index([slug], name: "idx_agency_slug")
+  @@map("AGENCIES")
+}
+
+model Associate {
+  id               Int            @id @default(autoincrement()) @map("ID")
+  associateTypeId  Int            @map("ASSOCIATE_TYPE_ID")
+  associateType    AssociateType  @relation(fields: [associateTypeId], references: [id])
+  personId         Int            @unique @map("PERSON_ID")
+  person           Person         @relation(fields: [personId], references: [id])
+  personRoleId     Int?           @map("PERSON_ROLE_ID")
+  personRole       PersonRole?    @relation(fields: [personRoleId], references: [id])
+  agencyId         Int?           @map("AGENCY_ID")
+  agency           Agency?        @relation(fields: [agencyId], references: [id])
+  officeId         Int?           @map("OFFICE_ID")
+  office           Office?        @relation(fields: [officeId], references: [id])
+  department       String?        @map("DEPARTMENT")
+  licenseNumber    String?        @map("LICENSE_NUMBER")
+  startDate        DateTime?      @map("START_DATE")
+  endDate          DateTime?      @map("END_DATE")
+  supervisorId     Int?           @map("SUPERVISOR_ID")
+  supervisor       Associate?     @relation("AssociateSupervisor", fields: [supervisorId], references: [id])
+  subordinates     Associate[]    @relation("AssociateSupervisor")
+  commissionPlanId Int?           @map("COMMISION_PLAN_ID")
+  bio              String?        @map("BIO") @db.Text
+  isPublicProfile  Boolean        @default(true) @map("IS_PUBLIC_PROFILE")
+  contactMethodId  Int?           @map("CONTACT_METHOD_ID")
+  contactMethod    ContactMethod? @relation(fields: [contactMethodId], references: [id])
+  photoId          Int?           @unique @map("PHOTO_ID")
+  videoId          Int?           @unique @map("VIDEO_ID")
+  fbHandle         String?        @map("FB_HANDLE") @db.VarChar(2048)
+  igHandle         String?        @map("IG_HANDLE") @db.VarChar(2048)
+  linkedinHandle   String?        @map("LINKEDIN_HANDLE") @db.VarChar(2048)
+  photo            Image?         @relation("AssociatePhoto", fields: [photoId], references: [id], onDelete: Restrict)
+  video            Video?         @relation("AssociateVideo", fields: [videoId], references: [id], onDelete: Restrict)
+
+  assignedRequests ContactRequest[] @relation("AssignedAssociate")
+
+  @@index([officeId, department], name: "idx_associate_office_dept")
+  @@map("ASSOCIATES")
+}
+
+model Role {
+  id          Int       @id @default(autoincrement()) @map("ID")
+  name        String    @unique @map("NAME")
+  code        String    @unique @map("CODE")
+  description String?   @map("DESCRIPTION") @db.Text
+  isEnabled   Boolean   @default(true) @map("IS_ENABLED")
+  isSystem    Boolean   @default(false) @map("IS_SYSTEM")
+  createdAt   DateTime  @default(now()) @map("CREATED_AT")
+  updatedAt   DateTime  @updatedAt @map("UPDATED_AT")
+  disabledAt  DateTime? @map("DISABLED_AT")
+
+  rolePermissions RolePermission[]
+  personRoles     PersonRole[]
+
+  @@map("ROLES")
+}
+
+model Permission {
+  id                Int                @id @default(autoincrement()) @map("ID")
+  name              String             @unique @map("NAME")
+  code              String             @unique @map("CODE")
+  description       String?            @map("DESCRIPTION") @db.Text
+  isEnabled         Boolean            @default(true) @map("IS_ENABLED")
+  isSystem          Boolean            @default(false) @map("IS_SYSTEM")
+  createdAt         DateTime           @default(now()) @map("CREATED_AT")
+  updatedAt         DateTime           @updatedAt @map("UPDATED_AT")
+  disabledAt        DateTime?          @map("DISABLED_AT")
+  rolePermissions   RolePermission[]
+  personPermissions PersonPermission[]
+
+  @@map("PERMISSIONS")
+}
+
+model RolePermission {
+  id           Int @id @default(autoincrement()) @map("ID")
+  roleId       Int @map("ROLE_ID")
+  permissionId Int @map("PERMISSION_ID")
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("ROLE_PERMISSIONS")
+}
+
+model PersonRole {
+  id       Int @id @default(autoincrement()) @map("ID")
+  personId Int @map("PERSON_ID")
+  roleId   Int @map("ROLE_ID")
+
+  person Person @relation(fields: [personId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  associates Associate[]
+
+  @@unique([personId, roleId])
+  @@map("PERSON_ROLES")
+}
+
+model PersonPermission {
+  id           Int @id @default(autoincrement()) @map("ID")
+  personId     Int @map("PERSON_ID")
+  permissionId Int @map("PERMISSION_ID")
+
+  person     Person     @relation(fields: [personId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([personId, permissionId])
+  @@map("PERSON_PERMISSIONS")
+}
+
+model AssociateType {
+  id          Int         @id @default(autoincrement()) @map("ID")
+  name        String      @unique @map("NAME")
+  description String?     @map("DESCRIPTION") @db.Text
+  associates  Associate[]
+
+  @@map("ASSOCIATE_TYPES")
 }
 
 model Office {
-  id         Int        @id @default(autoincrement()) @map("OFFICE_ID")
-  phone      String?    @map("Phone")
-  addressId  Int?       @map("address_id")
+  id                 Int         @id @default(autoincrement()) @map("ID")
+  phone              String?     @map("PHONE")
+  addressId          Int?        @map("ADDRESS_ID")
+  address            Address?    @relation("OfficeAddress", fields: [addressId], references: [id], onDelete: SetNull)
+  associates         Associate[]
+  managerAssociateId Int?        @map("MANAGER_ASSOCIATE_ID")
+  createdByPersonId  Int?        @map("CREATED_BY_PERSON_ID")
+  updatedByPersonId  Int?        @map("UPDATED_BY_PERSON_ID")
 
-  address    Address?   @relation("OfficeAddress", fields: [addressId], references: [id], onDelete: SetNull)
-  employees  Employee[]
+  managerPerson Person? @relation("OfficeManagerRelation", fields: [managerAssociateId], references: [id])
 
-  @@map("OFFICE")
+  createdPerson Person? @relation("OfficeCreatedByRelation", fields: [createdByPersonId], references: [id])
+
+  updatedPerson Person? @relation("OfficeUpdatedByRelation", fields: [updatedByPersonId], references: [id])
+
+  createdAt          DateTime    @default(now()) @map("CREATED_AT")
+  updatedAt          DateTime    @default(now()) @map("UPDATED_AT")
+
+  @@map("OFFICES")
 }
 
 // ================= MEDIA TABLES =================
 
 model Image {
-  id               Int             @id @default(autoincrement()) @map("ID")
-  uri              String          @db.VarChar(2048) @map("URI")
-  isPersonal       Boolean         @default(false) @map("IS_PERSONAL")
-  propertyImages   PropertyImage[]
-  bannerProperties Property[]      @relation("BannerImage")
-  employeePhoto    Employee?       @relation("EmployeePhoto")
+  id                 Int             @id @default(autoincrement()) @map("ID")
+  uri                String          @map("URI") @db.VarChar(2048)
+  isPersonal         Boolean         @default(false) @map("IS_PERSONAL")
+  propertyImages     PropertyImage[]
+  bannerProperties   Property[]      @relation("BannerImage")
+  associatePhoto     Associate?      @relation("AssociatePhoto")
+  agencyLogos        Agency[]        @relation("AgencyLogo")
+  agencyBanners      Agency[]        @relation("AgencyBanner")
+  blogFeaturedImages BlogPost[]      @relation("BlogFeaturedImage")
+
+  createdByPersonId Int?     @map("CREATED_BY_PERSON_ID") 
+  updatedByPersonId Int?     @map("UPDATED_BY_PERSON_ID")
+
+  createdPerson Person? @relation("ImageCreatedByRelation", fields: [createdByPersonId], references: [id])
+
+  updatedPerson Person? @relation("ImageUpdatedByRelation", fields: [updatedByPersonId], references: [id])
+
+  createdAt         DateTime @default(now()) @map("CREATED_AT")
+  updatedAt         DateTime @default(now()) @map("UPDATED_AT")
+
+  persons Person[] @relation("PersonImages")
+
   @@map("IMAGES")
 }
 
@@ -191,17 +430,29 @@ model PropertyImage {
   isBanner   Boolean  @default(false) @map("IS_BANNER")
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
   image      Image    @relation(fields: [imageId], references: [id], onDelete: Restrict)
+
   @@unique([propertyId, imageId], name: "uq_prop_img")
   @@index([propertyId, isBanner], name: "idx_prop_img_banner")
   @@map("PROPERTY_IMAGES")
 }
 
 model Video {
-  id               Int             @id @default(autoincrement()) @map("ID")
-  uri              String          @db.VarChar(2048) @map("URI")
-  isPersonal       Boolean         @default(false) @map("IS_PERSONAL")
-  propertyVideos   PropertyVideo[]
-  employeeVideo    Employee?       @relation("EmployeeVideo")
+  id             Int             @id @default(autoincrement()) @map("ID")
+  uri            String          @map("URI") @db.VarChar(2048)
+  isPersonal     Boolean         @default(false) @map("IS_PERSONAL")
+  propertyVideos PropertyVideo[]
+  associateVideo Associate?      @relation("AssociateVideo")
+
+  createdByPersonId Int?     @map("CREATED_BY_PERSON_ID") 
+  updatedByPersonId Int?     @map("UPDATED_BY_PERSON_ID")
+
+  createdPerson Person? @relation("VideoCreatedByRelation", fields: [createdByPersonId], references: [id])
+
+  updatedPerson Person? @relation("VideoUpdatedByRelation", fields: [updatedByPersonId], references: [id])
+
+  createdAt         DateTime @default(now()) @map("CREATED_AT")
+  updatedAt         DateTime @default(now()) @map("UPDATED_AT")
+
   @@map("VIDEOS")
 }
 
@@ -211,6 +462,7 @@ model PropertyVideo {
   videoId    Int      @map("VIDEO_ID")
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
   video      Video    @relation(fields: [videoId], references: [id], onDelete: Restrict)
+
   @@unique([propertyId, videoId], name: "uq_prop_vid")
   @@index([propertyId], name: "idx_prop_vid_prop")
   @@map("PROPERTY_VIDEOS")
@@ -219,47 +471,64 @@ model PropertyVideo {
 // ================= MAIN TABLE: PROPERTIES =================
 
 model Property {
-  id               Int              @id @default(autoincrement()) @map("id")
-  name             String           @map("name")
-  description      String           @db.Text @map("description")
-  summary          String?          @map("summary")
-  bannerImageId    Int?             @map("banner_image_id")
-  seoUrl           String?          @unique @db.VarChar(255) @map("seo_url")
-  publishDate      DateTime?        @map("publish_date")
-  price            Decimal?         @db.Decimal(12, 2) @map("price")
-  bedrooms         Int?             @map("bedrooms")
-  bathrooms        Int?             @map("bathrooms")
-  areaSqft         Decimal?         @db.Decimal(8, 2) @map("area_sqft")
+  id                Int       @id @default(autoincrement()) @map("ID")
+  name              String    @map("NAME")
+  description       String    @map("DESCRIPTION") @db.Text
+  summary           String?   @map("SUMMARY")
+  bannerImageId     Int?      @map("BANNER_IMAGE_ID")
+  seoUrl            String?   @unique @map("SEO_URL") @db.VarChar(255)
+  publishDate       DateTime? @map("PUBLISH_DATE")
+  price             Decimal?  @map("PRICE") @db.Decimal(12, 2)
+  bedrooms          Int?      @map("BEDROOMS")
+  bathrooms         Int?      @map("BATHROOMS")
+  areaSqft          Decimal?  @map("AREA_SQFT") @db.Decimal(8, 2)
+  streetAddress     String?   @map("STREET_ADDRESS") @db.VarChar(500)
+  addressLocality   String?   @map("ADDRESS_LOCALITY") @db.VarChar(200)
+  addressRegion     String?   @map("ADDRESS_REGION") @db.VarChar(100)
+  postalCode        String?   @map("POSTAL_CODE") @db.VarChar(20)
+  addressCountry    String?   @map("ADDRESS_COUNTRY") @db.Char(2)
+  garageSpaces      Int?      @map("GARAGE_SPACES")
+  builtYear         Int?      @map("BUILT_YEAR")
+  propertyTypeId    Int       @map("PROPERTY_TYPE_ID")
+  propertyStatusId  Int       @map("PROPERTY_STATUS_ID")
+  lotSize           Decimal?  @map("LOT_SIZE") @db.Decimal(10, 2)
+  hoaFees           Decimal?  @map("HOA_FEES") @db.Decimal(8, 2)
+  mlsId             String?   @map("MLS_ID")
+  latitude          Decimal?  @map("LATITUDE") @db.Decimal(9, 6)
+  longitude         Decimal?  @map("LONGITUDE") @db.Decimal(9, 6)
+  isFeatured        Boolean   @default(false) @map("IS_FEATURED")
+  isPublished       Boolean   @default(false) @map("IS_PUBLISHED")
+  virtualTourUrl    String?   @map("VIRTUAL_TOUR_URL") @db.VarChar(2048)
+  videoTourUrl      String?   @map("VIDEO_TOUR_URL") @db.VarChar(2048)
+  metaTitle         String?   @map("META_TITLE") @db.VarChar(255)
+  metaDescription   String?   @map("META_DESCRIPTION") @db.Text
+  agencyId          Int?      @map("AGENCY_ID")
+  addressId         Int?      @map("ADDRESS_ID")
   
-  // Schema.org compatible denormalized address fields
-  streetAddress    String?          @db.VarChar(500) @map("streetAddress")
-  addressLocality  String?          @db.VarChar(200) @map("addressLocality")
-  addressRegion    String?          @db.VarChar(100) @map("addressRegion")
-  postalCode       String?          @db.VarChar(20) @map("postalCode")
-  addressCountry   String?          @db.Char(2) @map("addressCountry")
-  
-  garageSpaces     Int?             @map("garage_spaces")
-  builtYear        Int?             @map("built_year")
-  propertyTypeId   Int              @map("property_type")
-  propertyStatusId Int              @map("property_status")
-  lotSize          Decimal?         @db.Decimal(10, 2) @map("lot_size")
-  hoaFees          Decimal?         @db.Decimal(8, 2) @map("hoa_fees")
-  mlsId            String?          @map("mls_id")
-  latitude         Decimal?         @db.Decimal(9, 6) @map("latitude")
-  longitude        Decimal?         @db.Decimal(9, 6) @map("longitude")
-  energyRating     Int?             @map("energy_rating")
-  agentId          Int?             @map("agent_id")
-  addressId        Int?             @map("address_id")
+  agentId           Int?      @map("AGENT_ID")
+  createdByPersonId Int?      @map("CREATED_BY_PERSON_ID") 
+  updatedByPersonId Int?      @map("UPDATED_BY_PERSON_ID")
 
-  propertyType   PropertyType   @relation(fields: [propertyTypeId], references: [id])
-  propertyStatus PropertyStatus @relation(fields: [propertyStatusId], references: [id])
-  agent          Person?        @relation("AgentProperties", fields: [agentId], references: [id])
-  bannerImage    Image?         @relation("BannerImage", fields: [bannerImageId], references: [id], onDelete: Restrict)
-  address        Address?       @relation("PropertyAddress", fields: [addressId], references: [id], onDelete: SetNull)
+  agent Person? @relation("PropertyAgentRelation", fields: [agentId], references: [id])
+
+  createdPerson Person? @relation("PropertyCreatedByRelation", fields: [createdByPersonId], references: [id])
+
+  updatedPerson Person? @relation("PropertyUpdatedByRelation", fields: [updatedByPersonId], references: [id])
+
+  createdAt DateTime @default(now()) @map("CREATED_AT")
+  updatedAt DateTime @default(now()) @map("UPDATED_AT")
+
+  propertyType   PropertyType    @relation(fields: [propertyTypeId], references: [id])
+  propertyStatus PropertyStatus  @relation(fields: [propertyStatusId], references: [id])
+
+  agency         Agency?         @relation("AgencyProperties", fields: [agencyId], references: [id])
+
+  bannerImage    Image?          @relation("BannerImage", fields: [bannerImageId], references: [id], onDelete: Restrict)
+  address        Address?        @relation("PropertyAddress", fields: [addressId], references: [id], onDelete: SetNull)
+
   propertyImages PropertyImage[]
   propertyVideos PropertyVideo[]
 
-  // Indexes for query performance
   @@index([price], name: "idx_price")
   @@index([bedrooms, bathrooms], name: "idx_room_counts")
   @@index([mlsId], name: "idx_mls_id")
@@ -268,6 +537,114 @@ model Property {
   @@index([propertyStatusId, price, publishDate], name: "idx_active_listings")
   @@index([addressLocality, addressRegion, addressCountry], name: "idx_location_schema_org")
   @@index([postalCode], name: "idx_postal_code")
+  @@map("PROPERTIES")
+}
 
-  @@map("Properties")
+model BlogPost {
+  id                Int      @id @default(autoincrement()) @map("ID")
+  title             String   @map("TITLE")
+  slug              String   @unique @map("SLUG")
+  excerpt           String?  @map("EXCERPT") @db.Text
+  content           String   @map("CONTENT") @db.Text
+  published         Boolean  @default(false) @map("PUBLISHED")
+  
+  featuredImageId   Int?     @map("FEATURED_IMAGE_ID")
+  featuredImage Image? @relation("BlogFeaturedImage", fields: [featuredImageId], references: [id])
+
+  createdAt         DateTime @default(now()) @map("CREATED_AT")
+  updatedAt         DateTime @updatedAt @map("UPDATED_AT")
+
+  authorPersonId    Int?      @map("AUTHOR_PERSON_ID")
+  createdByPersonId Int?     @map("CREATED_BY_PERSON_ID")
+  updatedByPersonId Int?     @map("UPDATED_BY_PERSON_ID")
+
+  authorPerson Person? @relation("BlogPostAuthorRelation", fields: [authorPersonId], references: [id])
+
+  createdPerson Person? @relation("BlogPostCreatedByRelation", fields: [createdByPersonId], references: [id])
+
+  updatedPerson Person? @relation("BlogPostUpdatedByRelation", fields: [updatedByPersonId], references: [id])
+
+  @@index([published, createdAt], name: "idx_blog_published_date")
+  @@map("BLOG_POSTS")
+}
+
+model ContactMethod {
+  /**
+   * EMAIL
+   * PHONE
+   * SMS
+   * WHATSAPP
+   */
+  id         Int         @id @default(autoincrement()) @map("ID")
+  method     String      @unique @map("METHOD")
+  associates Associate[]
+
+  @@map("CONTACT_METHODS")
+}
+
+// 2. The ContactRequest Model
+// Add here all data not crossreferencing other TABLES
+
+model ContactRequest {
+  id          Int     @id @default(autoincrement()) @map("ID")
+  firstName   String  @map("FIRST_NAME") @db.VarChar(100)
+  lastName    String  @map("LAST_NAME") @db.VarChar(100)
+  email       String  @map("EMAIL") @db.VarChar(255)
+  phone       String? @map("PHONE_NUMBER") @db.VarChar(50)
+  companyName String? @map("COMPANY_NAME") @db.VarChar(150)
+  jobTitle    String? @map("JOB_TITLE") @db.VarChar(100)
+
+  // Context & Content
+  type          RequestType @default(GENERAL) @map("TYPE")
+  subject       String?     @map("SUBJECT") @db.VarChar(255)
+  message       String      @map("MESSAGE") @db.Text
+  contactMethod String?     @map("CONTACT_METHOD") @db.VarChar(50)
+
+  // Marketing Attribution (UTMs)
+  utmSource      String? @map("UTM_SOURCE") @db.VarChar(100)
+  utmMedium      String? @map("UTM_MEDIUM") @db.VarChar(100)
+  utmCampaign    String? @map("UTM_CAMPAIGN") @db.VarChar(100)
+  referrerUrl    String? @map("REFERRER_URL") @db.Text
+  landingPageUrl String? @map("LANDING_PAGE_URL") @db.Text
+
+  // CRM Workflow & Compliance
+  status           RequestStatus @default(NEW) @map("STATUS")
+  marketingConsent Boolean       @default(false) @map("MARKETING_CONSENT")
+  ipAddress        String?       @map("IP_ADDRESS") @db.VarChar(45) // Supports IPv6 lengths
+
+  // Relations (Internal Team Assignment)
+  assignedAssociateId Int?       @map("ASSIGNED_ASSOCIATE_ID")
+  assignedTo          Associate? @relation("AssignedAssociate", fields: [assignedAssociateId], references: [id], onDelete: SetNull)
+
+  // Timestamps
+  createdAt         DateTime  @default(now()) @map("CREATED_AT")
+  updatedAt         DateTime  @updatedAt @map("UPDATED_AT")
+  resolvedAt        DateTime? @map("RESOLVED_AT")
+  
+  createdByPersonId Int?      @map("CREATED_BY_PERSON_ID") 
+  updatedByPersonId Int?      @map("UPDATED_BY_PERSON_ID")
+  
+  createdPerson Person? @relation("ContactRequestCreatedByRelation", fields: [createdByPersonId], references: [id])
+
+  updatedPerson Person? @relation("ContactRequestUpdatedByRelation", fields: [updatedByPersonId], references: [id])
+  
+  // Indexes for faster lookups in the CRM dashboard
+  @@index([email])
+  @@index([status])
+  @@index([assignedAssociateId])
+  @@map("CONTACT_REQUESTS")
+}
+
+enum RequestType {
+  GENERAL
+  SALES
+  SUPPORT
+  PARTNERSHIP
+}
+
+enum RequestStatus {
+  NEW
+  OPEN
+  HOLD
+  CLOSED
 }

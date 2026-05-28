@@ -3,16 +3,19 @@ import { GET as listAddresses, POST as createAddress } from '@/app/api/addresses
 import { GET as getAddress, PUT as updateAddress, DELETE as deleteAddress } from '@/app/api/addresses/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, createTestAddress } from '../utils/test-helpers';
+import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestAddress } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
 }
 
 describe('Addresses API', () => {
+  let adminPersonId: number;
+
   beforeEach(async () => {
     await clearTestDatabase();
     await seedLookupTables();
+    adminPersonId = await seedAdminUser();
   });
 
   describe('GET /api/addresses', () => {
@@ -42,7 +45,7 @@ describe('Addresses API', () => {
         postalCode: '33101',
         addressCountry: 'US',
       };
-      const req = createMockRequest(payload, 'http://localhost/api/addresses', 'POST');
+      const req = createMockRequest(payload, 'http://localhost/api/addresses', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createAddress(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -50,7 +53,7 @@ describe('Addresses API', () => {
     });
 
     it('should return 400 for missing required fields', async () => {
-      const req = createMockRequest({}, 'http://localhost/api/addresses', 'POST');
+      const req = createMockRequest({}, 'http://localhost/api/addresses', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createAddress(req);
       expect(res.status).toBe(400);
     });
@@ -77,7 +80,8 @@ describe('Addresses API', () => {
       const req = createMockRequest(
         { streetAddress: '789 Pine St', addressLocality: 'Orlando', addressRegion: 'FL', postalCode: '32801', addressCountry: 'US' },
         'http://localhost/api/addresses/1',
-        'PUT'
+        'PUT',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateAddress(req, params(String(addr.id)));
       const json = await res.json();
@@ -89,7 +93,8 @@ describe('Addresses API', () => {
       const req = createMockRequest(
         { streetAddress: 'X', addressLocality: 'Y', addressRegion: 'Z', postalCode: '00000', addressCountry: 'US' },
         'http://localhost/api/addresses/99999',
-        'PUT'
+        'PUT',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateAddress(req, params('99999'));
       expect(res.status).toBe(404);
@@ -99,7 +104,7 @@ describe('Addresses API', () => {
   describe('DELETE /api/addresses/[id]', () => {
     it('should delete an address', async () => {
       const addr = await createTestAddress();
-      const res = await deleteAddress(createMockRequest(), params(String(addr.id)));
+      const res = await deleteAddress(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(addr.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.address.findUnique({ where: { id: addr.id } });
@@ -107,7 +112,7 @@ describe('Addresses API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteAddress(createMockRequest(), params('99999'));
+      const res = await deleteAddress(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
       expect(res.status).toBe(404);
     });
   });

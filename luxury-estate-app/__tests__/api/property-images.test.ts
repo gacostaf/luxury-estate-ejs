@@ -3,16 +3,19 @@ import { GET as listRelations, POST as createRelation } from '@/app/api/property
 import { GET as getRelation, PUT as updateRelation, DELETE as deleteRelation } from '@/app/api/property-images/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, createTestProperty, createTestImage } from '../utils/test-helpers';
+import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestProperty, createTestImage } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
 }
 
 describe('Property-Images API', () => {
+  let adminPersonId: number;
+
   beforeEach(async () => {
     await clearTestDatabase();
     await seedLookupTables();
+    adminPersonId = await seedAdminUser();
   });
 
   describe('GET /api/property-images', () => {
@@ -43,7 +46,7 @@ describe('Property-Images API', () => {
       const prop = await createTestProperty();
       const img = await createTestImage();
       const payload = { propertyId: prop.id, imageId: img.id, isBanner: false };
-      const req = createMockRequest(payload, 'http://localhost/api/property-images', 'POST');
+      const req = createMockRequest(payload, 'http://localhost/api/property-images', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createRelation(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -54,7 +57,7 @@ describe('Property-Images API', () => {
     it('should return 404 when property does not exist', async () => {
       const img = await createTestImage();
       const payload = { propertyId: 99999, imageId: img.id, isBanner: false };
-      const req = createMockRequest(payload, 'http://localhost/api/property-images', 'POST');
+      const req = createMockRequest(payload, 'http://localhost/api/property-images', 'POST', { 'x-user-id': String(adminPersonId) });
       const res = await createRelation(req);
       expect(res.status).toBe(404);
     });
@@ -86,7 +89,8 @@ describe('Property-Images API', () => {
       const req = createMockRequest(
         { propertyId: prop.id, imageId: img2.id, isBanner: true },
         'http://localhost/api/property-images/1',
-        'PUT'
+        'PUT',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateRelation(req, params(String(rel.id)));
       const json = await res.json();
@@ -100,7 +104,8 @@ describe('Property-Images API', () => {
       const req = createMockRequest(
         { propertyId: prop.id, imageId: img.id, isBanner: false },
         'http://localhost/api/property-images/99999',
-        'PUT'
+        'PUT',
+        { 'x-user-id': String(adminPersonId) }
       );
       const res = await updateRelation(req, params('99999'));
       expect(res.status).toBe(404);
@@ -112,7 +117,7 @@ describe('Property-Images API', () => {
       const prop = await createTestProperty();
       const img = await createTestImage();
       const rel = await prisma.propertyImage.create({ data: { propertyId: prop.id, imageId: img.id } });
-      const res = await deleteRelation(createMockRequest(), params(String(rel.id)));
+      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(rel.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.propertyImage.findUnique({ where: { id: rel.id } });
@@ -120,7 +125,7 @@ describe('Property-Images API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteRelation(createMockRequest(), params('99999'));
+      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
       expect(res.status).toBe(404);
     });
   });
