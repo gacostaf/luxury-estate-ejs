@@ -112,7 +112,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <Ruler className="h-5 w-5 text-[#C6A15B]" />
 
             <span className="text-sm font-medium">
-              {property.areaSqFt || 0} sqft
+              {(property.areaSqFt || 0).toLocaleString()} ft<sup>2</sup>
             </span>
           </div>
         </div>

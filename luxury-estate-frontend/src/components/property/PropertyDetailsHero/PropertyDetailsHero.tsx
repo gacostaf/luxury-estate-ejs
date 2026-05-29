@@ -155,11 +155,11 @@ export function PropertyDetailsHero({
 
                         <div>
                           <p className="text-2xl font-bold">
-                            {property.areaSqFt || 0}
+                            {(property.areaSqFt || 0).toLocaleString()}
                           </p>
 
                           <p className="text-xs uppercase tracking-wide text-slate-300">
-                            Sq Ft
+                            Ft<sup>2</sup>
                           </p>
                         </div>
                       </div>

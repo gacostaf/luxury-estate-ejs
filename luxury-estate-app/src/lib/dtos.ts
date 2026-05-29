@@ -80,23 +80,27 @@ export interface PropertyVideoDTO {
 export interface PropertyDTO {
   id: number;
   name: string;
+  title: string;
   description: string;
   summary: string | null;
   bannerImageId: number | null;
   bannerImage?: ImageDTO;
   featuredImage: string | null;
   seoUrl: string | null;
+  slug: string | null;
   publishDate: string | null;
   price: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
   areaSqft: number | null;
+  areaSqFt: number | null;
   streetAddress: string | null;
   addressLocality: string | null;
   addressRegion: string | null;
   postalCode: string | null;
   addressCountry: string | null;
   garageSpaces: number | null;
+  garages: number | null;
   builtYear: number | null;
   propertyTypeId: number;
   propertyType?: PropertyTypeDTO;
@@ -425,23 +429,27 @@ export function toPropertyDTO(p: any): PropertyDTO {
   return {
     id: p.id,
     name: p.name,
+    title: p.name,
     description: p.description,
     summary: p.summary ?? null,
     bannerImageId: p.bannerImageId ?? null,
     bannerImage: p.bannerImage ? toImageDTO(p.bannerImage) : undefined,
     featuredImage: p.bannerImage?.uri ?? null,
     seoUrl: p.seoUrl ?? null,
+    slug: p.seoUrl ?? null,
     publishDate: toIsoString(p.publishDate),
     price: toDecimal(p.price),
     bedrooms: p.bedrooms ?? null,
     bathrooms: p.bathrooms ?? null,
     areaSqft: toDecimal(p.areaSqft),
+    areaSqFt: toDecimal(p.areaSqft),
     streetAddress: p.streetAddress ?? null,
     addressLocality: p.addressLocality ?? null,
     addressRegion: p.addressRegion ?? null,
     postalCode: p.postalCode ?? null,
     addressCountry: p.addressCountry ?? null,
     garageSpaces: p.garageSpaces ?? null,
+    garages: p.garageSpaces ?? null,
     builtYear: p.builtYear ?? null,
     propertyTypeId: p.propertyTypeId,
     propertyType: p.propertyType ? toPropertyTypeDTO(p.propertyType) : undefined,

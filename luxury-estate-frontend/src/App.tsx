@@ -4,6 +4,8 @@ import { HomePage } from '@/pages/Home/Homepage'
 
 import { ListingsPage } from '@/pages/Listings/ListingsPage'
 
+import { PropertyDetailsPage } from '@/pages/PropertyDetails/PropertyDetailsPage'
+
 import { QueryProvider } from '@/providers/QueryProvider'
 
 function App() {
@@ -22,6 +24,11 @@ function App() {
           <Route
             path="/listings"
             element={<ListingsPage />}
+          />
+
+          <Route
+            path="/properties/:slug"
+            element={<PropertyDetailsPage />}
           />
 
         </Routes>
