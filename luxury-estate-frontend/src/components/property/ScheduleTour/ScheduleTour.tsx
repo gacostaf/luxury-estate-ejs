@@ -1,166 +1,200 @@
 import { useState } from 'react'
-import toast from 'react-hot-toast'
-import { Calendar, Send } from 'lucide-react'
+
+import {
+  CalendarDays,
+  Clock,
+  Video,
+  Home,
+} from 'lucide-react'
+
+import { Button } from '@/components/common/Button/Button'
+import { Input } from '@/components/common/Input/Input'
 import { api } from '@/api/axios'
-import { useAuthStore } from '@/store/auth.store'
-import type { TourType } from './TourTypeSelector'
-import { TourTypeSelector } from './TourTypeSelector'
-import { TourDatePicker } from './TourDatePicker'
-import { TourSuccessModal } from './TourSuccessModal'
 
 interface ScheduleTourProps {
   propertyId: number
-  propertyTitle?: string
+  associateId?: number
 }
 
-export function ScheduleTour({ propertyId, propertyTitle }: ScheduleTourProps) {
-  const user = useAuthStore((s) => s.user)
-  const [tourType, setTourType] = useState<TourType>('in_person')
-  const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
-  const [firstName, setFirstName] = useState(user?.firstName ?? '')
-  const [lastName, setLastName] = useState(user?.lastName ?? '')
-  const [email, setEmail] = useState(user?.email ?? '')
-  const [phone, setPhone] = useState('')
-  const [message, setMessage] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
+export function ScheduleTour({
+  propertyId,
+  associateId,
+}: ScheduleTourProps) {
+  const [loading, setLoading] =
+    useState(false)
 
-  const canSubmit = firstName.trim() && lastName.trim() && email.trim() && date && time && !submitting
+  const [success, setSuccess] =
+    useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [form] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    preferredDate: '',
+    preferredTime: '',
+    tourType: 'IN_PERSON',
+    notes: '',
+  })
+
+  async function handleSubmit(
+    e: React.FormEvent,
+  ) {
     e.preventDefault()
-    if (!canSubmit) return
 
-    setSubmitting(true)
     try {
-      await api.post('/contact-requests', {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
-        phone: phone.trim() || undefined,
-        type: 'SALES',
-        subject: propertyTitle
-          ? `Tour request: ${propertyTitle}`
-          : `Tour request for property #${propertyId}`,
-        message: [
-          `Tour type: ${tourType}`,
-          `Preferred date: ${date}`,
-          `Preferred time: ${time}`,
-          message.trim() && `Notes: ${message.trim()}`,
-        ]
-          .filter(Boolean)
-          .join('\n'),
-        contactMethod: 'EMAIL',
+      setLoading(true)
+
+      await api.post('/tours', {
+        ...form,
+        propertyId,
+        associateId,
       })
-      setShowSuccess(true)
-      setDate('')
-      setTime('')
-      setPhone('')
-      setMessage('')
-    } catch {
-      toast.error('Failed to schedule tour. Please try again.')
+
+      setSuccess(true)
     } finally {
-      setSubmitting(false)
+      setLoading(false)
     }
   }
 
-  const handleCloseModal = () => {
-    setShowSuccess(false)
-    setTourType('in_person')
-  }
-
   return (
-    <>
-      <form onSubmit={handleSubmit} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C6A15B]/10">
-            <Calendar size={20} className="text-[#C6A15B]" />
+    <section className="bg-slate-50 py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div className="grid grid-cols-1 gap-16 xl:grid-cols-[1.2fr_0.8fr]">
+
+          <div className="rounded-[32px] bg-white p-10 shadow-xl">
+
+            <span className="inline-flex rounded-full bg-[#C6A15B]/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#C6A15B]">
+              Private Showing
+            </span>
+
+            <h2 className="mt-6 text-5xl font-bold text-slate-900">
+              Schedule a Tour
+            </h2>
+
+            <p className="mt-6 text-lg leading-8 text-slate-600">
+              Reserve a private viewing and experience this luxury property firsthand.
+            </p>
+
+            {success && (
+              <div className="mt-8 rounded-2xl bg-emerald-50 p-6">
+                Tour request submitted successfully.
+              </div>
+            )}
+
+            <form
+              onSubmit={handleSubmit}
+              className="mt-12 space-y-6"
+            >
+              <div className="grid grid-cols-2 gap-6">
+                <Input
+                  label="First Name"
+                  value={form.firstName}
+                />
+
+                <Input
+                  label="Last Name"
+                  value={form.lastName}
+                />
+              </div>
+
+              <Input
+                label="Email"
+                type="email"
+                value={form.email}
+              />
+
+              <Input
+                label="Phone"
+                value={form.phone}
+              />
+
+              <div className="grid grid-cols-2 gap-6">
+                <Input
+                  label="Preferred Date"
+                  type="date"
+                />
+
+                <Input
+                  label="Preferred Time"
+                  type="time"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <button
+                  type="button"
+                  className="rounded-2xl border p-5"
+                >
+                  <Home className="mb-3 h-6 w-6" />
+                  In Person
+                </button>
+
+                <button
+                  type="button"
+                  className="rounded-2xl border p-5"
+                >
+                  <Video className="mb-3 h-6 w-6" />
+                  Virtual Tour
+                </button>
+              </div>
+
+              <textarea
+                rows={5}
+                placeholder="Additional notes..."
+                className="w-full rounded-3xl border p-5"
+              />
+
+              <Button
+                type="submit"
+                size="lg"
+                fullWidth
+                disabled={loading}
+              >
+                Request Tour
+              </Button>
+            </form>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-[#C6A15B]">Schedule a Tour</h3>
-            <p className="text-xs text-gray-400">Pick your preferred experience</p>
+
+          <div className="space-y-8">
+
+            <div className="rounded-[32px] bg-slate-900 p-10 text-white">
+              <h3 className="text-3xl font-bold">
+                Luxury Viewing Experience
+              </h3>
+
+              <p className="mt-6 leading-8 text-slate-300">
+                Receive personalized guidance from a luxury real estate professional.
+              </p>
+            </div>
+
+            <div className="rounded-[32px] bg-white p-10 shadow-lg">
+              <div className="space-y-6">
+
+                <div className="flex gap-4">
+                  <CalendarDays />
+                  Flexible scheduling
+                </div>
+
+                <div className="flex gap-4">
+                  <Clock />
+                  Fast confirmations
+                </div>
+
+                <div className="flex gap-4">
+                  <Video />
+                  Virtual tour options
+                </div>
+
+              </div>
+            </div>
+
           </div>
+
         </div>
 
-        <div className="space-y-5">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-700">Tour Type</label>
-            <TourTypeSelector value={tourType} onChange={setTourType} />
-          </div>
-
-          <TourDatePicker date={date} time={time} onDateChange={setDate} onTimeChange={setTime} />
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="st-first" className="mb-1 block text-xs font-medium text-gray-700">First Name *</label>
-              <input
-                id="st-first"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B]/30"
-              />
-            </div>
-            <div>
-              <label htmlFor="st-last" className="mb-1 block text-xs font-medium text-gray-700">Last Name *</label>
-              <input
-                id="st-last"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B]/30"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="st-email" className="mb-1 block text-xs font-medium text-gray-700">Email *</label>
-            <input
-              id="st-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B]/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="st-phone" className="mb-1 block text-xs font-medium text-gray-700">Phone</label>
-            <input
-              id="st-phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 (555) 000-0000"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B]/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="st-notes" className="mb-1 block text-xs font-medium text-gray-700">Notes</label>
-            <textarea
-              id="st-notes"
-              rows={3}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Any specific questions or preferences?"
-              className="w-full resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition-colors focus:border-[#C6A15B] focus:ring-1 focus:ring-[#C6A15B]/30"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={!canSubmit}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C6A15B] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#b8913f] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Send size={16} />
-            {submitting ? 'Scheduling…' : 'Request Tour'}
-          </button>
-        </div>
-      </form>
-
-      <TourSuccessModal open={showSuccess} onClose={handleCloseModal} />
-    </>
+      </div>
+    </section>
   )
 }

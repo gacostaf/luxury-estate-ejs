@@ -5,9 +5,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 
-import {
-  PropertyDescriptionSectionDTO,
-} from '@/types/property-description'
+import type { PropertyDescriptionSectionDTO } from '@/types/property-description'
 
 interface PropertyDescriptionSectionProps {
   property: PropertyDescriptionSectionDTO

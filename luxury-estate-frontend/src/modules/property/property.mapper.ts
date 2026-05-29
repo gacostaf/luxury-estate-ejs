@@ -1,8 +1,49 @@
+interface PropertyImageItem {
+  id: number; isFeatured?: boolean; type?: string | null;
+  image?: { url?: string | null; thumbnailUrl?: string | null; alt?: string | null } | null;
+}
+
+interface PropertyApiRecord {
+  id: number; slug?: string | null; title?: string | null;
+  description?: string | null; shortDescription?: string | null;
+  price?: number; bedrooms?: number; bathrooms?: number;
+  garages?: number; areaSqFt?: number; yearBuilt?: number;
+  isFeatured?: boolean; latitude?: number; longitude?: number;
+  propertyStatus?: { name?: string | null } | null;
+  propertyType?: { name?: string | null } | null;
+  address?: {
+    streetAddress?: string | null; addressLocality?: string | null;
+    addressRegion?: string | null; postalCode?: string | null;
+  } | null;
+  images?: PropertyImageItem[] | null;
+  agent?: {
+    firstName?: string | null; lastName?: string | null;
+    avatarImage?: { url?: string | null } | null;
+  } | null;
+  agency?: {
+    name?: string | null; logoImage?: { url?: string | null } | null;
+  } | null;
+  features?: { id: number; name?: string | null; category?: string | null; value?: string | null }[] | null;
+  amenities?: { name?: string | null }[] | null;
+  energyRating?: { id?: number; name?: string | null; value?: string | null } | null;
+  highlights?: { id: number; label?: string | null; value?: string | null }[] | null;
+  reviews?: {
+    id: number; isPublished?: boolean; rating?: number;
+    title?: string | null; comment?: string | null;
+    isVerified?: boolean; createdAt?: string | null;
+    person?: {
+      firstName?: string | null; lastName?: string | null;
+      avatarImage?: { url?: string | null } | null;
+    } | null;
+    moderationStatus?: { name?: string | null } | null;
+  }[] | null;
+}
+
 export function mapPropertyImagesToGalleryDTO(
-  property: any,
+  property: PropertyApiRecord,
 ) {
   return (
-    property.images?.map((item: any) => ({
+    property.images?.map((item: PropertyImageItem) => ({
       id: item.id,
 
       url: item.image?.url,
@@ -22,7 +63,7 @@ export function mapPropertyImagesToGalleryDTO(
 }
 
 export function mapPropertyToDetailsHeroDTO(
-  property: any,
+  property: PropertyApiRecord,
 ) {
   return {
     id: property.id,
@@ -76,7 +117,7 @@ export function mapPropertyToDetailsHeroDTO(
       : undefined,
 
     gallery:
-      property.images?.map((item: any) => ({
+      property.images?.map((item: PropertyImageItem) => ({
         id: item.id,
         url: item.image?.url,
       })) || [],
@@ -106,11 +147,11 @@ export function mapPropertyToDetailsHeroDTO(
 }
 
 export function mapPropertyFeaturesDTO(
-  property: any,
+  property: PropertyApiRecord,
 ) {
   return {
     features:
-      property.features?.map((feature: any) => ({
+      property.features?.map((feature) => ({
         id: feature.id,
 
         name: feature.name,
@@ -122,7 +163,7 @@ export function mapPropertyFeaturesDTO(
 
     amenities:
       property.amenities?.map(
-        (amenity: any) => amenity.name,
+        (amenity) => amenity.name,
       ) || [],
 
     energyRating: property.energyRating
@@ -137,7 +178,7 @@ export function mapPropertyFeaturesDTO(
   }
 }
 export function mapPropertyDescriptionSectionDTO(
-  property: any,
+  property: PropertyApiRecord,
 ) {
   return {
     title: property.title,
@@ -150,7 +191,7 @@ export function mapPropertyDescriptionSectionDTO(
 
     highlights:
       property.highlights?.map(
-        (highlight: any) => ({
+        (highlight) => ({
           id: highlight.id,
 
           label: highlight.label,
@@ -195,7 +236,7 @@ export function mapPropertyDescriptionSectionDTO(
 }
 
 export function mapPropertyMapSectionDTO(
-  property: any,
+  property: PropertyApiRecord,
 ) {
   return {
     latitude: property.latitude,
@@ -235,12 +276,23 @@ export function mapPropertyMapSectionDTO(
   }
 }
 
+interface PropertyReviewItem {
+  id: number; isPublished?: boolean; rating?: number;
+  title?: string | null; comment?: string | null;
+  isVerified?: boolean; createdAt?: string | null;
+  person?: {
+    firstName?: string | null; lastName?: string | null;
+    avatarImage?: { url?: string | null } | null;
+  } | null;
+  moderationStatus?: { name?: string | null } | null;
+}
+
 export function mapPropertyReviewsSectionDTO(
-  property: any,
+  property: PropertyApiRecord,
 ) {
   const reviews =
     property.reviews?.filter(
-      (review: any) =>
+      (review: PropertyReviewItem) =>
         review.isPublished &&
         review.moderationStatus?.name ===
           'APPROVED',
@@ -249,8 +301,8 @@ export function mapPropertyReviewsSectionDTO(
   const averageRating =
     reviews.length > 0
       ? reviews.reduce(
-          (sum: number, review: any) =>
-            sum + review.rating,
+          (sum: number, review: PropertyReviewItem) =>
+            sum + (review.rating || 0),
           0,
         ) / reviews.length
       : 0
@@ -260,7 +312,7 @@ export function mapPropertyReviewsSectionDTO(
 
     totalReviews: reviews.length,
 
-    reviews: reviews.map((review: any) => ({
+    reviews: reviews.map((review: PropertyReviewItem) => ({
       id: review.id,
 
       reviewerName:

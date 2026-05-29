@@ -13,7 +13,7 @@ import {
 
 import { PropertyCard } from '@/components/property/PropertyCard/PropertyCard'
 
-import { PropertyCardDTO } from '@/types/property'
+import type { PropertyCardDTO } from '@/types/property'
 
 interface SimilarListingsCarouselProps {
   title?: string

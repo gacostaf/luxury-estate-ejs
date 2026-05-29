@@ -443,6 +443,141 @@ export async function GET() {
               secondaryAssociate: { $ref: '#/components/schemas/AssociateResponse' },
             },
           },
+          // --- Newsletter Input Schemas ---
+          NewsletterIssueInput: {
+            type: 'object',
+            required: ['title', 'slug'],
+            properties: {
+              title: { type: 'string', example: 'Q1 2026 Luxury Market Report' },
+              slug: { type: 'string', example: 'q1-2026-luxury-market-report' },
+              issueNumber: { type: 'integer', nullable: true, example: 1 },
+              summary: { type: 'string', nullable: true },
+              coverImageId: { type: 'integer', nullable: true },
+              publishedAt: { type: 'string', format: 'date-time', nullable: true },
+              isPublished: { type: 'boolean', default: false },
+              createdById: { type: 'integer', nullable: true },
+            },
+          },
+          NewsletterSubscriptionInput: {
+            type: 'object',
+            required: ['personId'],
+            properties: {
+              personId: { type: 'integer', example: 1 },
+              isSubscribed: { type: 'boolean', default: true },
+              source: { type: 'string', nullable: true, example: 'property-detail' },
+              categoryIds: { type: 'array', items: { type: 'integer' }, example: [1, 2] },
+            },
+          },
+          NewsletterCategoryInput: {
+            type: 'object',
+            required: ['name'],
+            properties: {
+              name: { type: 'string', example: 'Market Reports' },
+            },
+          },
+          // --- Newsletter Response Schemas ---
+          NewsletterIssueResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              title: { type: 'string' },
+              slug: { type: 'string' },
+              issueNumber: { type: 'integer', nullable: true },
+              summary: { type: 'string', nullable: true },
+              coverImageId: { type: 'integer', nullable: true },
+              publishedAt: { type: 'string', format: 'date-time', nullable: true },
+              isPublished: { type: 'boolean' },
+              createdById: { type: 'integer', nullable: true },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+              coverImage: { $ref: '#/components/schemas/ImageResponse' },
+              createdBy: { $ref: '#/components/schemas/PersonResponse' },
+              sections: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/NewsletterSectionResponse' },
+              },
+              contents: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/NewsletterContentResponse' },
+              },
+              campaigns: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/NewsletterCampaignResponse' },
+              },
+            },
+          },
+          NewsletterSectionResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              newsletterIssueId: { type: 'integer' },
+              title: { type: 'string' },
+              sortOrder: { type: 'integer' },
+              content: { type: 'string', nullable: true },
+            },
+          },
+          NewsletterContentResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              newsletterIssueId: { type: 'integer' },
+              newsletterContentTypeId: { type: 'integer' },
+              referenceId: { type: 'integer' },
+              sortOrder: { type: 'integer' },
+              newsletterContentType: { $ref: '#/components/schemas/NewsletterContentTypeResponse' },
+            },
+          },
+          NewsletterContentTypeResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              name: { type: 'string' },
+            },
+          },
+          NewsletterCampaignResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              newsletterIssueId: { type: 'integer' },
+              sentAt: { type: 'string', format: 'date-time', nullable: true },
+              recipientsCount: { type: 'integer' },
+              openCount: { type: 'integer' },
+              clickCount: { type: 'integer' },
+              createdAt: { type: 'string', format: 'date-time' },
+            },
+          },
+          NewsletterSubscriptionResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              personId: { type: 'integer' },
+              isSubscribed: { type: 'boolean' },
+              subscribedAt: { type: 'string', format: 'date-time' },
+              unsubscribedAt: { type: 'string', format: 'date-time', nullable: true },
+              source: { type: 'string', nullable: true },
+              person: { $ref: '#/components/schemas/PersonResponse' },
+              categories: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/NewsletterSubscriptionCategoryResponse' },
+              },
+            },
+          },
+          NewsletterCategoryResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              name: { type: 'string' },
+            },
+          },
+          NewsletterSubscriptionCategoryResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              newsletterSubscriptionId: { type: 'integer' },
+              newsletterCategoryId: { type: 'integer' },
+              newsletterCategory: { $ref: '#/components/schemas/NewsletterCategoryResponse' },
+            },
+          },
         },
       },
     },

@@ -7,7 +7,7 @@ import {
   Play,
 } from 'lucide-react'
 
-import { PropertyGalleryImageDTO } from '@/types/property-gallery'
+import type { PropertyGalleryImageDTO } from '@/types/property-gallery'
 
 interface PropertyImageGalleryProps {
   images: PropertyGalleryImageDTO[]
@@ -147,26 +147,6 @@ export function PropertyImageGallery({
           />
         </div>
       )}
-    </>
-  )
-}
-```
-
----
-
-# Example Usage
-
-## src/pages/Property/PropertyDetailsPage.tsx
-
-```tsx
-import { PropertyImageGallery } from '@/components/property/PropertyImageGallery/PropertyImageGallery'
-
-export function PropertyDetailsPage() {
-  return (
-    <>
-      <PropertyImageGallery
-        images={property.gallery}
-      />
     </>
   )
 }

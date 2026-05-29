@@ -1,6 +1,6 @@
 import { PropertyCard } from '@/components/property/PropertyCard/PropertyCard'
 
-import { PropertyCardDTO } from '@/types/property'
+import type { PropertyCardDTO } from '@/types/property'
 
 import { ListingsGridPagination } from './ListingsGridPagination'
 
@@ -9,11 +9,11 @@ import { EmptyListingsState } from './EmptyListingsState'
 interface ListingsGridProps {
   properties: PropertyCardDTO[]
 
-  totalPages: number
+  totalPages?: number
 
-  currentPage: number
+  currentPage?: number
 
-  onPageChange: (page: number) => void
+  onPageChange?: (page: number) => void
 }
 
 export function ListingsGrid({
@@ -37,13 +37,15 @@ export function ListingsGrid({
         ))}
       </div>
 
-      <div className="mt-16 flex justify-center">
-        <ListingsGridPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-        />
-      </div>
+      {totalPages !== undefined && currentPage !== undefined && onPageChange && (
+        <div className="mt-16 flex justify-center">
+          <ListingsGridPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        </div>
+      )}
     </div>
   )
 }

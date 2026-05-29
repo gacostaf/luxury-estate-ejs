@@ -8,7 +8,7 @@ import { PropertyCard } from '@/components/property/PropertyCard/PropertyCard'
 
 import { api } from '@/api/axios'
 
-import { PropertyCardDTO } from '@/types/property'
+import type { PropertyCardDTO } from '@/types/property'
 
 interface RelatedPropertiesSectionProps {
   propertyId: number

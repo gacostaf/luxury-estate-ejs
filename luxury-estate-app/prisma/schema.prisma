@@ -190,6 +190,9 @@ model Person {
 
   clientTours  TourRequest[] @relation("ClientTourRelation")
 
+  createdNewsletterIssues NewsletterIssue[] @relation("NewsletterIssueCreatedBy")
+  newsletterSubscription  NewsletterSubscription?
+
   @@index([personTypeId, isLead], name: "idx_person_type_lead")
   @@map("PERSONS")
 }
@@ -427,6 +430,8 @@ model Image {
   updatedAt         DateTime @default(now()) @map("UPDATED_AT")
 
   persons Person[] @relation("PersonImages")
+
+  newsletterIssueCovers NewsletterIssue[] @relation("NewsletterIssueCoverImage")
 
   @@map("IMAGES")
 }
@@ -709,6 +714,159 @@ model TourRequest {
   @@index([secondaryAssociateId])
   @@index([status])
   @@map("TOUR_REQUESTS")
+}
+
+// =====================================================
+// NEWSLETTERS
+// =====================================================
+
+model NewsletterIssue {
+  id            Int       @id @default(autoincrement()) @map("ID")
+  title         String    @map("TITLE") @db.VarChar(255)
+  slug          String    @unique @map("SLUG") @db.VarChar(255)
+  issueNumber   Int?      @map("ISSUE_NUMBER")
+  summary       String?   @map("SUMMARY") @db.Text
+
+  coverImageId  Int?      @map("COVER_IMAGE_ID")
+
+  publishedAt   DateTime? @map("PUBLISHED_AT")
+  isPublished   Boolean   @default(false) @map("IS_PUBLISHED")
+
+  createdById   Int?      @map("CREATED_BY_ID")
+
+  createdAt     DateTime  @default(now()) @map("CREATED_AT")
+  updatedAt     DateTime  @updatedAt @map("UPDATED_AT")
+
+  coverImage    Image?    @relation("NewsletterIssueCoverImage", fields: [coverImageId], references: [id])
+  createdBy     Person?   @relation("NewsletterIssueCreatedBy", fields: [createdById], references: [id])
+
+  sections      NewsletterSection[]
+  contents      NewsletterContent[]
+  campaigns     NewsletterCampaign[]
+
+  @@index([publishedAt], name: "idx_newsletter_published")
+  @@index([isPublished], name: "idx_newsletter_status")
+
+  @@map("NEWSLETTER_ISSUES")
+}
+
+model NewsletterSection {
+  id                 Int              @id @default(autoincrement()) @map("ID")
+  newsletterIssueId  Int              @map("NEWSLETTER_ISSUE_ID")
+
+  title              String           @map("TITLE") @db.VarChar(255)
+  sortOrder          Int              @default(0) @map("SORT_ORDER")
+
+  content            String?          @map("CONTENT") @db.Text
+
+  newsletterIssue    NewsletterIssue  @relation(fields: [newsletterIssueId], references: [id], onDelete: Cascade)
+
+  @@index([newsletterIssueId], name: "idx_newsletter_section_issue")
+
+  @@map("NEWSLETTER_SECTIONS")
+}
+
+model NewsletterContent {
+  id                      Int                       @id @default(autoincrement()) @map("ID")
+
+  newsletterIssueId       Int                       @map("NEWSLETTER_ISSUE_ID")
+
+  newsletterContentTypeId Int                       @map("NEWSLETTER_CONTENT_TYPE_ID")
+
+  referenceId             Int                       @map("REFERENCE_ID")
+
+  sortOrder               Int                       @default(0) @map("SORT_ORDER")
+
+  newsletterIssue         NewsletterIssue            @relation(fields: [newsletterIssueId], references: [id], onDelete: Cascade)
+
+  newsletterContentType   NewsletterContentType      @relation(fields: [newsletterContentTypeId], references: [id])
+
+  @@index([newsletterIssueId], name: "idx_newsletter_content_issue")
+  @@index([newsletterContentTypeId], name: "idx_newsletter_content_type")
+
+  @@map("NEWSLETTER_CONTENT")
+}
+
+model NewsletterContentType {
+  id                  Int                  @id @default(autoincrement()) @map("ID")
+  name                String               @unique @map("NAME") @db.VarChar(100)
+
+  newsletterContents  NewsletterContent[]
+
+  @@map("NEWSLETTER_CONTENT_TYPES")
+}
+
+model NewsletterCampaign {
+  id                 Int               @id @default(autoincrement()) @map("ID")
+
+  newsletterIssueId  Int               @map("NEWSLETTER_ISSUE_ID")
+
+  sentAt             DateTime?         @map("SENT_AT")
+
+  recipientsCount    Int               @default(0) @map("RECIPIENTS_COUNT")
+  openCount          Int               @default(0) @map("OPEN_COUNT")
+  clickCount         Int               @default(0) @map("CLICK_COUNT")
+
+  createdAt          DateTime          @default(now()) @map("CREATED_AT")
+
+  newsletterIssue    NewsletterIssue   @relation(fields: [newsletterIssueId], references: [id], onDelete: Cascade)
+
+  @@index([newsletterIssueId], name: "idx_newsletter_campaign_issue")
+
+  @@map("NEWSLETTER_CAMPAIGNS")
+}
+
+// =====================================================
+// NEWSLETTER SUBSCRIPTIONS
+// =====================================================
+
+model NewsletterSubscription {
+  id               Int       @id @default(autoincrement()) @map("ID")
+
+  personId         Int       @unique @map("PERSON_ID")
+
+  isSubscribed     Boolean   @default(true) @map("IS_SUBSCRIBED")
+
+  subscribedAt     DateTime  @default(now()) @map("SUBSCRIBED_AT")
+  unsubscribedAt   DateTime? @map("UNSUBSCRIBED_AT")
+
+  source           String?   @map("SOURCE") @db.VarChar(100)
+
+  person           Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  categories       NewsletterSubscriptionCategory[]
+
+  @@index([isSubscribed], name: "idx_newsletter_subscribed")
+
+  @@map("NEWSLETTER_SUBSCRIPTIONS")
+}
+
+model NewsletterCategory {
+  id              Int                                @id @default(autoincrement()) @map("ID")
+
+  name            String                             @unique @map("NAME") @db.VarChar(100)
+
+  subscriptions   NewsletterSubscriptionCategory[]
+
+  @@map("NEWSLETTER_CATEGORIES")
+}
+
+model NewsletterSubscriptionCategory {
+  id                         Int                       @id @default(autoincrement()) @map("ID")
+
+  newsletterSubscriptionId   Int                       @map("NEWSLETTER_SUBSCRIPTION_ID")
+  newsletterCategoryId       Int                       @map("NEWSLETTER_CATEGORY_ID")
+
+  newsletterSubscription     NewsletterSubscription    @relation(fields: [newsletterSubscriptionId], references: [id], onDelete: Cascade)
+
+  newsletterCategory         NewsletterCategory        @relation(fields: [newsletterCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([newsletterSubscriptionId, newsletterCategoryId], name: "uq_newsletter_subscription_category")
+
+  @@index([newsletterSubscriptionId], name: "idx_newsletter_sub")
+  @@index([newsletterCategoryId], name: "idx_newsletter_category")
+
+  @@map("NEWSLETTER_SUBSCRIPTION_CATEGORIES")
 }
 
 enum RequestType {

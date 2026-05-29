@@ -1,4 +1,4 @@
-import { PropertyCardDTO } from './property'
+import type { PropertyCardDTO } from './property'
 
 export interface RelatedPropertiesSectionDTO {
   currentPropertyId: number

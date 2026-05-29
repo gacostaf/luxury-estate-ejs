@@ -1,4 +1,16 @@
-import { Grid2X2, Rows3, SlidersHorizontal } from 'lucide-react'
+import { Grid2X2, Rows3 } from 'lucide-react'
+
+import { Select } from '@/components/common/Input/Select'
+
+interface ListingsGridToolbarProps {
+  totalResults: number
+
+  sortBy: string
+
+  onSortChange: (value: string) => void
+
+  gridMode: 'grid' | 'list'
+
   onGridModeChange: (
     value: 'grid' | 'list',
   ) => void
@@ -58,10 +70,9 @@ export function ListingsGridToolbar({
             onClick={() => onGridModeChange('grid')}
             className={`
               flex h-11 w-11 items-center justify-center rounded-xl transition-all
-              ${
-                gridMode === 'grid'
-                  ? 'bg-[#C6A15B] text-white shadow-md'
-                  : 'text-slate-600 hover:bg-slate-200'
+              ${gridMode === 'grid'
+                ? 'bg-[#C6A15B] text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-200'
               }
             `}
           >
@@ -72,10 +83,9 @@ export function ListingsGridToolbar({
             onClick={() => onGridModeChange('list')}
             className={`
               flex h-11 w-11 items-center justify-center rounded-xl transition-all
-              ${
-                gridMode === 'list'
-                  ? 'bg-[#C6A15B] text-white shadow-md'
-                  : 'text-slate-600 hover:bg-slate-200'
+              ${gridMode === 'list'
+                ? 'bg-[#C6A15B] text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-200'
               }
             `}
           >

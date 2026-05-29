@@ -1,6 +1,16 @@
 import { prisma } from '@/lib/prisma';
 
 export async function clearTestDatabase() {
+  await prisma.newsletterSubscriptionCategory.deleteMany();
+  await prisma.newsletterCampaign.deleteMany();
+  await prisma.newsletterContent.deleteMany();
+  await prisma.newsletterSection.deleteMany();
+  await prisma.newsletterIssue.deleteMany();
+  await prisma.newsletterSubscription.deleteMany();
+  await prisma.newsletterCategory.deleteMany();
+  await prisma.newsletterContentType.deleteMany();
+  await prisma.tourRequest.deleteMany();
+  await prisma.propertyReview.deleteMany();
   await prisma.propertyVideo.deleteMany();
   await prisma.propertyImage.deleteMany();
   await prisma.property.deleteMany();

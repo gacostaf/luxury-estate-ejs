@@ -199,3 +199,59 @@ export const tourRequestSchema = z.object({
 
 export type PropertyReviewInput = z.infer<typeof propertyReviewSchema>;
 export type TourRequestInput = z.infer<typeof tourRequestSchema>;
+
+export const newsletterIssueSchema = z.object({
+  title: z.string().min(1).max(255),
+  slug: z.string().min(1).max(255),
+  issueNumber: z.number().int().positive().optional().nullable(),
+  summary: z.string().optional().nullable(),
+  coverImageId: z.number().int().positive().optional().nullable(),
+  publishedAt: z.string().datetime().optional().nullable(),
+  isPublished: z.boolean().optional().default(false),
+  createdById: z.number().int().positive().optional().nullable(),
+});
+
+export const newsletterSectionSchema = z.object({
+  newsletterIssueId: z.number().int().positive(),
+  title: z.string().min(1).max(255),
+  sortOrder: z.number().int().min(0).optional().default(0),
+  content: z.string().optional().nullable(),
+});
+
+export const newsletterContentSchema = z.object({
+  newsletterIssueId: z.number().int().positive(),
+  newsletterContentTypeId: z.number().int().positive(),
+  referenceId: z.number().int().positive(),
+  sortOrder: z.number().int().min(0).optional().default(0),
+});
+
+export const newsletterCampaignSchema = z.object({
+  newsletterIssueId: z.number().int().positive(),
+  sentAt: z.string().datetime().optional().nullable(),
+  recipientsCount: z.number().int().min(0).optional().default(0),
+  openCount: z.number().int().min(0).optional().default(0),
+  clickCount: z.number().int().min(0).optional().default(0),
+});
+
+export const newsletterSubscriptionSchema = z.object({
+  personId: z.number().int().positive(),
+  isSubscribed: z.boolean().optional().default(true),
+  source: z.string().max(100).optional().nullable(),
+  categoryIds: z.array(z.number().int().positive()).optional().default([]),
+});
+
+export const newsletterCategorySchema = z.object({
+  name: z.string().min(1).max(100),
+});
+
+export const newsletterContentTypeSchema = z.object({
+  name: z.string().min(1).max(100),
+});
+
+export type NewsletterIssueInput = z.infer<typeof newsletterIssueSchema>;
+export type NewsletterSectionInput = z.infer<typeof newsletterSectionSchema>;
+export type NewsletterContentInput = z.infer<typeof newsletterContentSchema>;
+export type NewsletterCampaignInput = z.infer<typeof newsletterCampaignSchema>;
+export type NewsletterSubscriptionInput = z.infer<typeof newsletterSubscriptionSchema>;
+export type NewsletterCategoryInput = z.infer<typeof newsletterCategorySchema>;
+export type NewsletterContentTypeInput = z.infer<typeof newsletterContentTypeSchema>;

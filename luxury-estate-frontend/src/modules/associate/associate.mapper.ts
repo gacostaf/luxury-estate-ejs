@@ -1,5 +1,19 @@
+interface AssociateApiRecord {
+  id: number; slug?: string | null; title?: string | null;
+  person?: {
+    firstName?: string | null; lastName?: string | null;
+    email?: string | null; phone?: string | null;
+    description?: string | null;
+    facebookUrl?: string | null; instagramUrl?: string | null; linkedinUrl?: string | null;
+    avatarImage?: { url?: string | null } | null;
+    address?: { addressLocality?: string | null; addressRegion?: string | null } | null;
+  } | null;
+  properties?: unknown[] | null;
+  agency?: { name?: string | null } | null;
+}
+
 export function mapAssociateToCardDTO(
-    associate: any,
+    associate: AssociateApiRecord,
 ) {
     return {
         id: associate.id,
@@ -28,7 +42,7 @@ export function mapAssociateToCardDTO(
         bio: associate.person?.description,
 
         listingCount:
-            associate.properties?.length || 0,< ate.properties?.length || 0,
+            associate.properties?.length || 0,
 
         agency: associate.agency
             ? {
@@ -36,15 +50,15 @@ export function mapAssociateToCardDTO(
             }
             : undefined,
 
-            socials: {
-        facebook:
-        associate.person?.facebookUrl,
+        socials: {
+            facebook:
+                associate.person?.facebookUrl,
 
             instagram:
-        associate.person?.instagramUrl,
+                associate.person?.instagramUrl,
 
             linkedin:
-        associate.person?.linkedinUrl,
-    },
-}
+                associate.person?.linkedinUrl,
+        },
+    }
 }

@@ -1,8 +1,5 @@
 import {
   BedDouble,
-  Bath,
-  Car,
-  Ruler,
   Waves,
   Dumbbell,
   MonitorSmartphone,
@@ -15,7 +12,7 @@ import {
   Sun,
 } from 'lucide-react'
 
-import {
+import type {
   PropertyFeaturesDTO,
 } from '@/types/property-features'
 
@@ -23,7 +20,7 @@ interface PropertyFeaturesProps {
   features: PropertyFeaturesDTO
 }
 
-const amenityIcons: Record<string, any> = {
+const amenityIcons: Record<string, React.ElementType> = {
   Pool: Waves,
   Gym: Dumbbell,
   'Smart Home': MonitorSmartphone,

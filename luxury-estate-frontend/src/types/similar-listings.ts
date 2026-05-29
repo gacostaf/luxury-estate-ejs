@@ -1,4 +1,4 @@
-import { PropertyCardDTO } from './property'
+import type { PropertyCardDTO } from './property'
 
 export interface SimilarListingsCarouselDTO {
   title: string

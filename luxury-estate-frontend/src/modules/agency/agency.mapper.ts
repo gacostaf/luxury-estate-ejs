@@ -1,5 +1,15 @@
+interface AgencyApiRecord {
+  id: number; slug: string; name: string; description?: string | null;
+  phone?: string | null; email?: string | null; websiteUrl?: string | null;
+  foundedYear?: number | null; facebookUrl?: string | null;
+  instagramUrl?: string | null; linkedinUrl?: string | null;
+  logoImage?: { url?: string } | null; coverImage?: { url?: string } | null;
+  address?: { addressLocality?: string | null; addressRegion?: string | null } | null;
+  associates?: unknown[] | null; properties?: unknown[] | null;
+}
+
 export function mapAgencyToCardDTO(
-  agency: any,
+  agency: AgencyApiRecord,
 ) {
   return {
     id: agency.id,

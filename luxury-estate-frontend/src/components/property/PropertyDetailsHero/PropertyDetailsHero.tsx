@@ -9,7 +9,7 @@ import {
   Share2,
 } from 'lucide-react'
 
-import { PropertyDetailsHeroDTO } from '@/types/property-details'
+import type { PropertyDetailsHeroDTO } from '@/types/property-details'
 
 interface PropertyDetailsHeroProps {
   property: PropertyDetailsHeroDTO

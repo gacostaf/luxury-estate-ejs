@@ -8,7 +8,7 @@ import {
   MapPin,
 } from 'lucide-react'
 
-import { PropertyCardDTO } from '@/types/property'
+import type { PropertyCardDTO } from '@/types/property'
 
 interface PropertyCardProps {
   property: PropertyCardDTO

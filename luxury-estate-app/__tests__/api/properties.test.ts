@@ -81,7 +81,7 @@ describe('Properties API', () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json.data).toHaveLength(1);
-    expect(json.data[0].name).toBe('Malibu Home');
+    expect(json.data.items).toHaveLength(1);
+    expect(json.data.items[0].name).toBe('Malibu Home');
   });
 });

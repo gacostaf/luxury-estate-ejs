@@ -38,17 +38,52 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const city = searchParams.get('city');
+    const search = searchParams.get('search');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const bedrooms = searchParams.get('bedrooms');
+    const bathrooms = searchParams.get('bathrooms');
+    const propertyTypeId = searchParams.get('propertyTypeId');
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
+    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') ?? '12', 10)));
 
     const where: any = {};
     if (status) where.propertyStatus = { name: status };
     if (city) where.addressLocality = city;
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { addressLocality: { contains: search } },
+        { streetAddress: { contains: search } },
+      ];
+    }
+    if (minPrice) where.price = { ...where.price, gte: parseFloat(minPrice) };
+    if (maxPrice) where.price = { ...where.price, lte: parseFloat(maxPrice) };
+    if (bedrooms) where.bedrooms = { gte: parseInt(bedrooms, 10) };
+    if (bathrooms) where.bathrooms = { gte: parseInt(bathrooms, 10) };
+    if (propertyTypeId) where.propertyTypeId = parseInt(propertyTypeId, 10);
 
-    const properties = await prisma.property.findMany({
-      where,
-      include: { propertyType: true, propertyStatus: true, agent: true, address: true },
-      orderBy: { publishDate: 'desc' }
+    const [properties, totalItems] = await Promise.all([
+      prisma.property.findMany({
+        where,
+        include: { propertyType: true, propertyStatus: true, agent: true, address: true, bannerImage: true, propertyImages: { include: { image: true } } },
+        orderBy: { publishDate: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.property.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        items: toPropertyDTOList(properties),
+        totalItems,
+        totalPages: Math.ceil(totalItems / pageSize),
+        currentPage: page,
+        pageSize,
+      },
     });
-    return successResponse(toPropertyDTOList(properties));
   } catch (error) { return handlePrismaError(error); }
 }
 

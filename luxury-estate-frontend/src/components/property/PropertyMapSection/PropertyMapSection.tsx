@@ -16,9 +16,7 @@ import {
 
 import L from 'leaflet'
 
-import {
-  PropertyMapSectionDTO,
-} from '@/types/property-map'
+import type { PropertyMapSectionDTO } from '@/types/property-map'
 
 interface PropertyMapSectionProps {
   property: PropertyMapSectionDTO
@@ -36,7 +34,7 @@ const propertyIcon = new L.Icon({
   iconAnchor: [12, 41],
 })
 
-const nearbyIcons: Record<string, any> = {
+const nearbyIcons: Record<string, React.ElementType> = {
   School: GraduationCap,
   Shopping: ShoppingBag,
   Park: Trees,

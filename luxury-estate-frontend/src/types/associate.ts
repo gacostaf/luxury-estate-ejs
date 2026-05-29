@@ -33,3 +33,23 @@ export interface AssociateCardDTO {
     linkedin?: string
   }
 }
+
+export interface AssociateCardDTO {
+  id: number
+
+  fullName: string
+
+  title?: string
+
+  profileImageUrl?: string
+
+  phone?: string
+
+  email?: string
+
+  yearsExperience?: number
+
+  listingsCount?: number
+
+  slug?: string
+}

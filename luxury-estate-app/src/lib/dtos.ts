@@ -84,6 +84,7 @@ export interface PropertyDTO {
   summary: string | null;
   bannerImageId: number | null;
   bannerImage?: ImageDTO;
+  featuredImage: string | null;
   seoUrl: string | null;
   publishDate: string | null;
   price: number | null;
@@ -428,6 +429,7 @@ export function toPropertyDTO(p: any): PropertyDTO {
     summary: p.summary ?? null,
     bannerImageId: p.bannerImageId ?? null,
     bannerImage: p.bannerImage ? toImageDTO(p.bannerImage) : undefined,
+    featuredImage: p.bannerImage?.uri ?? null,
     seoUrl: p.seoUrl ?? null,
     publishDate: toIsoString(p.publishDate),
     price: toDecimal(p.price),
@@ -726,4 +728,186 @@ export function toTourRequestDTO(tr: any): TourRequestDTO {
 
 export function toTourRequestDTOList(items: any[]): TourRequestDTO[] {
   return items.map(toTourRequestDTO);
+}
+
+// --- Newsletter ---
+
+export interface NewsletterIssueDTO {
+  id: number;
+  title: string;
+  slug: string;
+  issueNumber: number | null;
+  summary: string | null;
+  coverImageId: number | null;
+  publishedAt: string | null;
+  isPublished: boolean;
+  createdById: number | null;
+  createdAt: string;
+  updatedAt: string;
+  coverImage?: ImageDTO;
+  createdBy?: PersonDTO;
+  sections?: NewsletterSectionDTO[];
+  contents?: NewsletterContentDTO[];
+  campaigns?: NewsletterCampaignDTO[];
+}
+
+export interface NewsletterSectionDTO {
+  id: number;
+  newsletterIssueId: number;
+  title: string;
+  sortOrder: number;
+  content: string | null;
+}
+
+export interface NewsletterContentDTO {
+  id: number;
+  newsletterIssueId: number;
+  newsletterContentTypeId: number;
+  referenceId: number;
+  sortOrder: number;
+  newsletterContentType?: NewsletterContentTypeDTO;
+}
+
+export interface NewsletterContentTypeDTO {
+  id: number;
+  name: string;
+}
+
+export interface NewsletterCampaignDTO {
+  id: number;
+  newsletterIssueId: number;
+  sentAt: string | null;
+  recipientsCount: number;
+  openCount: number;
+  clickCount: number;
+  createdAt: string;
+}
+
+export interface NewsletterSubscriptionDTO {
+  id: number;
+  personId: number;
+  isSubscribed: boolean;
+  subscribedAt: string;
+  unsubscribedAt: string | null;
+  source: string | null;
+  person?: PersonDTO;
+  categories?: NewsletterSubscriptionCategoryDTO[];
+}
+
+export interface NewsletterCategoryDTO {
+  id: number;
+  name: string;
+}
+
+export interface NewsletterSubscriptionCategoryDTO {
+  id: number;
+  newsletterSubscriptionId: number;
+  newsletterCategoryId: number;
+  newsletterCategory?: NewsletterCategoryDTO;
+}
+
+export function toNewsletterIssueDTO(ni: any): NewsletterIssueDTO {
+  return {
+    id: ni.id,
+    title: ni.title,
+    slug: ni.slug,
+    issueNumber: ni.issueNumber ?? null,
+    summary: ni.summary ?? null,
+    coverImageId: ni.coverImageId ?? null,
+    publishedAt: ni.publishedAt ? toIsoString(ni.publishedAt) : null,
+    isPublished: ni.isPublished ?? false,
+    createdById: ni.createdById ?? null,
+    createdAt: toIsoString(ni.createdAt) ?? '',
+    updatedAt: toIsoString(ni.updatedAt) ?? '',
+    coverImage: ni.coverImage ? toImageDTO(ni.coverImage) : undefined,
+    createdBy: ni.createdBy ? toPersonDTO(ni.createdBy) : undefined,
+    sections: ni.sections ? ni.sections.map(toNewsletterSectionDTO) : undefined,
+    contents: ni.contents ? ni.contents.map(toNewsletterContentDTO) : undefined,
+    campaigns: ni.campaigns ? ni.campaigns.map(toNewsletterCampaignDTO) : undefined,
+  };
+}
+
+export function toNewsletterSectionDTO(ns: any): NewsletterSectionDTO {
+  return {
+    id: ns.id,
+    newsletterIssueId: ns.newsletterIssueId,
+    title: ns.title,
+    sortOrder: ns.sortOrder ?? 0,
+    content: ns.content ?? null,
+  };
+}
+
+export function toNewsletterContentDTO(nc: any): NewsletterContentDTO {
+  return {
+    id: nc.id,
+    newsletterIssueId: nc.newsletterIssueId,
+    newsletterContentTypeId: nc.newsletterContentTypeId,
+    referenceId: nc.referenceId,
+    sortOrder: nc.sortOrder ?? 0,
+    newsletterContentType: nc.newsletterContentType ? toNewsletterContentTypeDTO(nc.newsletterContentType) : undefined,
+  };
+}
+
+export function toNewsletterContentTypeDTO(nct: any): NewsletterContentTypeDTO {
+  return {
+    id: nct.id,
+    name: nct.name,
+  };
+}
+
+export function toNewsletterCampaignDTO(nc: any): NewsletterCampaignDTO {
+  return {
+    id: nc.id,
+    newsletterIssueId: nc.newsletterIssueId,
+    sentAt: nc.sentAt ? toIsoString(nc.sentAt) : null,
+    recipientsCount: nc.recipientsCount ?? 0,
+    openCount: nc.openCount ?? 0,
+    clickCount: nc.clickCount ?? 0,
+    createdAt: toIsoString(nc.createdAt) ?? '',
+  };
+}
+
+export function toNewsletterSubscriptionDTO(ns: any): NewsletterSubscriptionDTO {
+  return {
+    id: ns.id,
+    personId: ns.personId,
+    isSubscribed: ns.isSubscribed ?? true,
+    subscribedAt: toIsoString(ns.subscribedAt) ?? '',
+    unsubscribedAt: ns.unsubscribedAt ? toIsoString(ns.unsubscribedAt) : null,
+    source: ns.source ?? null,
+    person: ns.person ? toPersonDTO(ns.person) : undefined,
+    categories: ns.categories ? ns.categories.map(toNewsletterSubscriptionCategoryDTO) : undefined,
+  };
+}
+
+export function toNewsletterCategoryDTO(nc: any): NewsletterCategoryDTO {
+  return {
+    id: nc.id,
+    name: nc.name,
+  };
+}
+
+export function toNewsletterSubscriptionCategoryDTO(nsc: any): NewsletterSubscriptionCategoryDTO {
+  return {
+    id: nsc.id,
+    newsletterSubscriptionId: nsc.newsletterSubscriptionId,
+    newsletterCategoryId: nsc.newsletterCategoryId,
+    newsletterCategory: nsc.newsletterCategory ? toNewsletterCategoryDTO(nsc.newsletterCategory) : undefined,
+  };
+}
+
+export function toNewsletterIssueDTOList(items: any[]): NewsletterIssueDTO[] {
+  return items.map(toNewsletterIssueDTO);
+}
+
+export function toNewsletterSubscriptionDTOList(items: any[]): NewsletterSubscriptionDTO[] {
+  return items.map(toNewsletterSubscriptionDTO);
+}
+
+export function toNewsletterCategoryDTOList(items: any[]): NewsletterCategoryDTO[] {
+  return items.map(toNewsletterCategoryDTO);
+}
+
+export function toNewsletterContentTypeDTOList(items: any[]): NewsletterContentTypeDTO[] {
+  return items.map(toNewsletterContentTypeDTO);
 }

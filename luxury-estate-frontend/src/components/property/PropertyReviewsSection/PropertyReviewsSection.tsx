@@ -4,9 +4,7 @@ import {
   MessageSquare,
 } from 'lucide-react'
 
-import {
-  PropertyReviewsSectionDTO,
-} from '@/types/property-reviews'
+import type { PropertyReviewsSectionDTO } from '@/types/property-review'
 
 interface PropertyReviewsSectionProps {
   reviews: PropertyReviewsSectionDTO
