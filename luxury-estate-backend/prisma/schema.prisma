@@ -12,12 +12,13 @@ generator client {
 model PersonType {
   id        Int      @id @default(autoincrement()) @map("ID")
   code      String   @unique @map("CODE")
-  name      String   @map("NAME")
-  isActive  Boolean  @default(true) @map("IS_ACTIVE")
-  sortOrder Int      @default(0) @map("SORT_ORDER")
-  createdAt DateTime @default(now()) @map("CREATED_AT")
-  updatedAt DateTime @updatedAt @map("UPDATED_AT")
-  persons   Person[]
+  name        String   @map("NAME")
+  description String?  @map("DESCRIPTION") @db.Text
+  isActive    Boolean  @default(true) @map("IS_ACTIVE")
+  sortOrder   Int      @default(0) @map("SORT_ORDER")
+  createdAt   DateTime @default(now()) @map("CREATED_AT")
+  updatedAt   DateTime @updatedAt @map("UPDATED_AT")
+  persons     Person[]
 
   @@map("PERSON_TYPES")
 }
@@ -25,12 +26,13 @@ model PersonType {
 model PropertyType {
   id         Int        @id @default(autoincrement()) @map("ID")
   code       String     @unique @map("CODE")
-  name       String     @map("NAME")
-  isActive   Boolean    @default(true) @map("IS_ACTIVE")
-  sortOrder  Int        @default(0) @map("SORT_ORDER")
-  createdAt  DateTime   @default(now()) @map("CREATED_AT")
-  updatedAt  DateTime   @updatedAt @map("UPDATED_AT")
-  properties Property[]
+  name        String     @map("NAME")
+  description String?    @map("DESCRIPTION") @db.Text
+  isActive    Boolean    @default(true) @map("IS_ACTIVE")
+  sortOrder   Int        @default(0) @map("SORT_ORDER")
+  createdAt   DateTime   @default(now()) @map("CREATED_AT")
+  updatedAt   DateTime   @updatedAt @map("UPDATED_AT")
+  properties  Property[]
 
   @@map("PROPERTY_TYPES")
 }
@@ -38,12 +40,13 @@ model PropertyType {
 model PropertyStatus {
   id         Int        @id @default(autoincrement()) @map("ID")
   code       String     @unique @map("CODE")
-  name       String     @map("NAME")
-  isActive   Boolean    @default(true) @map("IS_ACTIVE")
-  sortOrder  Int        @default(0) @map("SORT_ORDER")
-  createdAt  DateTime   @default(now()) @map("CREATED_AT")
-  updatedAt  DateTime   @updatedAt @map("UPDATED_AT")
-  properties Property[]
+  name        String     @map("NAME")
+  description String?    @map("DESCRIPTION") @db.Text
+  isActive    Boolean    @default(true) @map("IS_ACTIVE")
+  sortOrder   Int        @default(0) @map("SORT_ORDER")
+  createdAt   DateTime   @default(now()) @map("CREATED_AT")
+  updatedAt   DateTime   @updatedAt @map("UPDATED_AT")
+  properties  Property[]
 
   @@map("PROPERTY_STATUSES")
 }
@@ -614,12 +617,13 @@ model BlogPost {
 model ReviewModerationStatus {
   id        Int              @id @default(autoincrement()) @map("ID")
   code      String           @unique @map("CODE")
-  name      String           @map("NAME")
-  isActive  Boolean          @default(true) @map("IS_ACTIVE")
-  sortOrder Int              @default(0) @map("SORT_ORDER")
-  createdAt DateTime         @default(now()) @map("CREATED_AT")
-  updatedAt DateTime         @updatedAt @map("UPDATED_AT")
-  reviews   PropertyReview[]
+  name        String           @map("NAME")
+  description String?          @map("DESCRIPTION") @db.Text
+  isActive    Boolean          @default(true) @map("IS_ACTIVE")
+  sortOrder   Int              @default(0) @map("SORT_ORDER")
+  createdAt   DateTime         @default(now()) @map("CREATED_AT")
+  updatedAt   DateTime         @updatedAt @map("UPDATED_AT")
+  reviews     PropertyReview[]
 
   @@map("REVIEW_MODERATION_STATUSES")
 }
@@ -786,7 +790,7 @@ model TourType {
   id           Int          @id @default(autoincrement()) @map("ID")
   code         String       @unique @map("CODE")
   name         String       @map("NAME")
-  description  String       @map("DESCRIPTION") @db.VarChar(100)
+  description  String?      @map("DESCRIPTION") @db.Text
   isActive     Boolean      @default(true) @map("IS_ACTIVE")
   sortOrder    Int          @default(0) @map("SORT_ORDER")
   createdAt    DateTime     @default(now()) @map("CREATED_AT")
@@ -908,6 +912,7 @@ model NewsletterContentType {
   id                  Int                  @id @default(autoincrement()) @map("ID")
   code                String               @unique @map("CODE")
   name                String               @map("NAME") @db.VarChar(100)
+  description         String?              @map("DESCRIPTION") @db.Text
   isActive            Boolean              @default(true) @map("IS_ACTIVE")
   sortOrder           Int                  @default(0) @map("SORT_ORDER")
   createdAt           DateTime             @default(now()) @map("CREATED_AT")
@@ -999,6 +1004,7 @@ model RequestType {
   id              Int              @id @default(autoincrement()) @map("ID")
   code            String           @unique @map("CODE")
   name            String           @map("NAME")
+  description     String?          @map("DESCRIPTION") @db.Text
   isActive        Boolean          @default(true) @map("IS_ACTIVE")
   sortOrder       Int              @default(0) @map("SORT_ORDER")
   createdAt       DateTime         @default(now()) @map("CREATED_AT")
@@ -1012,6 +1018,7 @@ model RequestStatus {
   id              Int              @id @default(autoincrement()) @map("ID")
   code            String           @unique @map("CODE")
   name            String           @map("NAME")
+  description     String?          @map("DESCRIPTION") @db.Text
   isActive        Boolean          @default(true) @map("IS_ACTIVE")
   sortOrder       Int              @default(0) @map("SORT_ORDER")
   createdAt       DateTime         @default(now()) @map("CREATED_AT")
@@ -1025,6 +1032,7 @@ model TourStatus {
   id           Int           @id @default(autoincrement()) @map("ID")
   code         String        @unique @map("CODE")
   name         String        @map("NAME")
+  description  String?       @map("DESCRIPTION") @db.Text
   isActive     Boolean       @default(true) @map("IS_ACTIVE")
   sortOrder    Int           @default(0) @map("SORT_ORDER")
   createdAt    DateTime      @default(now()) @map("CREATED_AT")

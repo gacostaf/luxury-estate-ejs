@@ -2,46 +2,46 @@
 
 ## Person Types
 
-| Code | Name |
-|------|------|
-| CLIENT | CLIENT |
-| AGENT | AGENT |
-| BROKER | BROKER |
-| REALTOR | REALTOR |
-| VP | VP |
-| OWNER | OWNER |
-| EXTERNAL_AGENT | EXTERNAL_AGENT |
+| Code | Name | Description |
+|------|------|-------------|
+| CLIENT | CLIENT | client type |
+| AGENT | AGENT | agent type |
+| BROKER | BROKER | broker type |
+| REALTOR | REALTOR | realtor type |
+| VP | VP | vp type |
+| OWNER | OWNER | owner type |
+| EXTERNAL_AGENT | EXTERNAL_AGENT | external_agent type |
 
 ## Property Types
 
-| Code | Name |
-|------|------|
-| house | house |
-| condo | condo |
-| villa | villa |
-| townhouse | townhouse |
-| penthouse | penthouse |
-| land | land |
+| Code | Name | Description |
+|------|------|-------------|
+| house | house | house property type |
+| condo | condo | condo property type |
+| villa | villa | villa property type |
+| townhouse | townhouse | townhouse property type |
+| penthouse | penthouse | penthouse property type |
+| land | land | land property type |
 
 ## Property Statuses
 
-| Code | Name |
-|------|------|
-| for_sale | for_sale |
-| for_rent | for_rent |
-| sold | sold |
-| pending | pending |
+| Code | Name | Description |
+|------|------|-------------|
+| for_sale | for_sale | for sale property status |
+| for_rent | for_rent | for rent property status |
+| sold | sold | sold property status |
+| pending | pending | pending property status |
 
 ## Associate Types
 
 | Code | Name | Description |
 |------|------|-------------|
-| AGENT | AGENT | AGENT role |
-| BROKER | BROKER | BROKER role |
-| REALTOR | REALTOR | REALTOR role |
-| VP | VP | VP role |
-| MANAGER | MANAGER | MANAGER role |
-| ADMIN | ADMIN | ADMIN role |
+| AGENT | AGENT | agent role |
+| BROKER | BROKER | broker role |
+| REALTOR | REALTOR | realtor role |
+| VP | VP | vp role |
+| MANAGER | MANAGER | manager role |
+| ADMIN | ADMIN | admin role |
 
 ## Disqualification Statuses
 
@@ -85,12 +85,12 @@
 
 ## Review Moderation Statuses
 
-| Code | Name |
-|------|------|
-| PENDING | PENDING |
-| APPROVED | APPROVED |
-| REJECTED | REJECTED |
-| FLAGGED | FLAGGED |
+| Code | Name | Description |
+|------|------|-------------|
+| PENDING | PENDING | pending moderation status |
+| APPROVED | APPROVED | approved moderation status |
+| REJECTED | REJECTED | rejected moderation status |
+| FLAGGED | FLAGGED | flagged moderation status |
 
 ## Tour Types
 
@@ -107,39 +107,39 @@
 
 ## Tour Statuses
 
-| Code | Name |
-|------|------|
-| PENDING | PENDING |
-| CONFIRMED | CONFIRMED |
-| COMPLETED | COMPLETED |
-| CANCELLED | CANCELLED |
-| NO_SHOW | NO_SHOW |
+| Code | Name | Description |
+|------|------|-------------|
+| PENDING | PENDING | pending tour status |
+| CONFIRMED | CONFIRMED | confirmed tour status |
+| COMPLETED | COMPLETED | completed tour status |
+| CANCELLED | CANCELLED | cancelled tour status |
+| NO_SHOW | NO_SHOW | no_show tour status |
 
 ## Request Types
 
-| Code | Name |
-|------|------|
-| GENERAL | GENERAL |
-| SALES | SALES |
-| SUPPORT | SUPPORT |
-| PARTNERSHIP | PARTNERSHIP |
+| Code | Name | Description |
+|------|------|-------------|
+| GENERAL | GENERAL | general request type |
+| SALES | SALES | sales request type |
+| SUPPORT | SUPPORT | support request type |
+| PARTNERSHIP | PARTNERSHIP | partnership request type |
 
 ## Request Statuses
 
-| Code | Name |
-|------|------|
-| NEW | NEW |
-| OPEN | OPEN |
-| HOLD | HOLD |
-| CLOSED | CLOSED |
+| Code | Name | Description |
+|------|------|-------------|
+| NEW | NEW | new request status |
+| OPEN | OPEN | open request status |
+| HOLD | HOLD | hold request status |
+| CLOSED | CLOSED | closed request status |
 
 ## Newsletter Content Types
 
-| Code | Name |
-|------|------|
-| property | Property |
-| blog_post | Blog Post |
-| market_report | Market Report |
+| Code | Name | Description |
+|------|------|-------------|
+| property | Property | property content type |
+| blog_post | Blog Post | blog_post content type |
+| market_report | Market Report | market_report content type |
 
 ## Newsletter Categories
 

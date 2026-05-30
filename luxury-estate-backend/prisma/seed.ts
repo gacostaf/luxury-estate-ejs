@@ -12,7 +12,7 @@ async function main() {
 
     const personTypes = await Promise.all(
         ['CLIENT', 'AGENT', 'BROKER', 'REALTOR', 'VP', 'OWNER', 'EXTERNAL_AGENT'].map(name =>
-            prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name } })
+            prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` } })
         )
     );
     const [clientType, agentType, externalAgentType] = personTypes;
@@ -26,14 +26,14 @@ async function main() {
 
     const propertyTypes = await Promise.all(
         ['house', 'condo', 'villa', 'townhouse', 'penthouse', 'land'].map(name =>
-            prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name } })
+            prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name} property type` } })
         )
     );
     const [houseType, condoType] = propertyTypes;
 
     const propertyStatuses = await Promise.all(
         ['for_sale', 'for_rent', 'sold', 'pending'].map(name =>
-            prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } })
+            prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ')} property status` } })
         )
     );
     const [forSale, forRent] = propertyStatuses;
@@ -111,7 +111,7 @@ async function main() {
 
     const moderationStatuses = await Promise.all(
         ['PENDING', 'APPROVED', 'REJECTED', 'FLAGGED'].map(name =>
-            prisma.reviewModerationStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } })
+            prisma.reviewModerationStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} moderation status` } })
         )
     );
 
@@ -136,21 +136,21 @@ async function main() {
 
     const tourStatuses = await Promise.all(
         ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'].map(name =>
-            prisma.tourStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } })
+            prisma.tourStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase().replace(/_/g, ' ')} tour status` } })
         )
     );
     console.log(`  ✅ ${tourStatuses.length} tour statuses`);
 
     const requestTypes = await Promise.all(
         ['GENERAL', 'SALES', 'SUPPORT', 'PARTNERSHIP'].map(name =>
-            prisma.requestType.upsert({ where: { code: name }, update: {}, create: { code: name, name } })
+            prisma.requestType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} request type` } })
         )
     );
     console.log(`  ✅ ${requestTypes.length} request types`);
 
     const requestStatuses = await Promise.all(
         ['NEW', 'OPEN', 'HOLD', 'CLOSED'].map(name =>
-            prisma.requestStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } })
+            prisma.requestStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} request status` } })
         )
     );
     console.log(`  ✅ ${requestStatuses.length} request statuses`);

@@ -35,17 +35,17 @@ beforeAll(async () => {
   try {
     // Person Types
     for (const name of ['CLIENT', 'AGENT', 'BROKER', 'REALTOR', 'VP', 'OWNER', 'EXTERNAL_AGENT']) {
-      await prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+      await prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` } });
     }
 
     // Property Types
     for (const name of ['house', 'condo', 'villa', 'townhouse', 'penthouse', 'land']) {
-      await prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+      await prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name} property type` } });
     }
 
     // Property Status
     for (const name of ['for_sale', 'for_rent', 'sold', 'pending']) {
-      await prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+      await prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ')} property status` } });
     }
 
     // Disqualification Statuses

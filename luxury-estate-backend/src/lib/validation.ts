@@ -284,6 +284,7 @@ export const newsletterCategorySchema = z.object({
 export const newsletterContentTypeSchema = z.object({
   code: z.string().min(1).max(100),
   name: z.string().min(1).max(100),
+  description: z.string().max(500).optional().nullable(),
 });
 
 // --- Property Inquiry ---

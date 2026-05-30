@@ -287,16 +287,22 @@ export interface ContactRequestDTO {
 export interface PersonTypeDTO {
   id: number;
   name: string;
+  code?: string;
+  description: string | null;
 }
 
 export interface PropertyTypeDTO {
   id: number;
   name: string;
+  code?: string;
+  description: string | null;
 }
 
 export interface PropertyStatusDTO {
   id: number;
   name: string;
+  code?: string;
+  description: string | null;
 }
 
 export interface AssociateTypeDTO {
@@ -713,15 +719,15 @@ export function toPropertyReviewDTOList(reviews: any[]): PropertyReviewDTO[] {
 }
 
 export function toPersonTypeDTO(pt: any): PersonTypeDTO {
-  return { id: pt.id, name: pt.name };
+  return { id: pt.id, name: pt.name, code: pt.code, description: pt.description ?? null };
 }
 
 export function toPropertyTypeDTO(pt: any): PropertyTypeDTO {
-  return { id: pt.id, name: pt.name };
+  return { id: pt.id, name: pt.name, code: pt.code, description: pt.description ?? null };
 }
 
 export function toPropertyStatusDTO(ps: any): PropertyStatusDTO {
-  return { id: ps.id, name: ps.name };
+  return { id: ps.id, name: ps.name, code: ps.code, description: ps.description ?? null };
 }
 
 export function toAssociateTypeDTO(at: any): AssociateTypeDTO {
@@ -935,6 +941,7 @@ export interface NewsletterContentDTO {
 export interface NewsletterContentTypeDTO {
   id: number;
   name: string;
+  description: string | null;
 }
 
 export interface NewsletterCampaignDTO {
@@ -1018,6 +1025,7 @@ export function toNewsletterContentTypeDTO(nct: any): NewsletterContentTypeDTO {
   return {
     id: nct.id,
     name: nct.name,
+    description: nct.description ?? null,
   };
 }
 

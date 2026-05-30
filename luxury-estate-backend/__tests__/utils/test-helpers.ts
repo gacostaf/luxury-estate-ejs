@@ -31,15 +31,15 @@ export async function clearTestDatabase() {
 
 export async function seedLookupTables() {
   for (const name of ['CLIENT', 'AGENT', 'BROKER', 'REALTOR', 'VP', 'OWNER', 'EXTERNAL_AGENT']) {
-    await prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+    await prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` } });
   }
 
   for (const name of ['house', 'condo', 'villa', 'townhouse', 'penthouse', 'land']) {
-    await prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+    await prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name} property type` } });
   }
 
   for (const name of ['for_sale', 'for_rent', 'sold', 'pending']) {
-    await prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+    await prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ')} property status` } });
   }
 
   await prisma.country.upsert({
@@ -66,7 +66,7 @@ export async function seedLookupTables() {
   });
 
   for (const name of ['AGENT', 'BROKER', 'REALTOR', 'ASSISTANT']) {
-    await prisma.associateType.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+    await prisma.associateType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} role` } });
   }
 
   const TOUR_TYPES = [
@@ -84,15 +84,15 @@ export async function seedLookupTables() {
   }
 
   for (const name of ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']) {
-    await prisma.tourStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+    await prisma.tourStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase().replace(/_/g, ' ')} tour status` } });
   }
 
   for (const name of ['GENERAL', 'SALES', 'SUPPORT', 'PARTNERSHIP']) {
-    await prisma.requestType.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+    await prisma.requestType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} request type` } });
   }
 
   for (const name of ['NEW', 'OPEN', 'HOLD', 'CLOSED']) {
-    await prisma.requestStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+    await prisma.requestStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} request status` } });
   }
 
   for (const cm of [

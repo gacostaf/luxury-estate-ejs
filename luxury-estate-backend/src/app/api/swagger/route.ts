@@ -232,6 +232,8 @@ export async function GET() {
             properties: {
               id: { type: 'integer' },
               name: { type: 'string' },
+              code: { type: 'string' },
+              description: { type: 'string', nullable: true },
             },
           },
 
@@ -604,6 +606,7 @@ export async function GET() {
             properties: {
               id: { type: 'integer' },
               name: { type: 'string' },
+              description: { type: 'string', nullable: true },
             },
           },
           NewsletterCampaignResponse: {
