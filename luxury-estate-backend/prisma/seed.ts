@@ -155,6 +155,133 @@ async function main() {
     );
     console.log(`  ✅ ${requestStatuses.length} request statuses`);
 
+    console.log('🔐 Seeding roles & permissions...');
+
+    const ROLES = [
+      { code: 'ADMINISTRATOR', name: 'Administrator', isSystem: true, sortOrder: 10 },
+      { code: 'BROKER', name: 'Broker', isSystem: true, sortOrder: 20 },
+      { code: 'MANAGING_BROKER', name: 'Managing Broker', isSystem: false, sortOrder: 25 },
+      { code: 'ASSOCIATE', name: 'Associate', isSystem: false, sortOrder: 30 },
+      { code: 'MARKETING_MANAGER', name: 'Marketing Manager', isSystem: false, sortOrder: 35 },
+      { code: 'CONTENT_EDITOR', name: 'Content Editor', isSystem: false, sortOrder: 40 },
+      { code: 'CUSTOMER', name: 'Customer', isSystem: false, sortOrder: 50 },
+    ];
+
+    for (const r of ROLES) {
+      await prisma.role.upsert({
+        where: { code: r.code },
+        update: { name: r.name, isSystem: r.isSystem, sortOrder: r.sortOrder },
+        create: { code: r.code, name: r.name, description: `${r.name} role`, isSystem: r.isSystem, sortOrder: r.sortOrder },
+      });
+    }
+
+    const PERMISSION_CATEGORIES: { category: string; codes: { code: string; name: string; sortOrder: number }[] }[] = [
+      {
+        category: 'Properties',
+        codes: [
+          { code: 'PROPERTY_VIEW', name: 'View Properties', sortOrder: 10 },
+          { code: 'PROPERTY_CREATE', name: 'Create Properties', sortOrder: 20 },
+          { code: 'PROPERTY_UPDATE', name: 'Update Properties', sortOrder: 30 },
+          { code: 'PROPERTY_DELETE', name: 'Delete Properties', sortOrder: 40 },
+          { code: 'PROPERTY_PUBLISH', name: 'Publish Properties', sortOrder: 50 },
+        ],
+      },
+      {
+        category: 'Agencies',
+        codes: [
+          { code: 'AGENCY_VIEW', name: 'View Agencies', sortOrder: 10 },
+          { code: 'AGENCY_CREATE', name: 'Create Agencies', sortOrder: 20 },
+          { code: 'AGENCY_UPDATE', name: 'Update Agencies', sortOrder: 30 },
+          { code: 'AGENCY_DELETE', name: 'Delete Agencies', sortOrder: 40 },
+        ],
+      },
+      {
+        category: 'Associates',
+        codes: [
+          { code: 'ASSOCIATE_VIEW', name: 'View Associates', sortOrder: 10 },
+          { code: 'ASSOCIATE_CREATE', name: 'Create Associates', sortOrder: 20 },
+          { code: 'ASSOCIATE_UPDATE', name: 'Update Associates', sortOrder: 30 },
+          { code: 'ASSOCIATE_DELETE', name: 'Delete Associates', sortOrder: 40 },
+        ],
+      },
+      {
+        category: 'Blog',
+        codes: [
+          { code: 'BLOG_VIEW', name: 'View Blog Posts', sortOrder: 10 },
+          { code: 'BLOG_CREATE', name: 'Create Blog Posts', sortOrder: 20 },
+          { code: 'BLOG_UPDATE', name: 'Update Blog Posts', sortOrder: 30 },
+          { code: 'BLOG_DELETE', name: 'Delete Blog Posts', sortOrder: 40 },
+          { code: 'BLOG_PUBLISH', name: 'Publish Blog Posts', sortOrder: 50 },
+        ],
+      },
+      {
+        category: 'Newsletter',
+        codes: [
+          { code: 'NEWSLETTER_VIEW', name: 'View Newsletters', sortOrder: 10 },
+          { code: 'NEWSLETTER_CREATE', name: 'Create Newsletters', sortOrder: 20 },
+          { code: 'NEWSLETTER_UPDATE', name: 'Update Newsletters', sortOrder: 30 },
+          { code: 'NEWSLETTER_DELETE', name: 'Delete Newsletters', sortOrder: 40 },
+          { code: 'NEWSLETTER_SEND', name: 'Send Newsletters', sortOrder: 50 },
+        ],
+      },
+      {
+        category: 'Tours',
+        codes: [
+          { code: 'TOUR_VIEW', name: 'View Tours', sortOrder: 10 },
+          { code: 'TOUR_CREATE', name: 'Create Tours', sortOrder: 20 },
+          { code: 'TOUR_UPDATE', name: 'Update Tours', sortOrder: 30 },
+          { code: 'TOUR_DELETE', name: 'Delete Tours', sortOrder: 40 },
+          { code: 'TOUR_CONFIRM', name: 'Confirm Tours', sortOrder: 50 },
+          { code: 'TOUR_CANCEL', name: 'Cancel Tours', sortOrder: 60 },
+        ],
+      },
+      {
+        category: 'Inquiries',
+        codes: [
+          { code: 'INQUIRY_VIEW', name: 'View Inquiries', sortOrder: 10 },
+          { code: 'INQUIRY_CREATE', name: 'Create Inquiries', sortOrder: 20 },
+          { code: 'INQUIRY_UPDATE', name: 'Update Inquiries', sortOrder: 30 },
+          { code: 'INQUIRY_DELETE', name: 'Delete Inquiries', sortOrder: 40 },
+        ],
+      },
+      {
+        category: 'Users',
+        codes: [
+          { code: 'USER_VIEW', name: 'View Users', sortOrder: 10 },
+          { code: 'USER_CREATE', name: 'Create Users', sortOrder: 20 },
+          { code: 'USER_UPDATE', name: 'Update Users', sortOrder: 30 },
+          { code: 'USER_DELETE', name: 'Delete Users', sortOrder: 40 },
+        ],
+      },
+      {
+        category: 'Roles',
+        codes: [
+          { code: 'ROLE_VIEW', name: 'View Roles', sortOrder: 10 },
+          { code: 'ROLE_CREATE', name: 'Create Roles', sortOrder: 20 },
+          { code: 'ROLE_UPDATE', name: 'Update Roles', sortOrder: 30 },
+          { code: 'ROLE_DELETE', name: 'Delete Roles', sortOrder: 40 },
+        ],
+      },
+      {
+        category: 'System',
+        codes: [
+          { code: 'SYSTEM_ADMIN', name: 'System Admin', sortOrder: 10 },
+        ],
+      },
+    ];
+
+    for (const cat of PERMISSION_CATEGORIES) {
+      for (const p of cat.codes) {
+        await prisma.permission.upsert({
+          where: { code: p.code },
+          update: { name: p.name, category: cat.category, sortOrder: p.sortOrder },
+          create: { code: p.code, name: p.name, description: p.name, category: cat.category, sortOrder: p.sortOrder },
+        });
+      }
+    }
+
+    console.log(`  ✅ ${ROLES.length} roles, ${PERMISSION_CATEGORIES.reduce((s, c) => s + c.codes.length, 0)} permissions`);
+
     console.log('🌍 Seeding geographic data...');
 
     const usa = await prisma.country.upsert({

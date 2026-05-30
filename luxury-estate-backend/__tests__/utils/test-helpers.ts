@@ -225,14 +225,14 @@ export async function seedAdminUser() {
     await prisma.permission.upsert({
       where: { code },
       update: {},
-      create: { name: code, code, description: code },
+      create: { name: code, code, description: code, isSystem: true },
     });
   }
 
   const adminRole = await prisma.role.upsert({
     where: { code: 'ADMIN' },
     update: {},
-    create: { name: 'Administrator', code: 'ADMIN', description: 'System admin' },
+    create: { name: 'Administrator', code: 'ADMIN', description: 'System admin', isSystem: true },
   });
 
   for (const code of allPermCodes) {

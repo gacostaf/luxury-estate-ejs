@@ -644,6 +644,31 @@ export async function GET() {
               name: { type: 'string' },
             },
           },
+          RoleResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              code: { type: 'string' },
+              name: { type: 'string' },
+              description: { type: 'string', nullable: true },
+              isActive: { type: 'boolean' },
+              isSystem: { type: 'boolean' },
+              sortOrder: { type: 'integer' },
+            },
+          },
+          PermissionResponse: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              code: { type: 'string' },
+              name: { type: 'string' },
+              description: { type: 'string', nullable: true },
+              category: { type: 'string', nullable: true },
+              isActive: { type: 'boolean' },
+              isSystem: { type: 'boolean' },
+              sortOrder: { type: 'integer' },
+            },
+          },
           NewsletterSubscriptionCategoryResponse: {
             type: 'object',
             properties: {

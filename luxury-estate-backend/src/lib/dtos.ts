@@ -326,14 +326,23 @@ export interface DisqualificationReasonDTO {
 
 export interface RoleDTO {
   id: number;
+  code: string;
   name: string;
   description: string | null;
+  isActive: boolean;
+  isSystem: boolean;
+  sortOrder: number;
 }
 
 export interface PermissionDTO {
   id: number;
+  code: string;
   name: string;
   description: string | null;
+  category: string | null;
+  isActive: boolean;
+  isSystem: boolean;
+  sortOrder: number;
 }
 
 export interface PersonRoleDTO {
@@ -755,16 +764,25 @@ export function toDisqualificationReasonDTO(dr: any): DisqualificationReasonDTO 
 export function toRoleDTO(r: any): RoleDTO {
   return {
     id: r.id,
+    code: r.code,
     name: r.name,
     description: r.description ?? null,
+    isActive: r.isActive ?? true,
+    isSystem: r.isSystem ?? false,
+    sortOrder: r.sortOrder ?? 0,
   };
 }
 
 export function toPermissionDTO(p: any): PermissionDTO {
   return {
     id: p.id,
+    code: p.code,
     name: p.name,
     description: p.description ?? null,
+    category: p.category ?? null,
+    isActive: p.isActive ?? true,
+    isSystem: p.isSystem ?? false,
+    sortOrder: p.sortOrder ?? 0,
   };
 }
 

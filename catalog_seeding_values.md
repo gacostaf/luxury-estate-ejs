@@ -164,3 +164,136 @@ Referenced by `statusId` from `DisqualificationStatus`:
 | Bad Data | The email bounced or phone disconnected |
 | Bad Timing | The lead is interested but cannot buy now |
 | Lack of Resources | Company experienced restructuring |
+
+## Recommended Role Seed Values
+
+| Code | Name |
+|------|------|
+| ADMINISTRATOR | Administrator |
+| BROKER | Broker |
+| MANAGING_BROKER | Managing Broker |
+| ASSOCIATE | Associate |
+| MARKETING_MANAGER | Marketing Manager |
+| CONTENT_EDITOR | Content Editor |
+| CUSTOMER | Customer |
+
+## Example Role Records
+
+| Code | Name | Description | isSystem | sortOrder |
+|------|------|-------------|----------|-----------|
+| ADMINISTRATOR | Administrator | Administrator role | true | 10 |
+| BROKER | Broker | Broker role | true | 20 |
+| MANAGING_BROKER | Managing Broker | Managing Broker role | false | 25 |
+| ASSOCIATE | Associate | Associate role | false | 30 |
+| MARKETING_MANAGER | Marketing Manager | Marketing Manager role | false | 35 |
+| CONTENT_EDITOR | Content Editor | Content Editor role | false | 40 |
+| CUSTOMER | Customer | Customer role | false | 50 |
+
+## Recommended Permission Categories
+
+| Category |
+|----------|
+| Properties |
+| Agencies |
+| Associates |
+| Blog |
+| Newsletter |
+| Tours |
+| Inquiries |
+| Users |
+| Roles |
+| System |
+
+## Recommended Permission Codes
+
+### Properties
+
+| Code | Name |
+|------|------|
+| PROPERTY_VIEW | View Properties |
+| PROPERTY_CREATE | Create Properties |
+| PROPERTY_UPDATE | Update Properties |
+| PROPERTY_DELETE | Delete Properties |
+| PROPERTY_PUBLISH | Publish Properties |
+
+### Agencies
+
+| Code | Name |
+|------|------|
+| AGENCY_VIEW | View Agencies |
+| AGENCY_CREATE | Create Agencies |
+| AGENCY_UPDATE | Update Agencies |
+| AGENCY_DELETE | Delete Agencies |
+
+### Associates
+
+| Code | Name |
+|------|------|
+| ASSOCIATE_VIEW | View Associates |
+| ASSOCIATE_CREATE | Create Associates |
+| ASSOCIATE_UPDATE | Update Associates |
+| ASSOCIATE_DELETE | Delete Associates |
+
+### Blog
+
+| Code | Name |
+|------|------|
+| BLOG_VIEW | View Blog Posts |
+| BLOG_CREATE | Create Blog Posts |
+| BLOG_UPDATE | Update Blog Posts |
+| BLOG_DELETE | Delete Blog Posts |
+| BLOG_PUBLISH | Publish Blog Posts |
+
+### Newsletter
+
+| Code | Name |
+|------|------|
+| NEWSLETTER_VIEW | View Newsletters |
+| NEWSLETTER_CREATE | Create Newsletters |
+| NEWSLETTER_UPDATE | Update Newsletters |
+| NEWSLETTER_DELETE | Delete Newsletters |
+| NEWSLETTER_SEND | Send Newsletters |
+
+### Tours
+
+| Code | Name |
+|------|------|
+| TOUR_VIEW | View Tours |
+| TOUR_CREATE | Create Tours |
+| TOUR_UPDATE | Update Tours |
+| TOUR_DELETE | Delete Tours |
+| TOUR_CONFIRM | Confirm Tours |
+| TOUR_CANCEL | Cancel Tours |
+
+### Property Inquiries
+
+| Code | Name |
+|------|------|
+| INQUIRY_VIEW | View Inquiries |
+| INQUIRY_CREATE | Create Inquiries |
+| INQUIRY_UPDATE | Update Inquiries |
+| INQUIRY_DELETE | Delete Inquiries |
+
+### Users
+
+| Code | Name |
+|------|------|
+| USER_VIEW | View Users |
+| USER_CREATE | Create Users |
+| USER_UPDATE | Update Users |
+| USER_DELETE | Delete Users |
+
+### Roles
+
+| Code | Name |
+|------|------|
+| ROLE_VIEW | View Roles |
+| ROLE_CREATE | Create Roles |
+| ROLE_UPDATE | Update Roles |
+| ROLE_DELETE | Delete Roles |
+
+### System
+
+| Code | Name |
+|------|------|
+| SYSTEM_ADMIN | System Admin |
