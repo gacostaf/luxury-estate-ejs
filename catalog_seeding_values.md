@@ -54,14 +54,34 @@
 
 ## Contact Methods
 
-| Code | Name |
-|------|------|
-| EMAIL | EMAIL |
-| PHONE | PHONE |
-| SMS | SMS |
-| WHATSAPP | WHATSAPP |
-| TELEGRAM | TELEGRAM |
-| PORTAL | PORTAL |
+| Code | Name | Description |
+|------|------|-------------|
+| EMAIL | Email | Email communication |
+| PHONE | Phone | Phone call |
+| SMS | SMS | Text message (SMS) |
+| WHATSAPP | WhatsApp | WhatsApp messaging |
+| TELEGRAM | Telegram | Telegram messaging |
+| PORTAL | Portal | Client portal |
+
+## Lead Sources
+
+| Code | Name | Description |
+|------|------|-------------|
+| WEBSITE | Website | Direct website visit |
+| REFERRAL | Referral | Referred by existing client or partner |
+| SOCIAL_MEDIA | Social Media | Social media platform |
+| EMAIL_MARKETING | Email Marketing | Email marketing campaign |
+| PHONE_INQUIRY | Phone Inquiry | Incoming phone call inquiry |
+| WALK_IN | Walk-In | Walk-in to office |
+| OPEN_HOUSE | Open House | Open house event |
+| ZILLOW | Zillow | Zillow listing referral |
+| REALTOR_COM | Realtor.com | Realtor.com listing referral |
+| GOOGLE | Google | Google search or ads |
+| FACEBOOK | Facebook | Facebook ads or page |
+| INSTAGRAM | Instagram | Instagram ads or page |
+| LINKEDIN | LinkedIn | LinkedIn ads or profile |
+| YOUTUBE | YouTube | YouTube channel or ads |
+| OTHER | Other | Other source |
 
 ## Review Moderation Statuses
 

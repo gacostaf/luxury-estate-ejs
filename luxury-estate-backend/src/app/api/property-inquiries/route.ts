@@ -10,6 +10,8 @@ const inquiryIncludes = {
   property: true,
   associate: { include: { person: true } },
   person: true,
+  contactMethod: true,
+  leadSource: true,
 } as const;
 
 /**

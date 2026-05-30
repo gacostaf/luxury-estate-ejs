@@ -8,6 +8,7 @@ import { requireAuth } from '@/lib/auth/middleware';
 const subscriptionIncludes = {
   person: true,
   categories: { include: { newsletterCategory: true } },
+  leadSource: true,
 } as const;
 
 /**
@@ -58,8 +59,8 @@ export const POST = requireAuth()(async (req: NextRequest) => {
     const { categoryIds, ...subData } = data;
     const sub = await prisma.newsletterSubscription.upsert({
       where: { personId: subData.personId },
-      update: { isSubscribed: subData.isSubscribed, source: subData.source },
-      create: { personId: subData.personId, isSubscribed: subData.isSubscribed, source: subData.source },
+      update: { isSubscribed: subData.isSubscribed, source: subData.source, leadSourceId: subData.leadSourceId },
+      create: { personId: subData.personId, isSubscribed: subData.isSubscribed, source: subData.source, leadSourceId: subData.leadSourceId },
       include: subscriptionIncludes,
     });
     if (categoryIds && categoryIds.length > 0) {

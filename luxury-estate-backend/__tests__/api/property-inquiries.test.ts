@@ -129,6 +129,30 @@ describe('Property Inquiries API', () => {
       const res = await createInquiry(req);
       expect(res.status).toBe(400);
     });
+
+    it('should create inquiry with contactMethodId and leadSourceId', async () => {
+      const cm = await prisma.contactMethod.findUniqueOrThrow({ where: { code: 'EMAIL' } });
+      const ls = await prisma.leadSource.findUniqueOrThrow({ where: { code: 'SOCIAL_MEDIA' } });
+      const payload = {
+        propertyId,
+        associateId: adminAssociateId,
+        firstName: 'Diana',
+        lastName: 'Evans',
+        email: 'diana@test.com',
+        contactMethodId: cm.id,
+        leadSourceId: ls.id,
+      };
+      const req = createMockRequest(payload, 'http://localhost/api/property-inquiries', 'POST', { 'x-user-id': String(adminPersonId) });
+      const res = await createInquiry(req);
+      const json = await res.json();
+      expect(res.status).toBe(201);
+      expect(json.data.contactMethodId).toBe(cm.id);
+      expect(json.data.leadSourceId).toBe(ls.id);
+      expect(json.data.contactMethod).toBeDefined();
+      expect(json.data.contactMethod.code).toBe('EMAIL');
+      expect(json.data.leadSource).toBeDefined();
+      expect(json.data.leadSource.code).toBe('SOCIAL_MEDIA');
+    });
   });
 
   describe('GET /api/property-inquiries/[id]', () => {

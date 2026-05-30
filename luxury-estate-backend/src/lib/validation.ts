@@ -149,9 +149,38 @@ export const registerSchema = z.object({
   password: z.string().min(8),
 });
 
+export const contactRequestSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email().max(255),
+  phone: z.string().max(50).optional().nullable(),
+  companyName: z.string().max(150).optional().nullable(),
+  jobTitle: z.string().max(100).optional().nullable(),
+  requestTypeId: z.number().int().positive(),
+  subject: z.string().max(255).optional().nullable(),
+  message: z.string().min(1),
+  contactMethodId: z.number().int().positive().optional().nullable(),
+  leadSourceId: z.number().int().positive().optional().nullable(),
+  utmSource: z.string().max(100).optional().nullable(),
+  utmMedium: z.string().max(100).optional().nullable(),
+  utmCampaign: z.string().max(100).optional().nullable(),
+  referrerUrl: z.string().optional().nullable(),
+  landingPageUrl: z.string().optional().nullable(),
+  requestStatusId: z.number().int().positive().optional().default(1),
+  marketingConsent: z.boolean().optional().default(false),
+  ipAddress: z.string().max(45).optional().nullable(),
+  assignedAssociateId: z.number().int().positive().optional().nullable(),
+});
+
 export const contactMethodSchema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
+});
+
+export const leadSourceSchema = z.object({
+  code: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().optional().nullable(),
 });
 
 export const propertyReviewSchema = z.object({
@@ -182,7 +211,9 @@ export type AssociateInput = z.infer<typeof associateSchema>;
 export type AgencyInput = z.infer<typeof agencySchema>;
 export type BlogPostInput = z.infer<typeof blogPostSchema>;
 export type AuthAccountInput = z.infer<typeof authAccountSchema>;
+export type ContactRequestInput = z.infer<typeof contactRequestSchema>;
 export type ContactMethodInput = z.infer<typeof contactMethodSchema>;
+export type LeadSourceInput = z.infer<typeof leadSourceSchema>;
 export const tourRequestSchema = z.object({
   propertyId: z.number().int().positive(),
   clientPersonId: z.number().int().positive().optional().nullable(),
@@ -197,6 +228,8 @@ export const tourRequestSchema = z.object({
   scheduledDate: z.string().datetime(),
   clientMessage: z.string().optional().nullable(),
   associateNotes: z.string().optional().nullable(),
+  contactMethodId: z.number().int().positive().optional().nullable(),
+  leadSourceId: z.number().int().positive().optional().nullable(),
 });
 
 export type PropertyReviewInput = z.infer<typeof propertyReviewSchema>;
@@ -239,6 +272,7 @@ export const newsletterSubscriptionSchema = z.object({
   personId: z.number().int().positive(),
   isSubscribed: z.boolean().optional().default(true),
   source: z.string().max(100).optional().nullable(),
+  leadSourceId: z.number().int().positive().optional().nullable(),
   categoryIds: z.array(z.number().int().positive()).optional().default([]),
 });
 
@@ -263,6 +297,8 @@ export const propertyInquirySchema = z.object({
   email: z.string().email().max(255),
   phone: z.string().max(50).optional().nullable(),
   message: z.string().optional().nullable(),
+  contactMethodId: z.number().int().positive().optional().nullable(),
+  leadSourceId: z.number().int().positive().optional().nullable(),
 });
 
 export type PropertyInquiryInput = z.infer<typeof propertyInquirySchema>;

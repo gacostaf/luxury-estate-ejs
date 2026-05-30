@@ -9,6 +9,7 @@ import { Permissions } from '@/lib/rbac';
 const subscriptionIncludes = {
   person: true,
   categories: { include: { newsletterCategory: true } },
+  leadSource: true,
 } as const;
 
 /**

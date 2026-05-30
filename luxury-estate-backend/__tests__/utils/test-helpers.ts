@@ -9,7 +9,9 @@ export async function clearTestDatabase() {
   await prisma.newsletterSubscription.deleteMany();
   await prisma.newsletterCategory.deleteMany();
   await prisma.newsletterContentType.deleteMany();
+  await prisma.contactRequest.deleteMany();
   await prisma.tourRequest.deleteMany();
+  await prisma.propertyInquiry.deleteMany();
   await prisma.propertyReview.deleteMany();
   await prisma.propertyVideo.deleteMany();
   await prisma.propertyImage.deleteMany();
@@ -91,6 +93,37 @@ export async function seedLookupTables() {
 
   for (const name of ['NEW', 'OPEN', 'HOLD', 'CLOSED']) {
     await prisma.requestStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name } });
+  }
+
+  for (const cm of [
+    { code: 'EMAIL', name: 'Email', description: 'Email communication' },
+    { code: 'PHONE', name: 'Phone', description: 'Phone call' },
+    { code: 'SMS', name: 'SMS', description: 'Text message (SMS)' },
+    { code: 'WHATSAPP', name: 'WhatsApp', description: 'WhatsApp messaging' },
+    { code: 'TELEGRAM', name: 'Telegram', description: 'Telegram messaging' },
+    { code: 'PORTAL', name: 'Portal', description: 'Client portal' },
+  ]) {
+    await prisma.contactMethod.upsert({ where: { code: cm.code }, update: {}, create: cm });
+  }
+
+  for (const ls of [
+    { code: 'WEBSITE', name: 'Website', description: 'Direct website visit' },
+    { code: 'REFERRAL', name: 'Referral', description: 'Referred by existing client or partner' },
+    { code: 'SOCIAL_MEDIA', name: 'Social Media', description: 'Social media platform' },
+    { code: 'EMAIL_MARKETING', name: 'Email Marketing', description: 'Email marketing campaign' },
+    { code: 'PHONE_INQUIRY', name: 'Phone Inquiry', description: 'Incoming phone call inquiry' },
+    { code: 'WALK_IN', name: 'Walk-In', description: 'Walk-in to office' },
+    { code: 'OPEN_HOUSE', name: 'Open House', description: 'Open house event' },
+    { code: 'ZILLOW', name: 'Zillow', description: 'Zillow listing referral' },
+    { code: 'REALTOR_COM', name: 'Realtor.com', description: 'Realtor.com listing referral' },
+    { code: 'GOOGLE', name: 'Google', description: 'Google search or ads' },
+    { code: 'FACEBOOK', name: 'Facebook', description: 'Facebook ads or page' },
+    { code: 'INSTAGRAM', name: 'Instagram', description: 'Instagram ads or page' },
+    { code: 'LINKEDIN', name: 'LinkedIn', description: 'LinkedIn ads or profile' },
+    { code: 'YOUTUBE', name: 'YouTube', description: 'YouTube channel or ads' },
+    { code: 'OTHER', name: 'Other', description: 'Other source' },
+  ]) {
+    await prisma.leadSource.upsert({ where: { code: ls.code }, update: {}, create: ls });
   }
 }
 

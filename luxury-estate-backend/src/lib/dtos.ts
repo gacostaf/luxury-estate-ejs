@@ -240,6 +240,48 @@ export interface ContactMethodDTO {
   id: number;
   code: string;
   name: string;
+  description: string | null;
+}
+
+export interface LeadSourceDTO {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface ContactRequestDTO {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  companyName: string | null;
+  jobTitle: string | null;
+  requestTypeId: number;
+  requestType?: { id: number; name: string; code: string } | null;
+  subject: string | null;
+  message: string;
+  contactMethodId: number | null;
+  contactMethod?: ContactMethodDTO | null;
+  leadSourceId: number | null;
+  leadSource?: LeadSourceDTO | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  referrerUrl: string | null;
+  landingPageUrl: string | null;
+  requestStatusId: number;
+  requestStatus?: { id: number; name: string; code: string } | null;
+  marketingConsent: boolean;
+  ipAddress: string | null;
+  assignedAssociateId: number | null;
+  assignedTo?: { id: number; personId: number } | null;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
 }
 
 export interface PersonTypeDTO {
@@ -590,7 +632,57 @@ export function toContactMethodDTO(cm: any): ContactMethodDTO {
     id: cm.id,
     code: cm.code,
     name: cm.name,
+    description: cm.description ?? null,
   };
+}
+
+export function toLeadSourceDTO(ls: any): LeadSourceDTO {
+  return {
+    id: ls.id,
+    code: ls.code,
+    name: ls.name,
+    description: ls.description ?? null,
+    isActive: ls.isActive ?? true,
+    sortOrder: ls.sortOrder ?? 0,
+  };
+}
+
+export function toContactRequestDTO(cr: any): ContactRequestDTO {
+  return {
+    id: cr.id,
+    firstName: cr.firstName,
+    lastName: cr.lastName,
+    email: cr.email,
+    phone: cr.phone ?? null,
+    companyName: cr.companyName ?? null,
+    jobTitle: cr.jobTitle ?? null,
+    requestTypeId: cr.requestTypeId,
+    requestType: cr.requestType ? { id: cr.requestType.id, name: cr.requestType.name, code: cr.requestType.code } : undefined,
+    subject: cr.subject ?? null,
+    message: cr.message,
+    contactMethodId: cr.contactMethodId ?? null,
+    contactMethod: cr.contactMethod ? toContactMethodDTO(cr.contactMethod) : undefined,
+    leadSourceId: cr.leadSourceId ?? null,
+    leadSource: cr.leadSource ? toLeadSourceDTO(cr.leadSource) : undefined,
+    utmSource: cr.utmSource ?? null,
+    utmMedium: cr.utmMedium ?? null,
+    utmCampaign: cr.utmCampaign ?? null,
+    referrerUrl: cr.referrerUrl ?? null,
+    landingPageUrl: cr.landingPageUrl ?? null,
+    requestStatusId: cr.requestStatusId,
+    requestStatus: cr.requestStatus ? { id: cr.requestStatus.id, name: cr.requestStatus.name, code: cr.requestStatus.code } : undefined,
+    marketingConsent: cr.marketingConsent ?? false,
+    ipAddress: cr.ipAddress ?? null,
+    assignedAssociateId: cr.assignedAssociateId ?? null,
+    assignedTo: cr.assignedTo ? { id: cr.assignedTo.id, personId: cr.assignedTo.personId } : undefined,
+    createdAt: toIsoString(cr.createdAt) ?? '',
+    updatedAt: toIsoString(cr.updatedAt) ?? '',
+    resolvedAt: cr.resolvedAt ? toIsoString(cr.resolvedAt) : null,
+  };
+}
+
+export function toContactRequestDTOList(items: any[]): ContactRequestDTO[] {
+  return items.map(toContactRequestDTO);
 }
 
 export function toPropertyReviewDTO(pr: any): PropertyReviewDTO {
@@ -705,6 +797,10 @@ export interface TourRequestDTO {
   scheduledDate: string;
   clientMessage: string | null;
   associateNotes: string | null;
+  contactMethodId: number | null;
+  contactMethod?: ContactMethodDTO | null;
+  leadSourceId: number | null;
+  leadSource?: LeadSourceDTO | null;
   createdAt: string;
   updatedAt: string;
   property?: PropertyDTO;
@@ -730,6 +826,10 @@ export function toTourRequestDTO(tr: any): TourRequestDTO {
     scheduledDate: toIsoString(tr.scheduledDate) ?? '',
     clientMessage: tr.clientMessage ?? null,
     associateNotes: tr.associateNotes ?? null,
+    contactMethodId: tr.contactMethodId ?? null,
+    contactMethod: tr.contactMethod ? toContactMethodDTO(tr.contactMethod) : undefined,
+    leadSourceId: tr.leadSourceId ?? null,
+    leadSource: tr.leadSource ? toLeadSourceDTO(tr.leadSource) : undefined,
     createdAt: toIsoString(tr.createdAt) ?? '',
     updatedAt: toIsoString(tr.updatedAt) ?? '',
     property: tr.property ? toPropertyDTO(tr.property) : undefined,
@@ -756,6 +856,10 @@ export interface PropertyInquiryDTO {
   email: string;
   phone: string | null;
   message: string | null;
+  contactMethodId: number | null;
+  contactMethod?: ContactMethodDTO | null;
+  leadSourceId: number | null;
+  leadSource?: LeadSourceDTO | null;
   createdAt: string;
   updatedAt: string;
   property?: PropertyDTO;
@@ -774,6 +878,10 @@ export function toPropertyInquiryDTO(p: any): PropertyInquiryDTO {
     email: p.email,
     phone: p.phone ?? null,
     message: p.message ?? null,
+    contactMethodId: p.contactMethodId ?? null,
+    contactMethod: p.contactMethod ? toContactMethodDTO(p.contactMethod) : undefined,
+    leadSourceId: p.leadSourceId ?? null,
+    leadSource: p.leadSource ? toLeadSourceDTO(p.leadSource) : undefined,
     createdAt: toIsoString(p.createdAt) ?? '',
     updatedAt: toIsoString(p.updatedAt) ?? '',
     property: p.property ? toPropertyDTO(p.property) : undefined,
@@ -846,6 +954,8 @@ export interface NewsletterSubscriptionDTO {
   subscribedAt: string;
   unsubscribedAt: string | null;
   source: string | null;
+  leadSourceId: number | null;
+  leadSource?: LeadSourceDTO | null;
   person?: PersonDTO;
   categories?: NewsletterSubscriptionCategoryDTO[];
 }
@@ -931,6 +1041,8 @@ export function toNewsletterSubscriptionDTO(ns: any): NewsletterSubscriptionDTO 
     subscribedAt: toIsoString(ns.subscribedAt) ?? '',
     unsubscribedAt: ns.unsubscribedAt ? toIsoString(ns.unsubscribedAt) : null,
     source: ns.source ?? null,
+    leadSourceId: ns.leadSourceId ?? null,
+    leadSource: ns.leadSource ? toLeadSourceDTO(ns.leadSource) : undefined,
     person: ns.person ? toPersonDTO(ns.person) : undefined,
     categories: ns.categories ? ns.categories.map(toNewsletterSubscriptionCategoryDTO) : undefined,
   };

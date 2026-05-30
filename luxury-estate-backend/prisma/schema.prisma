@@ -657,13 +657,34 @@ model ContactMethod {
   id         Int         @id @default(autoincrement()) @map("ID")
   code       String      @unique @map("CODE")
   name       String      @map("NAME")
+  description String?    @map("DESCRIPTION") @db.Text
   isActive   Boolean     @default(true) @map("IS_ACTIVE")
   sortOrder  Int         @default(0) @map("SORT_ORDER")
   createdAt  DateTime    @default(now()) @map("CREATED_AT")
   updatedAt  DateTime    @updatedAt @map("UPDATED_AT")
   associates Associate[]
+  contactRequests     ContactRequest[]
+  propertyInquiries   PropertyInquiry[]
+  tourRequests        TourRequest[]
 
   @@map("CONTACT_METHODS")
+}
+
+model LeadSource {
+  id        Int       @id @default(autoincrement()) @map("ID")
+  code      String    @unique @map("CODE")
+  name      String    @map("NAME")
+  description String? @map("DESCRIPTION") @db.Text
+  isActive  Boolean   @default(true) @map("IS_ACTIVE")
+  sortOrder Int       @default(0) @map("SORT_ORDER")
+  createdAt DateTime  @default(now()) @map("CREATED_AT")
+  updatedAt DateTime  @updatedAt @map("UPDATED_AT")
+  contactRequests         ContactRequest[]
+  propertyInquiries       PropertyInquiry[]
+  tourRequests            TourRequest[]
+  newsletterSubscriptions NewsletterSubscription[]
+
+  @@map("LEAD_SOURCES")
 }
 
 // 2. The ContactRequest Model
@@ -681,7 +702,8 @@ model ContactRequest {
   requestTypeId Int     @map("REQUEST_TYPE_ID")
   subject       String? @map("SUBJECT") @db.VarChar(255)
   message       String  @map("MESSAGE") @db.Text
-  contactMethod String? @map("CONTACT_METHOD") @db.VarChar(50)
+  contactMethodId Int? @map("CONTACT_METHOD_ID")
+  contactMethod   ContactMethod? @relation(fields: [contactMethodId], references: [id])
 
   // Marketing Attribution (UTMs)
   utmSource      String? @map("UTM_SOURCE") @db.VarChar(100)
@@ -689,6 +711,9 @@ model ContactRequest {
   utmCampaign    String? @map("UTM_CAMPAIGN") @db.VarChar(100)
   referrerUrl    String? @map("REFERRER_URL") @db.Text
   landingPageUrl String? @map("LANDING_PAGE_URL") @db.Text
+
+  leadSourceId Int? @map("LEAD_SOURCE_ID")
+  leadSource   LeadSource? @relation(fields: [leadSourceId], references: [id])
 
   requestStatusId Int     @map("REQUEST_STATUS_ID")
   marketingConsent       Boolean @default(false) @map("MARKETING_CONSENT")
@@ -730,6 +755,10 @@ model PropertyInquiry {
   email       String   @map("EMAIL") @db.VarChar(255)
   phone       String?  @map("PHONE_NUMBER") @db.VarChar(50)
   message     String?  @map("MESSAGE") @db.Text
+  contactMethodId Int? @map("CONTACT_METHOD_ID")
+  contactMethod   ContactMethod? @relation(fields: [contactMethodId], references: [id])
+  leadSourceId Int? @map("LEAD_SOURCE_ID")
+  leadSource   LeadSource? @relation(fields: [leadSourceId], references: [id])
   createdAt   DateTime @default(now()) @map("CREATED_AT")
   updatedAt   DateTime @updatedAt @map("UPDATED_AT")
 
@@ -782,6 +811,10 @@ model TourRequest {
   clientMessage       String?    @map("CLIENT_MESSAGE") @db.Text
   associateNotes      String?    @map("ASSOCIATE_NOTES") @db.Text
   tourStatusId        Int        @map("TOUR_STATUS_ID")
+  contactMethodId Int? @map("CONTACT_METHOD_ID")
+  contactMethod   ContactMethod? @relation(fields: [contactMethodId], references: [id])
+  leadSourceId Int? @map("LEAD_SOURCE_ID")
+  leadSource   LeadSource? @relation(fields: [leadSourceId], references: [id])
   createdAt           DateTime   @default(now()) @map("CREATED_AT")
   updatedAt           DateTime   @updatedAt @map("UPDATED_AT")
 
@@ -919,6 +952,8 @@ model NewsletterSubscription {
   unsubscribedAt   DateTime? @map("UNSUBSCRIBED_AT")
 
   source           String?   @map("SOURCE") @db.VarChar(100)
+  leadSourceId Int? @map("LEAD_SOURCE_ID")
+  leadSource   LeadSource? @relation(fields: [leadSourceId], references: [id])
 
   person           Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
 

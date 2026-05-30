@@ -110,6 +110,33 @@ describe('Tour Requests API', () => {
       const res = await createTour(req);
       expect(res.status).toBe(400);
     });
+
+    it('should create tour request with contactMethodId and leadSourceId', async () => {
+      const cm = await prisma.contactMethod.findUniqueOrThrow({ where: { code: 'PHONE' } });
+      const ls = await prisma.leadSource.findUniqueOrThrow({ where: { code: 'PHONE_INQUIRY' } });
+      const payload = {
+        propertyId,
+        clientFirstName: 'Carol',
+        clientLastName: 'Davis',
+        clientEmail: 'carol@test.com',
+        primaryAssociateId: adminAssociateId,
+        tourTypeId: 1,
+        tourStatusId: 1,
+        scheduledDate: futureDate(),
+        contactMethodId: cm.id,
+        leadSourceId: ls.id,
+      };
+      const req = createMockRequest(payload, 'http://localhost/api/tour-requests', 'POST', { 'x-user-id': String(adminPersonId) });
+      const res = await createTour(req);
+      const json = await res.json();
+      expect(res.status).toBe(201);
+      expect(json.data.contactMethodId).toBe(cm.id);
+      expect(json.data.leadSourceId).toBe(ls.id);
+      expect(json.data.contactMethod).toBeDefined();
+      expect(json.data.contactMethod.code).toBe('PHONE');
+      expect(json.data.leadSource).toBeDefined();
+      expect(json.data.leadSource.code).toBe('PHONE_INQUIRY');
+    });
   });
 
   describe('GET /api/tour-requests/[id]', () => {

@@ -66,6 +66,18 @@ describe('Newsletter Subscriptions API', () => {
       const res = await createSub(req);
       expect(res.status).toBe(401);
     });
+
+    it('should create subscription with leadSourceId', async () => {
+      const ls = await prisma.leadSource.findUniqueOrThrow({ where: { code: 'WEBSITE' } });
+      const payload = { personId: adminPersonId, isSubscribed: true, leadSourceId: ls.id };
+      const req = createMockRequest(payload, undefined, 'POST', { 'x-user-id': String(adminPersonId) });
+      const res = await createSub(req);
+      const json = await res.json();
+      expect(res.status).toBe(201);
+      expect(json.data.leadSourceId).toBe(ls.id);
+      expect(json.data.leadSource).toBeDefined();
+      expect(json.data.leadSource.code).toBe('WEBSITE');
+    });
   });
 
   describe('GET /api/newsletter-subscriptions/[id]', () => {
