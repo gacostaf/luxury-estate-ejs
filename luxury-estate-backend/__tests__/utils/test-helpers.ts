@@ -150,7 +150,7 @@ export async function createTestPerson(overrides = {}) {
     data: {
       firstName: 'Test',
       lastName: 'Person',
-      email: `test-${Date.now()}@example.com`,
+      email: `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`,
       personTypeId: clientType.id,
       ...overrides,
     },
@@ -249,7 +249,7 @@ export async function seedAdminUser() {
     data: {
       firstName: 'Admin',
       lastName: 'User',
-      email: `admin-${Date.now()}@test.com`,
+      email: `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.com`,
       personTypeId: clientTypeId,
     },
   });

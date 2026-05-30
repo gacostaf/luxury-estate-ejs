@@ -13,6 +13,9 @@ const customJestConfig = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
+  // Run tests serially — all tests share a single database and parallel execution
+  // causes race conditions (FK violations, email collisions, data contamination).
+  maxWorkers: 1,
   // Silence React 19 peer dependency warnings from swagger-ui-react
   silent: true,
 };
