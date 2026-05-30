@@ -41,10 +41,10 @@ node -v
 ---
 
 2️⃣ Configure Project Version Lock
-Inside the luxury-estate-app/ folder, create a .nvmrc so nvm auto-detects the correct version:
+Inside the luxury-estate-backend/ folder, create a .nvmrc so nvm auto-detects the correct version:
 
 ```bash
-cd luxury-estate-app
+cd luxury-estate-backend
 echo "22" > .nvmrc
 nvm use  # Switches to Node 22 automatically
 
@@ -57,8 +57,8 @@ nvm use  # Switches to Node 22 automatically
 
 ```bash
 chmod +x setup-next-mysql.sh
-./setup-next-mysql.sh luxury-estate-app
-cd luxury-estate-app
+./setup-next-mysql.sh luxury-estate-backend
+cd luxury-estate-backend
 
 ---
 
@@ -227,7 +227,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: luxury-estate-app
+    container_name: luxury-estate-backend
     restart: unless-stopped
     depends_on:
       db:

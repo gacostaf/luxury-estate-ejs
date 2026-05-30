@@ -13,6 +13,7 @@ import { PropertyReviewsSection } from '@/components/property/PropertyReviewsSec
 import { ScheduleTour } from '@/components/property/ScheduleTour/ScheduleTour'
 import { PropertyInvestmentAnalysis } from '@/components/property/PropertyInvestmentAnalysis/PropertyInvestmentAnalysis'
 import { NeighborhoodInsights } from '@/components/property/NeighborhoodInsights/NeighborhoodInsights'
+import { ContactAgentForm } from '@/components/property/ContactAgentForm/ContactAgentForm'
 
 import { api } from '@/api/axios'
 
@@ -237,6 +238,19 @@ export function PropertyDetailsPage() {
         <PropertyImageGallery images={mapToGalleryDTO(property)} />
 
         <PropertyFeatures features={mapToFeaturesDTO(property)} />
+
+        {property.agent && (
+          <ContactAgentForm
+            propertyId={property.id}
+            associate={{
+              id: property.agent.id,
+              fullName: property.agent.fullName,
+              title: `${property.propertyType?.name ?? ''} Specialist`,
+              email: property.agent.email ?? undefined,
+              phone: property.agent.phone ?? undefined,
+            }}
+          />
+        )}
 
         <PropertyMapSection property={mapToMapDTO(property)} />
 

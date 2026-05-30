@@ -5,6 +5,7 @@ import { HomePage } from '@/pages/Home/Homepage'
 import { ListingsPage } from '@/pages/Listings/ListingsPage'
 
 import { PropertyDetailsPage } from '@/pages/PropertyDetails/PropertyDetailsPage'
+import { ScheduleTourPage } from '@/pages/ScheduleTour/ScheduleTourPage'
 
 import { QueryProvider } from '@/providers/QueryProvider'
 
@@ -29,6 +30,11 @@ function App() {
           <Route
             path="/properties/:slug"
             element={<PropertyDetailsPage />}
+          />
+
+          <Route
+            path="/schedule-tour/:propertyId"
+            element={<ScheduleTourPage />}
           />
 
         </Routes>

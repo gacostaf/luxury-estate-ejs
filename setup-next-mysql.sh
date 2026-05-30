@@ -2,7 +2,7 @@
 set -e
 
 # Use first argument as project name, or default to "luxury-estate-app"
-PROJECT_NAME="${1:-luxury-estate-app}"
+PROJECT_NAME="${1:-luxury-estate-backend}"
 
 echo "🔍 Checking Node.js version..."
 NODE_VERSION=$(node -v | cut -d 'v' -f2)
