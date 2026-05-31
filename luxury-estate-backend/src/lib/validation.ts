@@ -41,8 +41,8 @@ export const propertyVideoSchema = z.object({
 });
 
 export const personSchema = z.object({
-  firstName: z.string().optional().nullable(),
-  lastName: z.string().optional().nullable(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
   phone: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
   slug: z.string().min(1),

@@ -284,10 +284,10 @@ model Person {
   id                       Int     @id @default(autoincrement()) @map("ID")
   tenantId                 Int     @map("TENANT_ID")
   personTypeId             Int     @map("PERSON_TYPE")
-  firstName                String? @map("FIRST_NAME")
-  lastName                 String? @map("LAST_NAME")
+  firstName                String  @map("FIRST_NAME")
+  lastName                 String  @map("LAST_NAME")
   phone                    String? @map("PHONE")
-  email                    String? @unique @map("EMAIL") @db.VarChar(254)
+  email                    String? @map("EMAIL") @db.VarChar(254)
   slug                     String  @map("SLUG") @db.VarChar(255)
   notes                    String? @map("NOTES") @db.Text
   isLead                   Boolean @default(false) @map("IS_LEAD")
@@ -347,6 +347,7 @@ model Person {
 
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
+  @@unique([tenantId, email])
   @@unique([tenantId, slug])
   @@index([personTypeId, isLead], name: "idx_person_type_lead")
   @@index([disqualificationStatusId], name: "idx_person_dq_status")
@@ -983,7 +984,7 @@ model ContactRequest {
   firstName   String  @map("FIRST_NAME") @db.VarChar(100)
   lastName    String  @map("LAST_NAME") @db.VarChar(100)
   email       String  @map("EMAIL") @db.VarChar(255)
-  phone       String? @map("PHONE_NUMBER") @db.VarChar(50)
+  phone       String? @map("PHONE") @db.VarChar(50)
   companyName String? @map("COMPANY_NAME") @db.VarChar(150)
   jobTitle    String? @map("JOB_TITLE") @db.VarChar(100)
 
@@ -1051,7 +1052,7 @@ model PropertyInquiry {
   firstName   String   @map("FIRST_NAME") @db.VarChar(100)
   lastName    String   @map("LAST_NAME") @db.VarChar(100)
   email       String   @map("EMAIL") @db.VarChar(255)
-  phone       String?  @map("PHONE_NUMBER") @db.VarChar(50)
+  phone       String?  @map("PHONE") @db.VarChar(50)
   message     String?  @map("MESSAGE") @db.Text
   contactMethodId Int? @map("CONTACT_METHOD_ID")
   contactMethod   ContactMethod? @relation(fields: [contactMethodId], references: [id])
