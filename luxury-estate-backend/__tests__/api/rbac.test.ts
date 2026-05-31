@@ -124,7 +124,7 @@ describe('RBAC System', () => {
 
     it('should include directly assigned permissions', async () => {
       await prisma.personPermission.create({
-        data: { personId, permissionId: adminPermId },
+        data: { personId, permissionId: adminPermId, tenantId: 1 },
       });
 
       const permissions = await getPersonPermissions(personId);
@@ -136,7 +136,7 @@ describe('RBAC System', () => {
         data: { personId, roleId: agentRoleId, tenantId: 1 },
       });
       await prisma.personPermission.create({
-        data: { personId, permissionId: adminPermId },
+        data: { personId, permissionId: adminPermId, tenantId: 1 },
       });
 
       const permissions = await getPersonPermissions(personId);

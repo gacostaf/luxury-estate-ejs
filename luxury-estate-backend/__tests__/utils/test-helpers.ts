@@ -211,8 +211,10 @@ export async function createTestAddress(overrides = {}) {
 }
 
 export async function createTestImage(overrides = {}) {
+  const tenantId = await getOrCreateDefaultTenant();
   return prisma.image.create({
     data: {
+      tenantId,
       uri: `https://example.com/img-${Date.now()}.jpg`,
       isPersonal: false,
       ...overrides,
@@ -221,8 +223,10 @@ export async function createTestImage(overrides = {}) {
 }
 
 export async function createTestVideo(overrides = {}) {
+  const tenantId = await getOrCreateDefaultTenant();
   return prisma.video.create({
     data: {
+      tenantId,
       uri: `https://example.com/vid-${Date.now()}.mp4`,
       isPersonal: false,
       ...overrides,

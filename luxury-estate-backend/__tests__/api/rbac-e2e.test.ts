@@ -318,7 +318,7 @@ describe('RBAC End-to-End Enforcement', () => {
         data: { name: 'PI Test', description: 'Test', slug: 'pi-test', tenant: { connect: { id: 1 } }, propertyType: { connect: { id: houseTypeId } }, propertyStatus: { connect: { id: forSaleStatusId } } },
       });
       const img = await prisma.image.create({
-        data: { uri: 'https://example.com/pi.jpg' },
+        data: { uri: 'https://example.com/pi.jpg', tenantId: 1 },
       });
 
       const req = createMockRequest(

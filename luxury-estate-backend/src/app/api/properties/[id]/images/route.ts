@@ -102,7 +102,7 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ id: str
       const uri = saveImageFile(propertyId, ts, consecutive, ext, buffer);
 
       const image = await prisma.image.create({
-        data: { uri, isPersonal: false },
+        data: { uri, isPersonal: false, tenantId },
       });
 
       if (firstImageId === null) {

@@ -29,7 +29,7 @@ describe('Property-Videos API', () => {
     it('should filter by propertyId', async () => {
       const prop = await createTestProperty();
       const vid = await createTestVideo();
-      await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid.id } });
+      await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid.id, tenantId: 1 } });
       const req = createMockRequest(undefined, `http://localhost/api/property-videos?propertyId=${prop.id}`);
       const res = await listRelations(req);
       const json = await res.json();
@@ -65,7 +65,7 @@ describe('Property-Videos API', () => {
     it('should return relation by id', async () => {
       const prop = await createTestProperty();
       const vid = await createTestVideo();
-      const rel = await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid.id } });
+      const rel = await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid.id, tenantId: 1 } });
       const res = await getRelation(createMockRequest(), params(String(rel.id)));
       const json = await res.json();
       expect(res.status).toBe(200);
@@ -83,7 +83,7 @@ describe('Property-Videos API', () => {
       const prop = await createTestProperty();
       const vid1 = await createTestVideo();
       const vid2 = await createTestVideo();
-      const rel = await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid1.id } });
+      const rel = await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid1.id, tenantId: 1 } });
       const req = createMockRequest(
         { propertyId: prop.id, videoId: vid2.id },
         'http://localhost/api/property-videos/1',
@@ -114,7 +114,7 @@ describe('Property-Videos API', () => {
     it('should delete a relation', async () => {
       const prop = await createTestProperty();
       const vid = await createTestVideo();
-      const rel = await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid.id } });
+      const rel = await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid.id, tenantId: 1 } });
       const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(rel.id)));
       expect(res.status).toBe(204);
 

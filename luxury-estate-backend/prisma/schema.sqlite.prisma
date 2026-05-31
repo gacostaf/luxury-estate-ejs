@@ -57,7 +57,16 @@ model Tenant {
   newsletterCampaigns     NewsletterCampaign[]
   newsletterSubscriptions NewsletterSubscription[]
   addresses               Address[]
+  images                  Image[]
+  videos                  Video[]
+  propertyVideos          PropertyVideo[]
+  personPermissions       PersonPermission[]
+  newsletterContents      NewsletterContent[]
+  newsletterSections      NewsletterSection[]
+  newsletterSubscriptionCategories NewsletterSubscriptionCategory[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@map("TENANTS")
 }
 
@@ -83,6 +92,8 @@ model TenantSettings {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@map("TENANT_SETTINGS")
 }
 
@@ -102,6 +113,8 @@ model PersonType {
   tenant Tenant @relation(fields: [tenantId], references: [id])
   persons Person[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("PERSON_TYPES")
 }
@@ -120,6 +133,8 @@ model PropertyType {
   tenant Tenant @relation(fields: [tenantId], references: [id])
   properties Property[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("PROPERTY_TYPES")
 }
@@ -138,6 +153,8 @@ model PropertyStatus {
   tenant Tenant @relation(fields: [tenantId], references: [id])
   properties Property[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("PROPERTY_STATUSES")
 }
@@ -156,6 +173,8 @@ model DisqualificationStatus {
   reasons DisqualificationReason[]
   persons Person[]                  @relation("PersonDQStatus")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("DISQUALIFICATION_STATUSES")
 }
@@ -171,6 +190,8 @@ model DisqualificationReason {
   status DisqualificationStatus @relation(fields: [statusId], references: [id])
   persons Person[]               @relation("PersonDQReason")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, reason])
   @@index([statusId, reason], name: "idx_dq_status_reason")
   @@map("DISQUALIFICATION_REASONS")
@@ -247,6 +268,8 @@ model Address {
 
   persons Person[] @relation("PersonAddress")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([addressCountryId, addressRegionId, addressCityId], name: "idx_address_location")
   @@index([postalCode], name: "idx_address_zip")
   @@index([latitude, longitude], name: "idx_address_coords")
@@ -322,6 +345,8 @@ model Person {
   newsletterSubscription  NewsletterSubscription?
   propertyInquiries  PropertyInquiry[] @relation("PropertyInquiryPersonRelation")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
   @@index([personTypeId, isLead], name: "idx_person_type_lead")
   @@index([tenantId], name: "idx_person_tenant")
@@ -346,6 +371,8 @@ model AuthAccount {
   createdAt           DateTime  @default(now()) @map("CREATED_AT")
   updatedAt           DateTime  @updatedAt @map("UPDATED_AT")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([email], name: "idx_auth_email")
   @@index([tenantId], name: "idx_auth_tenant")
   @@map("AUTH_ACCOUNTS")
@@ -393,6 +420,8 @@ model Agency {
 
   properties Property[] @relation("AgencyProperties")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, name])
   @@unique([tenantId, slug])
   @@index([isFeatured], name: "idx_agency_featured")
@@ -444,6 +473,8 @@ model Associate {
   secondaryTours   TourRequest[] @relation("SecondaryAssociateTourRelation")
   inquiries        PropertyInquiry[] @relation("AssociateInquiries")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
   @@index([officeId, department], name: "idx_associate_office_dept")
   @@index([tenantId], name: "idx_associate_tenant")
@@ -466,6 +497,8 @@ model Role {
   rolePermissions RolePermission[]
   personRoles     PersonRole[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@index([tenantId], name: "idx_role_tenant")
   @@map("ROLES")
@@ -497,6 +530,8 @@ model RolePermission {
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
   tenant     Tenant     @relation(fields: [tenantId], references: [id])
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@id([roleId, permissionId])
   @@index([tenantId], name: "idx_rp_tenant")
   @@map("ROLE_PERMISSIONS")
@@ -514,6 +549,8 @@ model PersonRole {
 
   associates Associate[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([personId, roleId])
   @@index([tenantId], name: "idx_pr_tenant")
   @@map("PERSON_ROLES")
@@ -521,13 +558,18 @@ model PersonRole {
 
 model PersonPermission {
   id           Int @id @default(autoincrement()) @map("ID")
+  tenantId     Int @map("TENANT_ID")
   personId     Int @map("PERSON_ID")
   permissionId Int @map("PERMISSION_ID")
 
+  tenant     Tenant     @relation(fields: [tenantId], references: [id])
   person     Person     @relation(fields: [personId], references: [id])
   permission Permission @relation(fields: [permissionId], references: [id])
 
-  @@unique([personId, permissionId])
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
+  @@unique([tenantId, personId, permissionId])
+  @@index([tenantId], name: "idx_pp_tenant")
   @@map("PERSON_PERMISSIONS")
 }
 
@@ -545,6 +587,8 @@ model AssociateType {
   tenant     Tenant      @relation(fields: [tenantId], references: [id])
   associates Associate[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("ASSOCIATE_TYPES")
 }
@@ -572,6 +616,8 @@ model Office {
   createdAt          DateTime    @default(now()) @map("CREATED_AT")
   updatedAt          DateTime    @default(now()) @map("UPDATED_AT")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
   @@index([tenantId], name: "idx_office_tenant")
   @@map("OFFICES")
@@ -581,6 +627,7 @@ model Office {
 
 model Image {
   id                 Int             @id @default(autoincrement()) @map("ID")
+  tenantId           Int             @map("TENANT_ID")
   uri                String          @map("URI")
   isPersonal         Boolean         @default(false) @map("IS_PERSONAL")
   propertyImages     PropertyImage[]
@@ -600,10 +647,15 @@ model Image {
   createdAt         DateTime @default(now()) @map("CREATED_AT")
   updatedAt         DateTime @default(now()) @map("UPDATED_AT")
 
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
   persons Person[] @relation("PersonImages")
 
   newsletterIssueCovers NewsletterIssue[] @relation("NewsletterIssueCoverImage")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
+  @@index([tenantId], name: "idx_image_tenant")
   @@map("IMAGES")
 }
 
@@ -618,6 +670,8 @@ model PropertyImage {
   property Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
   image    Image    @relation(fields: [imageId], references: [id], onDelete: Restrict)
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([propertyId, imageId], name: "uq_prop_img")
   @@index([propertyId, isBanner], name: "idx_prop_img_banner")
   @@index([tenantId], name: "idx_pi_tenant")
@@ -626,6 +680,7 @@ model PropertyImage {
 
 model Video {
   id             Int             @id @default(autoincrement()) @map("ID")
+  tenantId       Int             @map("TENANT_ID")
   uri            String          @map("URI")
   isPersonal     Boolean         @default(false) @map("IS_PERSONAL")
   propertyVideos PropertyVideo[]
@@ -641,18 +696,29 @@ model Video {
   createdAt         DateTime @default(now()) @map("CREATED_AT")
   updatedAt         DateTime @default(now()) @map("UPDATED_AT")
 
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
+  @@index([tenantId], name: "idx_video_tenant")
   @@map("VIDEOS")
 }
 
 model PropertyVideo {
   id         Int      @id @default(autoincrement()) @map("ID")
+  tenantId   Int      @map("TENANT_ID")
   propertyId Int      @map("PROPERTY_ID")
   videoId    Int      @map("VIDEO_ID")
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
-  video      Video    @relation(fields: [videoId], references: [id], onDelete: Restrict)
 
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+  video    Video    @relation(fields: [videoId], references: [id], onDelete: Restrict)
+
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([propertyId, videoId], name: "uq_prop_vid")
   @@index([propertyId], name: "idx_prop_vid_prop")
+  @@index([tenantId], name: "idx_pv_tenant")
   @@map("PROPERTY_VIDEOS")
 }
 
@@ -722,6 +788,8 @@ model Property {
   tourRequests   TourRequest[]
   inquiries      PropertyInquiry[] @relation("PropertyInquiries")
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([price], name: "idx_price")
   @@index([bedrooms, bathrooms], name: "idx_room_counts")
   @@index([mlsId], name: "idx_mls_id")
@@ -761,6 +829,8 @@ model BlogPost {
 
   updatedPerson Person? @relation("BlogPostUpdatedByRelation", fields: [updatedByPersonId], references: [id])
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
   @@index([published, createdAt], name: "idx_blog_published_date")
   @@index([tenantId], name: "idx_blog_tenant")
@@ -781,6 +851,8 @@ model ReviewModerationStatus {
   tenant  Tenant          @relation(fields: [tenantId], references: [id])
   reviews PropertyReview[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("REVIEW_MODERATION_STATUSES")
 }
@@ -811,6 +883,8 @@ model PropertyReview {
   moderationStatus ReviewModerationStatus? @relation(fields: [moderationStatusId], references: [id])
   moderatedBy Person? @relation("ReviewModeratorRelation", fields: [moderatedById], references: [id])
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([propertyId, rating], name: "idx_review_rating")
   @@index([personId], name: "idx_review_person")
   @@index([tenantId], name: "idx_review_tenant")
@@ -834,6 +908,8 @@ model ContactMethod {
   propertyInquiries   PropertyInquiry[]
   tourRequests        TourRequest[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("CONTACT_METHODS")
 }
@@ -855,6 +931,8 @@ model LeadSource {
   tourRequests            TourRequest[]
   newsletterSubscriptions NewsletterSubscription[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("LEAD_SOURCES")
 }
@@ -912,6 +990,8 @@ model ContactRequest {
   updatedPerson Person? @relation("ContactRequestUpdatedByRelation", fields: [updatedByPersonId], references: [id])
   
   // Indexes for faster lookups in the CRM dashboard
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([email])
   @@index([requestStatusId])
   @@index([assignedAssociateId])
@@ -942,6 +1022,8 @@ model PropertyInquiry {
   associate Associate @relation("AssociateInquiries", fields: [associateId], references: [id])
   person    Person?   @relation("PropertyInquiryPersonRelation", fields: [personId], references: [id])
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([propertyId], name: "idx_property_inquiries_property_id")
   @@index([associateId], name: "idx_property_inquiries_associate_id")
   @@index([tenantId], name: "idx_property_inquiries_tenant")
@@ -973,6 +1055,8 @@ model TourType {
   tenant       Tenant       @relation(fields: [tenantId], references: [id])
   tourRequests TourRequest[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("TOUR_TYPES")
 }
@@ -1008,6 +1092,8 @@ model TourRequest {
   tourType           TourType   @relation(fields: [tourTypeId], references: [id])
   tourStatus         TourStatus @relation(fields: [tourStatusId], references: [id])
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([propertyId])
   @@index([primaryAssociateId])
   @@index([secondaryAssociateId])
@@ -1047,6 +1133,8 @@ model NewsletterIssue {
   contents      NewsletterContent[]
   campaigns     NewsletterCampaign[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
   @@index([publishedAt], name: "idx_newsletter_published")
   @@index([isPublished], name: "idx_newsletter_status")
@@ -1056,6 +1144,7 @@ model NewsletterIssue {
 
 model NewsletterSection {
   id                 Int              @id @default(autoincrement()) @map("ID")
+  tenantId           Int              @map("TENANT_ID")
   newsletterIssueId  Int              @map("NEWSLETTER_ISSUE_ID")
 
   title              String           @map("TITLE")
@@ -1063,15 +1152,20 @@ model NewsletterSection {
 
   content            String?          @map("CONTENT")
 
+  tenant             Tenant           @relation(fields: [tenantId], references: [id])
   newsletterIssue    NewsletterIssue  @relation(fields: [newsletterIssueId], references: [id], onDelete: Cascade)
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([newsletterIssueId], name: "idx_newsletter_section_issue")
+  @@index([tenantId], name: "idx_ns_tenant")
 
   @@map("NEWSLETTER_SECTIONS")
 }
 
 model NewsletterContent {
   id                      Int                       @id @default(autoincrement()) @map("ID")
+  tenantId                Int                       @map("TENANT_ID")
 
   newsletterIssueId       Int                       @map("NEWSLETTER_ISSUE_ID")
 
@@ -1081,12 +1175,16 @@ model NewsletterContent {
 
   sortOrder               Int                       @default(0) @map("SORT_ORDER")
 
+  tenant                  Tenant                    @relation(fields: [tenantId], references: [id])
   newsletterIssue         NewsletterIssue            @relation(fields: [newsletterIssueId], references: [id], onDelete: Cascade)
 
   newsletterContentType   NewsletterContentType      @relation(fields: [newsletterContentTypeId], references: [id])
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([newsletterIssueId], name: "idx_newsletter_content_issue")
   @@index([newsletterContentTypeId], name: "idx_newsletter_content_type")
+  @@index([tenantId], name: "idx_nc_tenant")
 
   @@map("NEWSLETTER_CONTENT")
 }
@@ -1105,6 +1203,8 @@ model NewsletterContentType {
   tenant              Tenant               @relation(fields: [tenantId], references: [id])
   newsletterContents  NewsletterContent[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("NEWSLETTER_CONTENT_TYPES")
 }
@@ -1125,8 +1225,10 @@ model NewsletterCampaign {
   tenant             Tenant             @relation(fields: [tenantId], references: [id])
   newsletterIssue    NewsletterIssue   @relation(fields: [newsletterIssueId], references: [id], onDelete: Cascade)
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([newsletterIssueId], name: "idx_newsletter_campaign_issue")
-  @@index([tenantId], name: "idx_nc_tenant")
+  @@index([tenantId], name: "idx_campaign_tenant")
 
   @@map("NEWSLETTER_CAMPAIGNS")
 }
@@ -1155,8 +1257,10 @@ model NewsletterSubscription {
 
   categories       NewsletterSubscriptionCategory[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([isSubscribed], name: "idx_newsletter_subscribed")
-  @@index([tenantId], name: "idx_ns_tenant")
+  @@index([tenantId], name: "idx_sub_tenant")
 
   @@map("NEWSLETTER_SUBSCRIPTIONS")
 }
@@ -1174,24 +1278,31 @@ model NewsletterCategory {
   tenant          Tenant                             @relation(fields: [tenantId], references: [id])
   subscriptions   NewsletterSubscriptionCategory[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("NEWSLETTER_CATEGORIES")
 }
 
 model NewsletterSubscriptionCategory {
   id                         Int                       @id @default(autoincrement()) @map("ID")
+  tenantId                   Int                       @map("TENANT_ID")
 
   newsletterSubscriptionId   Int                       @map("NEWSLETTER_SUBSCRIPTION_ID")
   newsletterCategoryId       Int                       @map("NEWSLETTER_CATEGORY_ID")
 
+  tenant                     Tenant                    @relation(fields: [tenantId], references: [id])
   newsletterSubscription     NewsletterSubscription    @relation(fields: [newsletterSubscriptionId], references: [id], onDelete: Cascade)
 
   newsletterCategory         NewsletterCategory        @relation(fields: [newsletterCategoryId], references: [id], onDelete: Cascade)
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([newsletterSubscriptionId, newsletterCategoryId], name: "uq_newsletter_subscription_category")
 
   @@index([newsletterSubscriptionId], name: "idx_newsletter_sub")
   @@index([newsletterCategoryId], name: "idx_newsletter_category")
+  @@index([tenantId], name: "idx_nsc_tenant")
 
   @@map("NEWSLETTER_SUBSCRIPTION_CATEGORIES")
 }
@@ -1210,6 +1321,8 @@ model RequestType {
   tenant          Tenant           @relation(fields: [tenantId], references: [id])
   contactRequests ContactRequest[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("REQUEST_TYPES")
 }
@@ -1228,6 +1341,8 @@ model RequestStatus {
   tenant          Tenant           @relation(fields: [tenantId], references: [id])
   contactRequests ContactRequest[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("REQUEST_STATUSES")
 }
@@ -1246,6 +1361,8 @@ model TourStatus {
   tenant       Tenant        @relation(fields: [tenantId], references: [id])
   tourRequests TourRequest[]
 
+
+  isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
   @@map("TOUR_STATUSES")
 }

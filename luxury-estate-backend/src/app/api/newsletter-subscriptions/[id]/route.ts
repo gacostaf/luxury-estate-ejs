@@ -77,11 +77,13 @@ export const PATCH = requirePermission(Permissions.REVIEW_MODERATE)(async (req: 
       include: subscriptionIncludes,
     });
     if (categoryIds) {
+      const tenantId = sub.tenantId;
       await prisma.newsletterSubscriptionCategory.deleteMany({ where: { newsletterSubscriptionId: sub.id } });
       await prisma.newsletterSubscriptionCategory.createMany({
         data: categoryIds.map((categoryId: number) => ({
           newsletterSubscriptionId: sub.id,
           newsletterCategoryId: categoryId,
+          tenantId,
         })),
       });
     }

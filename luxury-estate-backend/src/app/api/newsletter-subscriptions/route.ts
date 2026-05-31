@@ -72,6 +72,7 @@ export const POST = requireAuth()(async (req: NextRequest) => {
         data: categoryIds.map((categoryId: number) => ({
           newsletterSubscriptionId: sub.id,
           newsletterCategoryId: categoryId,
+          tenantId,
         })),
       });
     }

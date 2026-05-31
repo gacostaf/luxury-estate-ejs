@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toImageDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -37,7 +38,9 @@ export const POST = requirePermission(Permissions.IMAGE_CREATE)(async (req: Next
   try {
     const body = await req.json();
     const data = imageSchema.parse(body);
-    const image = await prisma.image.create({ data });
+    const image = await prisma.image.create({
+      data: { ...data, tenantId: getTenantId(req)! },
+    });
     return successResponse(toImageDTO(image), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);

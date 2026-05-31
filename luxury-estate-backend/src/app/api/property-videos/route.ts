@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyVideoDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -57,7 +58,7 @@ export const POST = requirePermission(Permissions.VIDEO_CREATE)(async (req: Next
     if (!property || !video) return handlePrismaError({ code: 'P2025' });
 
     const relation = await prisma.propertyVideo.create({
-      data,
+      data: { ...data, tenantId: getTenantId(req)! },
       include: { video: true },
     });
     return successResponse(toPropertyVideoDTO(relation), 201);
