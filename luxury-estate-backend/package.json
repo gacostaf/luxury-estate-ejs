@@ -17,7 +17,7 @@
     "db:test:setup": "mysql -u root -p -e \"CREATE DATABASE IF NOT EXISTS luxury_estate_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\" && DATABASE_URL=$TEST_DATABASE_URL npx prisma db push --force-reset",
     "test:full": "npm run db:test:setup && npm test",
     "db:sqlite:generate": "node scripts/generate-sqlite-schema.js && cross-env PRISMA_SCHEMA=prisma/schema.sqlite.prisma npx prisma generate",
-    "db:sqlite:push": "cross-env PRISMA_SCHEMA=prisma/schema.sqlite.prisma npx prisma db push --accept-data-loss",
+    "db:sqlite:push": "cross-env PRISMA_SCHEMA=prisma/schema.sqlite.prisma DATABASE_URL=\"file:./prisma/test.db\" npx prisma db push --accept-data-loss",
     "test:sqlite": "npm run db:sqlite:generate && npm run db:sqlite:push && cross-env TEST_TARGET=sqlite jest --runInBand",
     "test:mysql": "cross-env TEST_TARGET=mysql jest --runInBand"
   },
