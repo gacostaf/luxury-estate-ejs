@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { GET, POST } from '@/app/api/properties/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, lookupPropertyTypeId, lookupPropertyStatusId } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, lookupPropertyTypeId, lookupPropertyStatusId } from '../utils/test-helpers';
 
 describe('Properties API', () => {
   let houseTypeId: number;
@@ -10,15 +10,11 @@ describe('Properties API', () => {
   let forSaleStatusId: number;
   let adminPersonId: number;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
+    await clearTransactionalData();
     houseTypeId = await lookupPropertyTypeId('house');
     condoTypeId = await lookupPropertyTypeId('condo');
     forSaleStatusId = await lookupPropertyStatusId('for_sale');
-  });
-
-  beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
     adminPersonId = await seedAdminUser();
   });
 
@@ -38,7 +34,7 @@ describe('Properties API', () => {
       bathrooms: 3,
     };
 
-    const postReq = createMockRequest(payload, 'http://localhost/api/properties', 'POST', { 'x-user-id': String(adminPersonId) });
+    const postReq = createMockRequest(payload, 'http://localhost/api/properties', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
     const postRes = await POST(postReq);
     const postJson = await postRes.json();
     
@@ -55,24 +51,26 @@ describe('Properties API', () => {
       data: {
         name: 'Malibu Home',
         description: 'Beachfront luxury',
-        propertyTypeId: houseTypeId,
-        propertyStatusId: forSaleStatusId,
+        propertyType: { connect: { id: houseTypeId } },
+        propertyStatus: { connect: { id: forSaleStatusId } },
         addressLocality: 'Malibu',
         addressRegion: 'CA',
         addressCountry: 'US',
         postalCode: '90265',
+        tenant: { connect: { id: 1 } },
       },
     });
     await prisma.property.create({
       data: {
         name: 'Miami Condo',
         description: 'Ocean view condo',
-        propertyTypeId: condoTypeId,
-        propertyStatusId: forSaleStatusId,
+        propertyType: { connect: { id: condoTypeId } },
+        propertyStatus: { connect: { id: forSaleStatusId } },
         addressLocality: 'Miami',
         addressRegion: 'FL',
         addressCountry: 'US',
         postalCode: '33140',
+        tenant: { connect: { id: 1 } },
       },
     });
 

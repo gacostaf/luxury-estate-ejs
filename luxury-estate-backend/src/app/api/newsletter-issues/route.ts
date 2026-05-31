@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toNewsletterIssueDTO, toNewsletterIssueDTOList } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const issueIncludes = {
   coverImage: true,
@@ -44,7 +45,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const isPublished = searchParams.get('isPublished');
-    const where: any = {};
+    const tenantId = getTenantId(req)!;
+    const where: any = { tenantId };
     if (isPublished !== null) where.isPublished = isPublished === 'true';
     const issues = await prisma.newsletterIssue.findMany({
       where,
@@ -59,8 +61,10 @@ export const POST = requirePermission(Permissions.REVIEW_MODERATE)(async (req: N
   try {
     const body = await req.json();
     const data = newsletterIssueSchema.parse(body);
+    const tenantId = getTenantId(req)!;
     const issue = await prisma.newsletterIssue.create({
       data: {
+        tenantId,
         ...data,
         publishedAt: data.publishedAt ? new Date(data.publishedAt) : undefined,
       },

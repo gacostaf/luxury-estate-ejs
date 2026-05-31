@@ -107,14 +107,18 @@ export const RolePermissions: Record<string, Permission[]> = {
 export interface RBACUser {
   personId: number;
   email: string;
+  tenantId: number;
   roles: string[];
   permissions: Permission[];
 }
 
-export async function getPersonPermissions(personId: number): Promise<Permission[]> {
+export async function getPersonPermissions(personId: number, tenantId?: number): Promise<Permission[]> {
+  const wherePersonRole: any = { personId };
+  if (tenantId) wherePersonRole.tenantId = tenantId;
+
   const [personRoles, personPermissions] = await Promise.all([
     prisma.personRole.findMany({
-      where: { personId },
+      where: wherePersonRole,
       include: { role: { include: { rolePermissions: { include: { permission: true } } } } },
     }),
     prisma.personPermission.findMany({
@@ -138,9 +142,12 @@ export async function getPersonPermissions(personId: number): Promise<Permission
   return Array.from(permSet) as Permission[];
 }
 
-export async function getPersonRoles(personId: number): Promise<string[]> {
+export async function getPersonRoles(personId: number, tenantId?: number): Promise<string[]> {
+  const where: any = { personId };
+  if (tenantId) where.tenantId = tenantId;
+
   const roles = await prisma.personRole.findMany({
-    where: { personId },
+    where,
     include: { role: true },
   });
   return roles.map(pr => pr.role.code);
@@ -151,13 +158,14 @@ export async function getRBACUser(personId: number): Promise<RBACUser> {
   if (!person) throw new Error('Person not found');
   
   const [roles, permissions] = await Promise.all([
-    getPersonRoles(personId),
-    getPersonPermissions(personId),
+    getPersonRoles(personId, person.tenantId),
+    getPersonPermissions(personId, person.tenantId),
   ]);
 
   return {
     personId,
     email: person.email ?? '',
+    tenantId: person.tenantId,
     roles,
     permissions,
   };

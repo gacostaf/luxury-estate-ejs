@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toContactMethodDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -26,9 +27,10 @@ import { Permissions } from '@/lib/rbac';
  *       401: { description: Unauthorized }
  *       403: { description: Forbidden }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const methods = await prisma.contactMethod.findMany();
+    const tenantId = getTenantId(req)!;
+    const methods = await prisma.contactMethod.findMany({ where: { tenantId } });
     return successResponse(methods.map(toContactMethodDTO));
   } catch (error) { return handlePrismaError(error); }
 }
@@ -37,7 +39,8 @@ export const POST = requireAuth()(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const data = contactMethodSchema.parse(body);
-    const method = await prisma.contactMethod.create({ data });
+    const tenantId = getTenantId(req)!;
+    const method = await prisma.contactMethod.create({ data: { tenantId, ...data } });
     return successResponse(toContactMethodDTO(method), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);

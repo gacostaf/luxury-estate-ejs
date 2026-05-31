@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { loginSchema } from '@/lib/validation';
 import { signToken } from '@/lib/auth/jwt';
 import { verifyPassword } from '@/lib/auth/password';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -40,6 +41,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Account not found' }, { status: 404 });
     }
 
+    const tenantId = getTenantId(req)!;
+    const person = await prisma.person.findFirst({ where: { id: account.personId, tenantId } });
+    if (!person) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+    }
+
     if (!account.isActive) {
       return NextResponse.json({ error: 'Account is deactivated' }, { status: 401 });
     }
@@ -66,7 +73,7 @@ export async function POST(req: NextRequest) {
       data: { lastLoginAt: new Date(), failedLoginAttempts: 0 },
     });
 
-    const token = await signToken({ personId: account.personId, email: account.email });
+    const token = await signToken({ personId: account.personId, email: account.email, tenantId });
 
     return NextResponse.json({
       success: true,

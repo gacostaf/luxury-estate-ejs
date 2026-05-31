@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from './jwt';
 import { prisma } from '@/lib/prisma';
 import { getPersonPermissions, getPersonRoles, Permission, Permissions, RBACUser } from '@/lib/rbac';
+import { resolveTenantId } from './tenantContextMiddleware';
 
 const userContext = new WeakMap<NextRequest, RBACUser>();
 
@@ -16,7 +17,8 @@ export interface RBACOptions {
 }
 
 async function authenticate(req: NextRequest): Promise<RBACUser | null> {
-  // Dev mode: X-User-ID header bypasses full auth
+  const tenantId = resolveTenantId(req);
+
   const devUserId = req.headers.get('x-user-id');
   if (devUserId && process.env.NODE_ENV !== 'production') {
     const personId = parseInt(devUserId, 10);
@@ -27,10 +29,9 @@ async function authenticate(req: NextRequest): Promise<RBACUser | null> {
       getPersonRoles(personId),
       getPersonPermissions(personId),
     ]);
-    return { personId, email: person.email ?? '', roles, permissions };
+    return { personId, email: person.email ?? '', tenantId: tenantId ?? 1, roles, permissions };
   }
 
-  // Production mode: Bearer JWT token
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) return null;
 
@@ -46,6 +47,7 @@ async function authenticate(req: NextRequest): Promise<RBACUser | null> {
   return {
     personId: payload.personId,
     email: payload.email,
+    tenantId: payload.tenantId,
     roles,
     permissions,
   };

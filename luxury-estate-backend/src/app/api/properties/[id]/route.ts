@@ -2,6 +2,7 @@
 import { prisma } from '@/lib/prisma';
 import { handlePrismaError } from '@/lib/api-helpers';
 import { toPropertyDTO } from '@/lib/dtos';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 export async function GET(
   req: NextRequest,
@@ -10,7 +11,8 @@ export async function GET(
   try {
     const { id } = await params;
     const numId = parseInt(id, 10);
-    const where = Number.isNaN(numId) ? { seoUrl: id } : { id: numId };
+    const tenantId = getTenantId(req)!;
+    const where = Number.isNaN(numId) ? { seoUrl: id, tenantId } : { id: numId, tenantId };
 
     const property = await prisma.property.findFirst({
       where,

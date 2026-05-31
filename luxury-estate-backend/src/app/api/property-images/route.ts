@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyImageDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -34,8 +35,10 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const propertyId = searchParams.get('propertyId');
+    const tenantId = getTenantId(req)!;
     
-    const where = propertyId ? { propertyId: parseInt(propertyId) } : {};
+    const where: any = { tenantId };
+    if (propertyId) where.propertyId = parseInt(propertyId);
     const relations = await prisma.propertyImage.findMany({
       where,
       include: { property: { select: { name: true } }, image: true },
@@ -49,10 +52,11 @@ export const POST = requirePermission(Permissions.IMAGE_CREATE)(async (req: Next
   try {
     const body = await req.json();
     const data = propertyImageSchema.parse(body);
+    const tenantId = getTenantId(req)!;
     
     // Verify property and image exist
     const [property, image] = await Promise.all([
-      prisma.property.findUnique({ where: { id: data.propertyId } }),
+      prisma.property.findFirst({ where: { id: data.propertyId, tenantId } }),
       prisma.image.findUnique({ where: { id: data.imageId } }),
     ]);
     if (!property || !image) return handlePrismaError({ code: 'P2025' });
@@ -66,7 +70,7 @@ export const POST = requirePermission(Permissions.IMAGE_CREATE)(async (req: Next
     }
 
     const relation = await prisma.propertyImage.create({
-      data,
+      data: { tenantId, ...data },
       include: { image: true },
     });
     return successResponse(toPropertyImageDTO(relation), 201);

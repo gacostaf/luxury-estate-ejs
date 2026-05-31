@@ -3,7 +3,7 @@ import { GET as listRelations, POST as createRelation } from '@/app/api/property
 import { GET as getRelation, PUT as updateRelation, DELETE as deleteRelation } from '@/app/api/property-images/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestProperty, createTestImage } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, createTestProperty, createTestImage } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -13,8 +13,7 @@ describe('Property-Images API', () => {
   let adminPersonId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
   });
 
@@ -30,7 +29,7 @@ describe('Property-Images API', () => {
     it('should filter by propertyId', async () => {
       const prop = await createTestProperty();
       const img = await createTestImage();
-      await prisma.propertyImage.create({ data: { propertyId: prop.id, imageId: img.id } });
+      await prisma.propertyImage.create({ data: { tenant: { connect: { id: 1 } }, property: { connect: { id: prop.id } }, image: { connect: { id: img.id } } } });
 
       const req = createMockRequest(undefined, `http://localhost/api/property-images?propertyId=${prop.id}`);
       const res = await listRelations(req);
@@ -46,7 +45,7 @@ describe('Property-Images API', () => {
       const prop = await createTestProperty();
       const img = await createTestImage();
       const payload = { propertyId: prop.id, imageId: img.id, isBanner: false };
-      const req = createMockRequest(payload, 'http://localhost/api/property-images', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/property-images', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createRelation(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -57,7 +56,7 @@ describe('Property-Images API', () => {
     it('should return 404 when property does not exist', async () => {
       const img = await createTestImage();
       const payload = { propertyId: 99999, imageId: img.id, isBanner: false };
-      const req = createMockRequest(payload, 'http://localhost/api/property-images', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/property-images', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createRelation(req);
       expect(res.status).toBe(404);
     });
@@ -67,7 +66,7 @@ describe('Property-Images API', () => {
     it('should return relation by id', async () => {
       const prop = await createTestProperty();
       const img = await createTestImage();
-      const rel = await prisma.propertyImage.create({ data: { propertyId: prop.id, imageId: img.id } });
+      const rel = await prisma.propertyImage.create({ data: { tenant: { connect: { id: 1 } }, property: { connect: { id: prop.id } }, image: { connect: { id: img.id } } } });
       const res = await getRelation(createMockRequest(), params(String(rel.id)));
       const json = await res.json();
       expect(res.status).toBe(200);
@@ -85,12 +84,12 @@ describe('Property-Images API', () => {
       const prop = await createTestProperty();
       const img1 = await createTestImage();
       const img2 = await createTestImage();
-      const rel = await prisma.propertyImage.create({ data: { propertyId: prop.id, imageId: img1.id } });
+      const rel = await prisma.propertyImage.create({ data: { tenant: { connect: { id: 1 } }, property: { connect: { id: prop.id } }, image: { connect: { id: img1.id } } } });
       const req = createMockRequest(
         { propertyId: prop.id, imageId: img2.id, isBanner: true },
         'http://localhost/api/property-images/1',
         'PUT',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateRelation(req, params(String(rel.id)));
       const json = await res.json();
@@ -105,7 +104,7 @@ describe('Property-Images API', () => {
         { propertyId: prop.id, imageId: img.id, isBanner: false },
         'http://localhost/api/property-images/99999',
         'PUT',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateRelation(req, params('99999'));
       expect(res.status).toBe(404);
@@ -116,8 +115,8 @@ describe('Property-Images API', () => {
     it('should delete a relation', async () => {
       const prop = await createTestProperty();
       const img = await createTestImage();
-      const rel = await prisma.propertyImage.create({ data: { propertyId: prop.id, imageId: img.id } });
-      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(rel.id)));
+      const rel = await prisma.propertyImage.create({ data: { tenant: { connect: { id: 1 } }, property: { connect: { id: prop.id } }, image: { connect: { id: img.id } } } });
+      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }), params(String(rel.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.propertyImage.findUnique({ where: { id: rel.id } });
@@ -125,7 +124,7 @@ describe('Property-Images API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
+      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }), params('99999'));
       expect(res.status).toBe(404);
     });
   });

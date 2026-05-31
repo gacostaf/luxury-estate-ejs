@@ -2,20 +2,19 @@ import { describe, it, expect, beforeEach } from '@jest/globals';
 import { GET as listCategories, POST as createCategory } from '@/app/api/newsletter-categories/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser } from '../utils/test-helpers';
 
 describe('Newsletter Categories API', () => {
   let adminPersonId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
   });
 
   describe('GET /api/newsletter-categories', () => {
     it('should return empty list when no categories exist', async () => {
-      const res = await listCategories();
+      const res = await listCategories(createMockRequest());
       const json = await res.json();
       expect(res.status).toBe(200);
       expect(json.data).toEqual([]);
@@ -24,11 +23,11 @@ describe('Newsletter Categories API', () => {
     it('should return categories ordered by name', async () => {
       await prisma.newsletterCategory.createMany({
         data: [
-          { code: 'zeta', name: 'Zeta' },
-          { code: 'alpha', name: 'Alpha' },
+          { code: 'zeta', name: 'Zeta', tenantId: 1 },
+          { code: 'alpha', name: 'Alpha', tenantId: 1 },
         ],
       });
-      const res = await listCategories();
+      const res = await listCategories(createMockRequest());
       const json = await res.json();
       expect(json.data).toHaveLength(2);
       expect(json.data[0].name).toBe('Alpha');
@@ -39,7 +38,7 @@ describe('Newsletter Categories API', () => {
   describe('POST /api/newsletter-categories', () => {
     it('should create a category', async () => {
       const payload = { code: 'market_reports', name: 'Market Reports' };
-      const req = createMockRequest(payload, undefined, 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, undefined, 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createCategory(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -54,7 +53,7 @@ describe('Newsletter Categories API', () => {
     });
 
     it('should return 400 for missing code and name', async () => {
-      const req = createMockRequest({}, undefined, 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest({}, undefined, 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createCategory(req);
       expect(res.status).toBe(400);
     });

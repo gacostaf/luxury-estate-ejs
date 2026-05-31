@@ -3,7 +3,7 @@ import { GET as listOffices, POST as createOffice } from '@/app/api/offices/rout
 import { GET as getOffice, PATCH as updateOffice, DELETE as deleteOffice } from '@/app/api/offices/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestOffice } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, createTestOffice } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -13,8 +13,7 @@ describe('Offices API', () => {
   let adminPersonId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
   });
 

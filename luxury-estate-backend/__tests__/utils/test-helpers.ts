@@ -1,45 +1,73 @@
 import { prisma } from '@/lib/prisma';
 
-export async function clearTestDatabase() {
-  await prisma.newsletterSubscriptionCategory.deleteMany();
-  await prisma.newsletterCampaign.deleteMany();
-  await prisma.newsletterContent.deleteMany();
-  await prisma.newsletterSection.deleteMany();
-  await prisma.newsletterIssue.deleteMany();
-  await prisma.newsletterSubscription.deleteMany();
-  await prisma.newsletterCategory.deleteMany();
-  await prisma.newsletterContentType.deleteMany();
-  await prisma.contactRequest.deleteMany();
-  await prisma.tourRequest.deleteMany();
-  await prisma.propertyInquiry.deleteMany();
-  await prisma.propertyReview.deleteMany();
-  await prisma.propertyVideo.deleteMany();
-  await prisma.propertyImage.deleteMany();
-  await prisma.property.deleteMany();
-  await prisma.blogPost.deleteMany();
-  await prisma.associate.deleteMany();
-  await prisma.personPermission.deleteMany();
-  await prisma.personRole.deleteMany();
-  await prisma.authAccount.deleteMany();
-  await prisma.video.deleteMany();
-  await prisma.image.deleteMany();
-  await prisma.person.deleteMany();
-  await prisma.office.deleteMany();
-  await prisma.agency.deleteMany();
-  await prisma.address.deleteMany();
+const DEFAULT_TENANT_ID = 1;
+
+export async function getOrCreateDefaultTenant(): Promise<number> {
+  let tenant = await prisma.tenant.findUnique({ where: { id: DEFAULT_TENANT_ID } });
+  if (!tenant) {
+    tenant = await prisma.tenant.create({
+      data: { id: DEFAULT_TENANT_ID, name: 'Default Tenant', slug: 'default' },
+    });
+  }
+  return tenant.id;
 }
 
-export async function seedLookupTables() {
+const LOOKUP_TABLES = new Set([
+  'PERSON_TYPES', 'PROPERTY_TYPES', 'PROPERTY_STATUSES',
+  'DISQUALIFICATION_STATUSES', 'DISQUALIFICATION_REASONS',
+  'COUNTRIES', 'STATES', 'CITIES',
+  'ASSOCIATE_TYPES', 'TOUR_TYPES', 'TOUR_STATUSES',
+  'REQUEST_TYPES', 'REQUEST_STATUSES', 'REVIEW_MODERATION_STATUSES',
+  'CONTACT_METHODS', 'LEAD_SOURCES',
+  'PERMISSIONS', 'TENANTS', 'TENANT_SETTINGS',
+]);
+
+const TRANSACTIONAL_TABLES = [
+  'NEWSLETTER_SUBSCRIPTION_CATEGORIES', 'NEWSLETTER_CAMPAIGNS',
+  'NEWSLETTER_CONTENT', 'NEWSLETTER_SECTIONS', 'NEWSLETTER_ISSUES',
+  'NEWSLETTER_SUBSCRIPTIONS', 'NEWSLETTER_CATEGORIES', 'NEWSLETTER_CONTENT_TYPES',
+  'CONTACT_REQUESTS', 'TOUR_REQUESTS', 'PROPERTY_INQUIRIES',
+  'PROPERTY_REVIEWS', 'PROPERTY_VIDEOS', 'PROPERTY_IMAGES',
+  'PROPERTIES', 'BLOG_POSTS', 'ASSOCIATES',
+  'PERSON_PERMISSIONS', 'PERSON_ROLES', 'ROLE_PERMISSIONS',
+  'AUTH_ACCOUNTS', 'VIDEOS', 'IMAGES', 'PERSONS',
+  'OFFICES', 'AGENCIES', 'ADDRESSES', 'ROLES',
+];
+
+function fkDisableSQL() {
+  return process.env.DATABASE_URL?.startsWith('file:')
+    ? ['PRAGMA foreign_keys = OFF', 'PRAGMA defer_foreign_keys = ON']
+    : ['SET FOREIGN_KEY_CHECKS = 0'];
+}
+
+function fkEnableSQL() {
+  return process.env.DATABASE_URL?.startsWith('file:')
+    ? ['PRAGMA foreign_keys = ON', 'PRAGMA defer_foreign_keys = OFF']
+    : ['SET FOREIGN_KEY_CHECKS = 1'];
+}
+
+export async function clearTransactionalData() {
+  const deletes = TRANSACTIONAL_TABLES.map(t => `DELETE FROM \`${t}\``);
+  await prisma.$transaction([
+    ...fkDisableSQL().map(s => prisma.$executeRawUnsafe(s)),
+    ...deletes.map(q => prisma.$executeRawUnsafe(q)),
+    ...fkEnableSQL().map(s => prisma.$executeRawUnsafe(s)),
+  ]);
+}
+
+export async function seedLookupTables(tenantId = DEFAULT_TENANT_ID) {
+  await getOrCreateDefaultTenant();
+
   for (const name of ['CLIENT', 'AGENT', 'BROKER', 'REALTOR', 'VP', 'OWNER', 'EXTERNAL_AGENT']) {
-    await prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` } });
+    await prisma.personType.upsert({ where: { tenantId_code: { tenantId, code: name } }, update: {}, create: { tenantId, code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` } });
   }
 
   for (const name of ['house', 'condo', 'villa', 'townhouse', 'penthouse', 'land']) {
-    await prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name} property type` } });
+    await prisma.propertyType.upsert({ where: { tenantId_code: { tenantId, code: name } }, update: {}, create: { tenantId, code: name, name, description: `${name} property type` } });
   }
 
   for (const name of ['for_sale', 'for_rent', 'sold', 'pending']) {
-    await prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ')} property status` } });
+    await prisma.propertyStatus.upsert({ where: { tenantId_code: { tenantId, code: name } }, update: {}, create: { tenantId, code: name, name, description: `${name.replace(/_/g, ' ')} property status` } });
   }
 
   await prisma.country.upsert({
@@ -66,7 +94,7 @@ export async function seedLookupTables() {
   });
 
   for (const name of ['AGENT', 'BROKER', 'REALTOR', 'ASSISTANT']) {
-    await prisma.associateType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} role` } });
+    await prisma.associateType.upsert({ where: { tenantId_code: { tenantId, code: name } }, update: {}, create: { tenantId, code: name, name, description: `${name.toLowerCase()} role` } });
   }
 
   const TOUR_TYPES = [
@@ -80,19 +108,19 @@ export async function seedLookupTables() {
     { code: 'investment', name: 'Investment Property Tour', description: 'Investment Property Tour' },
   ];
   for (const tt of TOUR_TYPES) {
-    await prisma.tourType.upsert({ where: { code: tt.code }, update: {}, create: tt });
+    await prisma.tourType.upsert({ where: { tenantId_code: { tenantId, code: tt.code } }, update: {}, create: { tenantId, ...tt } });
   }
 
   for (const name of ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']) {
-    await prisma.tourStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase().replace(/_/g, ' ')} tour status` } });
+    await prisma.tourStatus.upsert({ where: { tenantId_code: { tenantId, code: name } }, update: {}, create: { tenantId, code: name, name, description: `${name.toLowerCase().replace(/_/g, ' ')} tour status` } });
   }
 
   for (const name of ['GENERAL', 'SALES', 'SUPPORT', 'PARTNERSHIP']) {
-    await prisma.requestType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} request type` } });
+    await prisma.requestType.upsert({ where: { tenantId_code: { tenantId, code: name } }, update: {}, create: { tenantId, code: name, name, description: `${name.toLowerCase()} request type` } });
   }
 
   for (const name of ['NEW', 'OPEN', 'HOLD', 'CLOSED']) {
-    await prisma.requestStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} request status` } });
+    await prisma.requestStatus.upsert({ where: { tenantId_code: { tenantId, code: name } }, update: {}, create: { tenantId, code: name, name, description: `${name.toLowerCase()} request status` } });
   }
 
   for (const cm of [
@@ -103,7 +131,7 @@ export async function seedLookupTables() {
     { code: 'TELEGRAM', name: 'Telegram', description: 'Telegram messaging' },
     { code: 'PORTAL', name: 'Portal', description: 'Client portal' },
   ]) {
-    await prisma.contactMethod.upsert({ where: { code: cm.code }, update: {}, create: cm });
+    await prisma.contactMethod.upsert({ where: { tenantId_code: { tenantId, code: cm.code } }, update: {}, create: { tenantId, ...cm } });
   }
 
   for (const ls of [
@@ -123,42 +151,45 @@ export async function seedLookupTables() {
     { code: 'YOUTUBE', name: 'YouTube', description: 'YouTube channel or ads' },
     { code: 'OTHER', name: 'Other', description: 'Other source' },
   ]) {
-    await prisma.leadSource.upsert({ where: { code: ls.code }, update: {}, create: ls });
+    await prisma.leadSource.upsert({ where: { tenantId_code: { tenantId, code: ls.code } }, update: {}, create: { tenantId, ...ls } });
   }
 }
 
-export async function lookupPersonTypeId(name: string) {
-  return (await prisma.personType.findUniqueOrThrow({ where: { code: name } })).id;
+export async function lookupPersonTypeId(name: string, tenantId = DEFAULT_TENANT_ID) {
+  return (await prisma.personType.findFirst({ where: { tenantId, code: name } }))!.id;
 }
 
-export async function lookupPropertyTypeId(name: string) {
-  return (await prisma.propertyType.findUniqueOrThrow({ where: { code: name } })).id;
+export async function lookupPropertyTypeId(name: string, tenantId = DEFAULT_TENANT_ID) {
+  return (await prisma.propertyType.findFirst({ where: { tenantId, code: name } }))!.id;
 }
 
-export async function lookupPropertyStatusId(name: string) {
-  return (await prisma.propertyStatus.findUniqueOrThrow({ where: { code: name } })).id;
+export async function lookupPropertyStatusId(name: string, tenantId = DEFAULT_TENANT_ID) {
+  return (await prisma.propertyStatus.findFirst({ where: { tenantId, code: name } }))!.id;
 }
 
-export async function lookupAssociateTypeId(name: string) {
-  return (await prisma.associateType.findUniqueOrThrow({ where: { code: name } })).id;
+export async function lookupAssociateTypeId(name: string, tenantId = DEFAULT_TENANT_ID) {
+  return (await prisma.associateType.findFirst({ where: { tenantId, code: name } }))!.id;
 }
 
 export async function createTestPerson(overrides = {}) {
-  await seedLookupTables();
-  const clientType = await prisma.personType.findUniqueOrThrow({ where: { code: 'CLIENT' } });
+  const tenantId = await getOrCreateDefaultTenant();
+  await seedLookupTables(tenantId);
+  const clientType = await prisma.personType.findFirst({ where: { tenantId, code: 'CLIENT' } });
   return prisma.person.create({
     data: {
+      tenantId,
       firstName: 'Test',
       lastName: 'Person',
       email: `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`,
-      personTypeId: clientType.id,
+      personTypeId: clientType!.id,
       ...overrides,
     },
   });
 }
 
 export async function createTestAddress(overrides = {}) {
-  await seedLookupTables();
+  const tenantId = await getOrCreateDefaultTenant();
+  await seedLookupTables(tenantId);
   const usa = await prisma.country.findUniqueOrThrow({ where: { codenum: '840' } });
   const caState = await prisma.state.findFirstOrThrow({ where: { stateCode: 'CA' } });
   const city = await prisma.city.create({
@@ -166,6 +197,7 @@ export async function createTestAddress(overrides = {}) {
   });
   return prisma.address.create({
     data: {
+      tenantId,
       addressStreet: '123 Test St',
       addressCityId: city.id,
       addressRegionId: caState.id,
@@ -205,8 +237,9 @@ export async function createTestOffice(overrides = {}) {
   });
 }
 
-export async function seedAdminUser() {
-  await seedLookupTables();
+export async function seedAdminUser(tenantId?: number) {
+  const tid = tenantId ?? await getOrCreateDefaultTenant();
+  await seedLookupTables(tid);
 
   const allPermCodes = [
     'person:read', 'person:create', 'person:update', 'person:delete',
@@ -230,9 +263,9 @@ export async function seedAdminUser() {
   }
 
   const adminRole = await prisma.role.upsert({
-    where: { code: 'ADMIN' },
+    where: { tenantId_code: { tenantId: tid, code: 'ADMIN' } },
     update: {},
-    create: { name: 'Administrator', code: 'ADMIN', description: 'System admin', isSystem: true },
+    create: { tenantId: tid, name: 'Administrator', code: 'ADMIN', description: 'System admin', isSystem: true },
   });
 
   for (const code of allPermCodes) {
@@ -240,13 +273,14 @@ export async function seedAdminUser() {
     await prisma.rolePermission.upsert({
       where: { roleId_permissionId: { roleId: adminRole.id, permissionId: perm.id } },
       update: {},
-      create: { roleId: adminRole.id, permissionId: perm.id },
+      create: { roleId: adminRole.id, permissionId: perm.id, tenantId: tid },
     });
   }
 
-  const clientTypeId = await lookupPersonTypeId('CLIENT');
+  const clientTypeId = await lookupPersonTypeId('CLIENT', tid);
   const person = await prisma.person.create({
     data: {
+      tenantId: tid,
       firstName: 'Admin',
       lastName: 'User',
       email: `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.com`,
@@ -255,23 +289,25 @@ export async function seedAdminUser() {
   });
 
   await prisma.personRole.create({
-    data: { personId: person.id, roleId: adminRole.id },
+    data: { personId: person.id, roleId: adminRole.id, tenantId: tid },
   });
 
   return person.id;
 }
 
 export async function createTestProperty(overrides = {}) {
-  await seedLookupTables();
-  const houseType = await prisma.propertyType.findUniqueOrThrow({ where: { code: 'house' } });
-  const forSaleStatus = await prisma.propertyStatus.findUniqueOrThrow({ where: { code: 'for_sale' } });
+  const tenantId = await getOrCreateDefaultTenant();
+  await seedLookupTables(tenantId);
+  const houseType = await prisma.propertyType.findFirst({ where: { tenantId, code: 'house' } });
+  const forSaleStatus = await prisma.propertyStatus.findFirst({ where: { tenantId, code: 'for_sale' } });
   return prisma.property.create({
     data: {
+      tenantId,
       name: 'Test Property',
       description: 'Test description',
       summary: 'Test summary',
-      propertyTypeId: houseType.id,
-      propertyStatusId: forSaleStatus.id,
+      propertyTypeId: houseType!.id,
+      propertyStatusId: forSaleStatus!.id,
       addressLocality: 'TestCity',
       addressRegion: 'TC',
       addressCountry: 'US',

@@ -3,7 +3,7 @@ import { POST as login } from '@/app/api/auth/route';
 import { POST as register } from '@/app/api/auth/register/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, lookupPersonTypeId } from '../utils/test-helpers';
+import { clearTransactionalData, lookupPersonTypeId } from '../utils/test-helpers';
 import { verifyToken } from '@/lib/auth/jwt';
 
 describe('Auth API', () => {
@@ -13,18 +13,16 @@ describe('Auth API', () => {
   const testPassword = 'testpassword123';
 
   beforeAll(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
   });
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     testSeq++;
     testEmail = `auth-${Date.now()}-${testSeq}@test.com`;
     const clientTypeId = await lookupPersonTypeId('CLIENT');
     const person = await prisma.person.create({
-      data: { firstName: 'Auth', lastName: 'Test', email: testEmail, personTypeId: clientTypeId },
+      data: { firstName: 'Auth', lastName: 'Test', email: testEmail, personTypeId: clientTypeId, tenantId: 1 },
     });
     personId = person.id;
   });

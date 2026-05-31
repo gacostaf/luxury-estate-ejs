@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyDTO, toPropertyDTOList } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -47,7 +48,8 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') ?? '12', 10)));
 
-    const where: any = {};
+    const tenantId = getTenantId(req)!;
+    const where: any = { tenantId };
     if (status) where.propertyStatus = { name: status };
     if (city) where.addressLocality = city;
     if (search) {
@@ -91,7 +93,8 @@ export const POST = requirePermission(Permissions.PROPERTY_CREATE)(async (req: N
   try {
     const body = await req.json();
     const data = propertySchema.parse(body);
-    const property = await prisma.property.create({ data, include: { propertyType: true, propertyStatus: true } });
+    const tenantId = getTenantId(req)!;
+    const property = await prisma.property.create({ data: { tenantId, ...data }, include: { propertyType: true, propertyStatus: true } });
     return successResponse(toPropertyDTO(property), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);

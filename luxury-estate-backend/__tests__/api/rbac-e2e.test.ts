@@ -10,7 +10,7 @@ import { POST as createContactMethod } from '@/app/api/contact-methods/route';
 import { POST as createImage } from '@/app/api/images/route';
 import { POST as createVideo } from '@/app/api/videos/route';
 import { POST as createPropertyImage } from '@/app/api/property-images/route';
-import { clearTestDatabase, seedLookupTables, lookupPersonTypeId, lookupAssociateTypeId } from '../utils/test-helpers';
+import { clearTransactionalData, seedLookupTables, lookupPersonTypeId, lookupAssociateTypeId, lookupPropertyTypeId, lookupPropertyStatusId } from '../utils/test-helpers';
 import { createMockRequest } from '../utils/mock-request';
 import { signToken } from '@/lib/auth/jwt';
 import { Permissions } from '@/lib/rbac';
@@ -22,11 +22,17 @@ describe('RBAC End-to-End Enforcement', () => {
   let agentPersonId: number;
   let agentToken: string;
   let associateTypeId: number;
+  let clientTypeId: number;
+  let houseTypeId: number;
+  let forSaleStatusId: number;
 
   beforeAll(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
+    const tenantId = 1;
     associateTypeId = await lookupAssociateTypeId('AGENT');
+    clientTypeId = await lookupPersonTypeId('CLIENT');
+    houseTypeId = await lookupPropertyTypeId('house');
+    forSaleStatusId = await lookupPropertyStatusId('for_sale');
 
     // Create permissions needed by actual route handlers
     const perms = [
@@ -48,23 +54,24 @@ describe('RBAC End-to-End Enforcement', () => {
 
     // Create roles
     const adminRole = await prisma.role.upsert({
-      where: { code: 'ADMIN' },
+      where: { tenantId_code: { tenantId, code: 'ADMIN' } },
       update: {},
-      create: { name: 'Administrator', code: 'ADMIN', description: 'Has all permissions' },
+      create: { tenantId, name: 'Administrator', code: 'ADMIN', description: 'Has all permissions' },
     });
 
     const agentRole = await prisma.role.upsert({
-      where: { code: 'AGENT' },
+      where: { tenantId_code: { tenantId, code: 'AGENT' } },
       update: {},
-      create: { name: 'Agent', code: 'AGENT', description: 'Limited permissions' },
+      create: { tenantId, name: 'Agent', code: 'AGENT', description: 'Limited permissions' },
     });
 
     // Assign all permissions to admin
     for (const p of perms) {
+      const perm = await prisma.permission.findUniqueOrThrow({ where: { code: p.code } });
       await prisma.rolePermission.upsert({
-        where: { roleId_permissionId: { roleId: adminRole.id, permissionId: (await prisma.permission.findUniqueOrThrow({ where: { code: p.code } })).id } },
+        where: { roleId_permissionId: { roleId: adminRole.id, permissionId: perm.id } },
         update: {},
-        create: { roleId: adminRole.id, permissionId: (await prisma.permission.findUniqueOrThrow({ where: { code: p.code } })).id },
+        create: { roleId: adminRole.id, permissionId: perm.id, tenantId },
       });
     }
 
@@ -75,7 +82,7 @@ describe('RBAC End-to-End Enforcement', () => {
       await prisma.rolePermission.upsert({
         where: { roleId_permissionId: { roleId: agentRole.id, permissionId: perm.id } },
         update: {},
-        create: { roleId: agentRole.id, permissionId: perm.id },
+        create: { roleId: agentRole.id, permissionId: perm.id, tenantId },
       });
     }
   });
@@ -85,26 +92,26 @@ describe('RBAC End-to-End Enforcement', () => {
 
     // Unauthenticated person (no roles)
     const unauthPerson = await prisma.person.create({
-      data: { firstName: 'Unauth', lastName: 'User', email: `unauth-${Date.now()}@test.com`, personTypeId: clientTypeId },
+      data: { firstName: 'Unauth', lastName: 'User', email: `unauth-${Date.now()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
     });
     unauthPersonId = unauthPerson.id;
 
     // Admin person
     const adminPerson = await prisma.person.create({
-      data: { firstName: 'Admin', lastName: 'User', email: `admin-${Date.now()}-${Math.random()}@test.com`, personTypeId: clientTypeId },
+      data: { firstName: 'Admin', lastName: 'User', email: `admin-${Date.now()}-${Math.random()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
     });
     adminPersonId = adminPerson.id;
-    const adminRole = await prisma.role.findUniqueOrThrow({ where: { code: 'ADMIN' } });
-    await prisma.personRole.create({ data: { personId: adminPersonId, roleId: adminRole.id } });
+    const adminRole = await prisma.role.findUniqueOrThrow({ where: { tenantId_code: { tenantId: 1, code: 'ADMIN' } } });
+    await prisma.personRole.create({ data: { personId: adminPersonId, roleId: adminRole.id, tenantId: 1 } });
     adminToken = await signToken({ personId: adminPersonId, email: `admin-${Date.now()}@test.com` });
 
     // Agent person (limited permissions)
     const agentPerson = await prisma.person.create({
-      data: { firstName: 'Agent', lastName: 'User', email: `agent-${Date.now()}-${Math.random()}@test.com`, personTypeId: clientTypeId },
+      data: { firstName: 'Agent', lastName: 'User', email: `agent-${Date.now()}-${Math.random()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
     });
     agentPersonId = agentPerson.id;
-    const agentRole = await prisma.role.findUniqueOrThrow({ where: { code: 'AGENT' } });
-    await prisma.personRole.create({ data: { personId: agentPersonId, roleId: agentRole.id } });
+    const agentRole = await prisma.role.findUniqueOrThrow({ where: { tenantId_code: { tenantId: 1, code: 'AGENT' } } });
+    await prisma.personRole.create({ data: { personId: agentPersonId, roleId: agentRole.id, tenantId: 1 } });
     agentToken = await signToken({ personId: agentPersonId, email: `agent-${Date.now()}@test.com` });
   });
 
@@ -113,7 +120,7 @@ describe('RBAC End-to-End Enforcement', () => {
   describe('POST /api/people (requireAuth)', () => {
     it('should return 401 without auth', async () => {
       const req = createMockRequest(
-        { firstName: 'Test', lastName: 'User', personTypeId: 1 },
+        { firstName: 'Test', lastName: 'User', personTypeId: clientTypeId },
         'http://localhost/api/people', 'POST'
       );
       const res = await createPerson(req);
@@ -122,7 +129,7 @@ describe('RBAC End-to-End Enforcement', () => {
 
     it('should return 201 with valid auth', async () => {
       const req = createMockRequest(
-        { firstName: 'Test', lastName: 'User', personTypeId: 1 },
+        { firstName: 'Test', lastName: 'User', personTypeId: clientTypeId },
         'http://localhost/api/people', 'POST',
         { 'x-user-id': String(unauthPersonId) }
       );
@@ -271,7 +278,7 @@ describe('RBAC End-to-End Enforcement', () => {
   describe('POST /api/properties (PROPERTY_CREATE) — agent has this permission', () => {
     it('should return 201 for agent with PROPERTY_CREATE', async () => {
       const req = createMockRequest(
-        { name: 'Agent Property', description: 'Test', propertyTypeId: 1, propertyStatusId: 1 },
+        { name: 'Agent Property', description: 'Test', propertyTypeId: houseTypeId, propertyStatusId: forSaleStatusId },
         'http://localhost/api/properties', 'POST',
         { 'x-user-id': String(agentPersonId) }
       );
@@ -281,7 +288,7 @@ describe('RBAC End-to-End Enforcement', () => {
 
     it('should return 201 for admin with PROPERTY_CREATE', async () => {
       const req = createMockRequest(
-        { name: 'Admin Property', description: 'Test', propertyTypeId: 1, propertyStatusId: 1 },
+        { name: 'Admin Property', description: 'Test', propertyTypeId: houseTypeId, propertyStatusId: forSaleStatusId },
         'http://localhost/api/properties', 'POST',
         { authorization: `Bearer ${adminToken}` }
       );
@@ -306,7 +313,7 @@ describe('RBAC End-to-End Enforcement', () => {
     it('should return 201 for agent', async () => {
       // First create a property and image
       const prop = await prisma.property.create({
-        data: { name: 'PI Test', description: 'Test', propertyTypeId: 1, propertyStatusId: 1 },
+        data: { name: 'PI Test', description: 'Test', tenant: { connect: { id: 1 } }, propertyType: { connect: { id: houseTypeId } }, propertyStatus: { connect: { id: forSaleStatusId } } },
       });
       const img = await prisma.image.create({
         data: { uri: 'https://example.com/pi.jpg' },

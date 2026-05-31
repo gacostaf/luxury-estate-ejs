@@ -1,14 +1,11 @@
-// jest.setup.ts
 import { config } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 
-// ✅ Load test environment variables
-config({ path: '.env.test' });
+const envFile = process.env.TEST_TARGET === 'sqlite' ? '.env.test.sqlite' : '.env.test';
+config({ path: envFile, override: true });
 
-// ✅ Set global test timeout
 jest.setTimeout(30000);
 
-// ✅ Suppress React 19 peer dependency warnings
 if (typeof window === 'undefined' && process.env.NODE_ENV === 'test') {
   const originalError = console.error;
   console.error = (...args: any[]) => {
@@ -24,7 +21,8 @@ if (typeof window === 'undefined' && process.env.NODE_ENV === 'test') {
   };
 }
 
-// ✅ Seed lookup tables before all tests
+const DEFAULT_TENANT_ID = 1;
+
 beforeAll(async () => {
   const prisma = new PrismaClient({
     datasources: {
@@ -33,22 +31,54 @@ beforeAll(async () => {
   });
 
   try {
-    // Person Types
+    await prisma.tenant.upsert({
+      where: { id: DEFAULT_TENANT_ID },
+      update: {},
+      create: { id: DEFAULT_TENANT_ID, name: 'Test Tenant', slug: 'test', isActive: true },
+    });
+
     for (const name of ['CLIENT', 'AGENT', 'BROKER', 'REALTOR', 'VP', 'OWNER', 'EXTERNAL_AGENT']) {
-      await prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` } });
+      await prisma.personType.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` } });
     }
 
-    // Property Types
     for (const name of ['house', 'condo', 'villa', 'townhouse', 'penthouse', 'land']) {
-      await prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name} property type` } });
+      await prisma.propertyType.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name} property type` } });
     }
 
-    // Property Status
     for (const name of ['for_sale', 'for_rent', 'sold', 'pending']) {
-      await prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ')} property status` } });
+      await prisma.propertyStatus.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.replace(/_/g, ' ')} property status` } });
     }
 
-    // Disqualification Statuses
+    for (const name of ['AGENT', 'BROKER', 'REALTOR', 'ASSISTANT']) {
+      await prisma.associateType.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.toLowerCase()} role` } });
+    }
+
+    const TOUR_TYPES_SEED = [
+      { code: 'in_person', name: 'In-Person Tour', description: 'In-Person Tour' },
+      { code: 'virtual', name: 'Virtual Tour', description: 'Virtual Tour' },
+      { code: 'private_showing', name: 'Private Showing', description: 'Private Showing' },
+      { code: 'open_house', name: 'Open House Visit', description: 'Open House Visit' },
+      { code: 'broker_tour', name: 'Broker Tour', description: 'Broker Tour' },
+      { code: 'video_walkthrough', name: 'Video Walkthrough', description: 'Video Walkthrough' },
+      { code: 'new_construction', name: 'New Construction Tour', description: 'New Construction Tour' },
+      { code: 'investment', name: 'Investment Property Tour', description: 'Investment Property Tour' },
+    ];
+    for (const tt of TOUR_TYPES_SEED) {
+      await prisma.tourType.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: tt.code } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, ...tt } });
+    }
+
+    for (const name of ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']) {
+      await prisma.tourStatus.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.toLowerCase().replace(/_/g, ' ')} tour status` } });
+    }
+
+    for (const name of ['GENERAL', 'SALES', 'SUPPORT', 'PARTNERSHIP']) {
+      await prisma.requestType.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.toLowerCase()} request type` } });
+    }
+
+    for (const name of ['NEW', 'OPEN', 'HOLD', 'CLOSED']) {
+      await prisma.requestStatus.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.toLowerCase()} request status` } });
+    }
+
     for (const name of [
       'NOT A FIT/BUDGET',
       'LOST TO COMPETITION',
@@ -56,10 +86,9 @@ beforeAll(async () => {
       'POSTPONED (NURTURE)'
     ]) {
       const code = name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-      await prisma.disqualificationStatus.upsert({ where: { code }, update: {}, create: { code, name } });
+      await prisma.disqualificationStatus.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, code, name } });
     }
 
-    // Countries
     await prisma.country.upsert({
       where: { codenum: '840' },
       update: {},
@@ -71,7 +100,6 @@ beforeAll(async () => {
       create: { codenum: '484', name: 'Mexico', code002: 'MX', code003: 'MEX', tld: '.mx' }
     });
 
-    // States
     const usa = await prisma.country.findUnique({ where: { codenum: '840' } });
     const mexico = await prisma.country.findUnique({ where: { codenum: '484' } });
 
@@ -95,7 +123,6 @@ beforeAll(async () => {
       });
     }
 
-    // Contact Methods
     for (const cm of [
       { code: 'EMAIL', name: 'Email', description: 'Email communication' },
       { code: 'PHONE', name: 'Phone', description: 'Phone call' },
@@ -104,10 +131,9 @@ beforeAll(async () => {
       { code: 'TELEGRAM', name: 'Telegram', description: 'Telegram messaging' },
       { code: 'PORTAL', name: 'Portal', description: 'Client portal' },
     ]) {
-      await prisma.contactMethod.upsert({ where: { code: cm.code }, update: {}, create: cm });
+      await prisma.contactMethod.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: cm.code } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, ...cm } });
     }
 
-    // Lead Sources
     for (const ls of [
       { code: 'WEBSITE', name: 'Website', description: 'Direct website visit' },
       { code: 'REFERRAL', name: 'Referral', description: 'Referred by existing client or partner' },
@@ -125,7 +151,7 @@ beforeAll(async () => {
       { code: 'YOUTUBE', name: 'YouTube', description: 'YouTube channel or ads' },
       { code: 'OTHER', name: 'Other', description: 'Other source' },
     ]) {
-      await prisma.leadSource.upsert({ where: { code: ls.code }, update: {}, create: ls });
+      await prisma.leadSource.upsert({ where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: ls.code } }, update: {}, create: { tenantId: DEFAULT_TENANT_ID, ...ls } });
     }
 
     console.log('✅ Lookup tables seeded for tests');
@@ -137,7 +163,5 @@ beforeAll(async () => {
   }
 });
 
-// ✅ Cleanup after all tests
 afterAll(async () => {
-  // Prisma client disconnect handled by test helpers or singleton
 });

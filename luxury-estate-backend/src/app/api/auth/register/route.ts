@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/validation';
 import { hashPassword } from '@/lib/auth/password';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -34,8 +35,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { personId, email, password } = registerSchema.parse(body);
+    const tenantId = getTenantId(req)!;
 
-    const person = await prisma.person.findUnique({ where: { id: personId } });
+    const person = await prisma.person.findFirst({ where: { id: personId, tenantId } });
     if (!person) {
       return NextResponse.json({ error: 'Person not found' }, { status: 404 });
     }
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
     const passwordHash = hashPassword(password);
 
     const account = await prisma.authAccount.create({
-      data: { personId, email, passwordHash },
+      data: { personId, email, passwordHash, tenantId },
     });
 
     return NextResponse.json({ success: true, data: { id: account.id, email: account.email } }, { status: 201 });

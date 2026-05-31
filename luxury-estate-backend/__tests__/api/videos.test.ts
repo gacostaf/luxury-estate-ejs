@@ -3,7 +3,7 @@ import { GET as listVideos, POST as createVideo } from '@/app/api/videos/route';
 import { GET as getVideo, PUT as updateVideo, DELETE as deleteVideo } from '@/app/api/videos/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestVideo } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, createTestVideo } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -13,8 +13,7 @@ describe('Videos API', () => {
   let adminPersonId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
   });
 

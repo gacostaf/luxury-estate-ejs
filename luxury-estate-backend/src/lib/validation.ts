@@ -166,7 +166,7 @@ export const contactRequestSchema = z.object({
   utmCampaign: z.string().max(100).optional().nullable(),
   referrerUrl: z.string().optional().nullable(),
   landingPageUrl: z.string().optional().nullable(),
-  requestStatusId: z.number().int().positive().optional().default(1),
+  requestStatusId: z.number().int().positive().optional(),
   marketingConsent: z.boolean().optional().default(false),
   ipAddress: z.string().max(45).optional().nullable(),
   assignedAssociateId: z.number().int().positive().optional().nullable(),

@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyInquiryDTO, toPropertyInquiryDTOList } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const inquiryIncludes = {
   property: true,
@@ -47,7 +48,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const propertyId = searchParams.get('propertyId');
     const associateId = searchParams.get('associateId');
-    const where: any = {};
+    const tenantId = getTenantId(req)!;
+    const where: any = { tenantId };
     if (propertyId) where.propertyId = parseInt(propertyId, 10);
     if (associateId) where.associateId = parseInt(associateId, 10);
     const inquiries = await prisma.propertyInquiry.findMany({
@@ -63,8 +65,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const data = propertyInquirySchema.parse(body);
+    const tenantId = getTenantId(req)!;
     const inquiry = await prisma.propertyInquiry.create({
-      data,
+      data: { tenantId, ...data },
       include: inquiryIncludes,
     });
     return successResponse(toPropertyInquiryDTO(inquiry), 201);

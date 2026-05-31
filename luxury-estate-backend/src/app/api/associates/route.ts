@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toAssociateDTO, toAssociateDTOList } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -26,9 +27,11 @@ import { Permissions } from '@/lib/rbac';
  *       401: { description: Unauthorized }
  *       403: { description: Forbidden }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const tenantId = getTenantId(req)!;
     const associates = await prisma.associate.findMany({
+      where: { tenantId },
       include: { person: true, associateType: true, agency: true, office: true },
     });
     return successResponse(toAssociateDTOList(associates));
@@ -39,12 +42,13 @@ export const POST = requirePermission(Permissions.ASSOCIATE_CREATE)(async (req: 
   try {
     const body = await req.json();
     const data = associateSchema.parse(body);
+    const tenantId = getTenantId(req)!;
 
-    const person = await prisma.person.findUnique({ where: { id: data.personId } });
+    const person = await prisma.person.findFirst({ where: { id: data.personId, tenantId } });
     if (!person) return NextResponse.json({ error: 'Person not found' }, { status: 404 });
 
     const associate = await prisma.associate.create({
-      data,
+      data: { tenantId, ...data },
       include: { person: true, associateType: true },
     });
     return successResponse(toAssociateDTO(associate), 201);

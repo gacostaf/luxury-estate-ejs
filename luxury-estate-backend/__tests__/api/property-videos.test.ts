@@ -3,7 +3,7 @@ import { GET as listRelations, POST as createRelation } from '@/app/api/property
 import { GET as getRelation, PUT as updateRelation, DELETE as deleteRelation } from '@/app/api/property-videos/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestProperty, createTestVideo } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, createTestProperty, createTestVideo } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -13,8 +13,7 @@ describe('Property-Videos API', () => {
   let adminPersonId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
   });
 

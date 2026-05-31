@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyReviewDTO } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const reviewIncludes = {
   person: true,
@@ -61,8 +62,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const review = await prisma.propertyReview.findUnique({
-      where: { id },
+    const tenantId = getTenantId(req)!;
+    const review = await prisma.propertyReview.findFirst({
+      where: { id, tenantId },
       include: reviewIncludes,
     });
     if (!review) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
@@ -76,6 +78,9 @@ export const PATCH = requirePermission(Permissions.REVIEW_MODERATE)(async (req: 
     const id = parseInt(idStr, 10);
     const body = await req.json();
     const data = propertyReviewSchema.partial().parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.propertyReview.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
     const review = await prisma.propertyReview.update({
       where: { id },
       data,
@@ -93,6 +98,9 @@ export const DELETE = requirePermission(Permissions.REVIEW_DELETE)(async (req: N
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.propertyReview.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
     await prisma.propertyReview.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

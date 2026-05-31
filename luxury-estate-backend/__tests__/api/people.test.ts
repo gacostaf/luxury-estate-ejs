@@ -2,18 +2,14 @@ import { describe, it, expect, beforeAll, beforeEach } from '@jest/globals';
 import { GET, POST } from '@/app/api/people/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, lookupPersonTypeId, createTestPerson } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, lookupPersonTypeId, createTestPerson } from '../utils/test-helpers';
 
 describe('People API', () => {
   let clientTypeId: number;
 
-  beforeAll(async () => {
-    clientTypeId = await lookupPersonTypeId('CLIENT');
-  });
-
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
+    clientTypeId = await lookupPersonTypeId('CLIENT');
   });
 
   describe('GET /api/people', () => {
@@ -60,7 +56,7 @@ describe('People API', () => {
         isLead: true,
       };
 
-      const req = createMockRequest(payload, 'http://localhost/api/people', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/people', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await POST(req);
       const json = await res.json();
 
@@ -72,7 +68,7 @@ describe('People API', () => {
 
     it('should return 400 for invalid email', async () => {
       const payload = { firstName: 'Bad', lastName: 'Email', email: 'not-an-email', personTypeId: clientTypeId };
-      const req = createMockRequest(payload, 'http://localhost/api/people', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/people', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await POST(req);
 
       expect(res.status).toBe(400);
@@ -82,7 +78,7 @@ describe('People API', () => {
       await createTestPerson({ email: 'duplicate@example.com' });
 
       const payload = { firstName: 'Another', lastName: 'Person', email: 'duplicate@example.com', personTypeId: clientTypeId };
-      const req = createMockRequest(payload, 'http://localhost/api/people', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/people', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await POST(req);
 
       expect(res.status).toBe(409);

@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toAgencyDTO, toAgencyDTOList } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -26,9 +27,10 @@ import { Permissions } from '@/lib/rbac';
  *       401: { description: Unauthorized }
  *       403: { description: Forbidden }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const agencies = await prisma.agency.findMany({ include: { address: true } });
+    const tenantId = getTenantId(req)!;
+    const agencies = await prisma.agency.findMany({ where: { tenantId }, include: { address: true } });
     return successResponse(toAgencyDTOList(agencies));
   } catch (error) { return handlePrismaError(error); }
 }
@@ -37,7 +39,8 @@ export const POST = requirePermission(Permissions.AGENCY_CREATE)(async (req: Nex
   try {
     const body = await req.json();
     const data = agencySchema.parse(body);
-    const agency = await prisma.agency.create({ data });
+    const tenantId = getTenantId(req)!;
+    const agency = await prisma.agency.create({ data: { tenantId, ...data } });
     return successResponse(toAgencyDTO(agency), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);

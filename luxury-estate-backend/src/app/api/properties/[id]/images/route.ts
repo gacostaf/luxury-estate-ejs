@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { handlePrismaError } from '@/lib/api-helpers';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 import { saveImageFile, getFileName, timestamp } from '@/lib/image-storage';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -54,7 +55,8 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ id: str
       );
     }
 
-    const property = await prisma.property.findUnique({ where: { id: propertyId } });
+    const tenantId = getTenantId(req)!;
+    const property = await prisma.property.findFirst({ where: { id: propertyId, tenantId } });
     if (!property) {
       return NextResponse.json(
         { success: false, error: 'Property not found' },
@@ -112,6 +114,7 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ id: str
           propertyId,
           imageId: image.id,
           isBanner: false,
+          tenantId,
         },
       });
 

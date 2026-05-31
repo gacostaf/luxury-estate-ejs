@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toBlogPostDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -53,7 +54,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const post = await prisma.blogPost.findUnique({ where: { id }, include: { authorPerson: true, featuredImage: true } });
+    const tenantId = getTenantId(req)!;
+    const post = await prisma.blogPost.findFirst({ where: { id, tenantId }, include: { authorPerson: true, featuredImage: true } });
     if (!post) return NextResponse.json({ error: 'Blog post not found' }, { status: 404 });
     return successResponse(toBlogPostDTO(post));
   } catch (error) { return handlePrismaError(error); }
@@ -65,6 +67,9 @@ export const PATCH = requirePermission(Permissions.BLOG_UPDATE)(async (req: Next
     const id = parseInt(idStr, 10);
     const body = await req.json();
     const data = blogPostSchema.partial().parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.blogPost.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Blog post not found' }, { status: 404 });
     const post = await prisma.blogPost.update({ where: { id }, data });
     return successResponse(toBlogPostDTO(post));
   } catch (error) {
@@ -78,6 +83,9 @@ export const DELETE = requirePermission(Permissions.BLOG_DELETE)(async (req: Nex
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.blogPost.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Blog post not found' }, { status: 404 });
     await prisma.blogPost.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handlePrismaError, successResponse } from '@/lib/api-helpers';
 import { requireAuth } from '@/lib/auth/middleware';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const statuses = await prisma.tourStatus.findMany({ orderBy: { sortOrder: 'asc' } });
+    const tenantId = getTenantId(req)!;
+    const statuses = await prisma.tourStatus.findMany({ where: { tenantId }, orderBy: { sortOrder: 'asc' } });
     return successResponse(statuses);
   } catch (error) { return handlePrismaError(error); }
 }
@@ -13,7 +15,8 @@ export async function GET() {
 export const POST = requireAuth()(async (req: NextRequest) => {
   try {
     const body = await req.json();
-    const status = await prisma.tourStatus.create({ data: body });
+    const tenantId = getTenantId(req)!;
+    const status = await prisma.tourStatus.create({ data: { tenantId, ...body } });
     return successResponse(status, 201);
   } catch (error) {
     if (error instanceof SyntaxError) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });

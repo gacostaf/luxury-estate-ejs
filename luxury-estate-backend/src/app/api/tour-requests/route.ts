@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toTourRequestDTO, toTourRequestDTOList } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const tourIncludes = {
   property: true,
@@ -51,7 +52,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const propertyId = searchParams.get('propertyId');
     const tourStatusId = searchParams.get('tourStatusId');
-    const where: any = {};
+    const tenantId = getTenantId(req)!;
+    const where: any = { tenantId };
     if (propertyId) where.propertyId = parseInt(propertyId);
     if (tourStatusId) where.tourStatusId = parseInt(tourStatusId);
     const tours = await prisma.tourRequest.findMany({
@@ -67,8 +69,10 @@ export const POST = requireAuth()(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const data = tourRequestSchema.parse(body);
+    const tenantId = getTenantId(req)!;
     const tour = await prisma.tourRequest.create({
       data: {
+        tenantId,
         ...data,
         scheduledDate: new Date(data.scheduledDate),
       },

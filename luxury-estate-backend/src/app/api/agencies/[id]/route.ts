@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toAgencyDTO } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -53,8 +54,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const agency = await prisma.agency.findUnique({
-      where: { id },
+    const tenantId = getTenantId(req)!;
+    const agency = await prisma.agency.findFirst({
+      where: { id, tenantId },
       include: { address: true, associates: { include: { person: true } }, properties: true },
     });
     if (!agency) return NextResponse.json({ error: 'Agency not found' }, { status: 404 });
@@ -68,6 +70,9 @@ export const PATCH = requirePermission(Permissions.AGENCY_UPDATE)(async (req: Ne
     const id = parseInt(idStr, 10);
     const body = await req.json();
     const data = agencySchema.partial().parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.agency.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Agency not found' }, { status: 404 });
     const agency = await prisma.agency.update({ where: { id }, data });
     return successResponse(toAgencyDTO(agency));
   } catch (error) {
@@ -81,6 +86,9 @@ export const DELETE = requirePermission(Permissions.AGENCY_DELETE)(async (req: N
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.agency.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Agency not found' }, { status: 404 });
     await prisma.agency.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

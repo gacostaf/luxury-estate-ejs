@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toBlogPostDTO, toBlogPostDTOList } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -26,9 +27,11 @@ import { Permissions } from '@/lib/rbac';
  *       401: { description: Unauthorized }
  *       403: { description: Forbidden }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const tenantId = getTenantId(req)!;
     const posts = await prisma.blogPost.findMany({
+      where: { tenantId },
       include: { authorPerson: true, featuredImage: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -40,7 +43,8 @@ export const POST = requirePermission(Permissions.BLOG_CREATE)(async (req: NextR
   try {
     const body = await req.json();
     const data = blogPostSchema.parse(body);
-    const post = await prisma.blogPost.create({ data });
+    const tenantId = getTenantId(req)!;
+    const post = await prisma.blogPost.create({ data: { tenantId, ...data } });
     return successResponse(toBlogPostDTO(post), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);

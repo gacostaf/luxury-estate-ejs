@@ -5,7 +5,7 @@ import { signToken, verifyToken } from '@/lib/auth/jwt';
 import { requireAuth, requirePermission, requireRole, getCurrentUser } from '@/lib/auth/middleware';
 import { Permissions, getPersonPermissions, getPersonRoles, hasPermission, hasAnyPermission, hasAllPermissions } from '@/lib/rbac';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, lookupPersonTypeId } from '../utils/test-helpers';
+import { clearTransactionalData, seedLookupTables, lookupPersonTypeId } from '../utils/test-helpers';
 
 describe('RBAC System', () => {
   let personId: number;
@@ -16,8 +16,8 @@ describe('RBAC System', () => {
   let adminPermId: number;
 
   beforeAll(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
+    const tenantId = 1;
 
     // Create permissions
     const p1 = await prisma.permission.upsert({
@@ -43,48 +43,40 @@ describe('RBAC System', () => {
 
     // Create roles
     const r1 = await prisma.role.upsert({
-      where: { code: 'ADMIN' },
+      where: { tenantId_code: { tenantId, code: 'ADMIN' } },
       update: {},
-      create: { name: 'Administrator', code: 'ADMIN', description: 'System admin' },
+      create: { tenantId, name: 'Administrator', code: 'ADMIN', description: 'System admin' },
     });
     adminRoleId = r1.id;
 
     const r2 = await prisma.role.upsert({
-      where: { code: 'AGENT' },
+      where: { tenantId_code: { tenantId, code: 'AGENT' } },
       update: {},
-      create: { name: 'Agent', code: 'AGENT', description: 'Real estate agent' },
+      create: { tenantId, name: 'Agent', code: 'AGENT', description: 'Real estate agent' },
     });
     agentRoleId = r2.id;
 
     // Assign all permissions to admin role
-    await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: adminRoleId, permissionId: propertyReadPermId } },
-      update: {},
-      create: { roleId: adminRoleId, permissionId: propertyReadPermId },
-    });
-    await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: adminRoleId, permissionId: propertyCreatePermId } },
-      update: {},
-      create: { roleId: adminRoleId, permissionId: propertyCreatePermId },
-    });
-    await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: adminRoleId, permissionId: adminPermId } },
-      update: {},
-      create: { roleId: adminRoleId, permissionId: adminPermId },
-    });
+    await prisma.rolePermission.create({
+      data: { roleId: adminRoleId, permissionId: propertyReadPermId, tenantId },
+    }).catch(() => {});
+    await prisma.rolePermission.create({
+      data: { roleId: adminRoleId, permissionId: propertyCreatePermId, tenantId },
+    }).catch(() => {});
+    await prisma.rolePermission.create({
+      data: { roleId: adminRoleId, permissionId: adminPermId, tenantId },
+    }).catch(() => {});
 
     // Assign only property:read to agent role
-    await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: agentRoleId, permissionId: propertyReadPermId } },
-      update: {},
-      create: { roleId: agentRoleId, permissionId: propertyReadPermId },
-    });
+    await prisma.rolePermission.create({
+      data: { roleId: agentRoleId, permissionId: propertyReadPermId, tenantId },
+    }).catch(() => {});
   });
 
   beforeEach(async () => {
     const clientTypeId = await lookupPersonTypeId('CLIENT');
     const person = await prisma.person.create({
-      data: { firstName: 'RBAC', lastName: 'Test', email: `rbac-${Date.now()}@test.com`, personTypeId: clientTypeId },
+      data: { firstName: 'RBAC', lastName: 'Test', email: `rbac-${Date.now()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
     });
     personId = person.id;
   });
@@ -122,7 +114,7 @@ describe('RBAC System', () => {
 
     it('should return permissions from assigned roles', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: agentRoleId },
+        data: { personId, roleId: agentRoleId, tenantId: 1 },
       });
 
       const permissions = await getPersonPermissions(personId);
@@ -141,7 +133,7 @@ describe('RBAC System', () => {
 
     it('should merge role-based and direct permissions', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: agentRoleId },
+        data: { personId, roleId: agentRoleId, tenantId: 1 },
       });
       await prisma.personPermission.create({
         data: { personId, permissionId: adminPermId },
@@ -161,7 +153,7 @@ describe('RBAC System', () => {
 
     it('hasPermission should return true when present via role', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: agentRoleId },
+        data: { personId, roleId: agentRoleId, tenantId: 1 },
       });
       const result = await hasPermission(personId, Permissions.PROPERTY_READ);
       expect(result).toBe(true);
@@ -169,7 +161,7 @@ describe('RBAC System', () => {
 
     it('hasAnyPermission should return true if any permission matches', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: agentRoleId },
+        data: { personId, roleId: agentRoleId, tenantId: 1 },
       });
       const result = await hasAnyPermission(personId, [
         Permissions.ADMIN_ACCESS,
@@ -188,7 +180,7 @@ describe('RBAC System', () => {
 
     it('hasAllPermissions should return true if all match', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: adminRoleId },
+        data: { personId, roleId: adminRoleId, tenantId: 1 },
       });
       const result = await hasAllPermissions(personId, [
         Permissions.PROPERTY_READ,
@@ -199,7 +191,7 @@ describe('RBAC System', () => {
 
     it('hasAllPermissions should return false if missing any', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: agentRoleId },
+        data: { personId, roleId: agentRoleId, tenantId: 1 },
       });
       const result = await hasAllPermissions(personId, [
         Permissions.PROPERTY_READ,
@@ -217,7 +209,7 @@ describe('RBAC System', () => {
 
     it('should return assigned role names', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: adminRoleId },
+        data: { personId, roleId: adminRoleId, tenantId: 1 },
       });
       const roles = await getPersonRoles(personId);
       expect(roles).toContain('ADMIN');
@@ -295,7 +287,7 @@ describe('RBAC System', () => {
 
     it('should call handler when user has required permission', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: adminRoleId },
+        data: { personId, roleId: adminRoleId, tenantId: 1 },
       });
 
       const handler = requirePermission(Permissions.ADMIN_ACCESS)(async (req: NextRequest) => {
@@ -325,7 +317,7 @@ describe('RBAC System', () => {
 
     it('should call handler when user has required role', async () => {
       await prisma.personRole.create({
-        data: { personId, roleId: adminRoleId },
+        data: { personId, roleId: adminRoleId, tenantId: 1 },
       });
 
       const handler = requireRole('ADMIN')(async (req: NextRequest) => {

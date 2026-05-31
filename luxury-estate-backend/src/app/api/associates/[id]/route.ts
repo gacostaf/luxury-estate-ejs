@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toAssociateDTO } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -53,8 +54,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const associate = await prisma.associate.findUnique({
-      where: { id },
+    const tenantId = getTenantId(req)!;
+    const associate = await prisma.associate.findFirst({
+      where: { id, tenantId },
       include: { person: true, associateType: true, agency: true, office: true, supervisor: true, subordinates: true },
     });
     if (!associate) return NextResponse.json({ error: 'Associate not found' }, { status: 404 });
@@ -68,6 +70,9 @@ export const PATCH = requirePermission(Permissions.ASSOCIATE_UPDATE)(async (req:
     const id = parseInt(idStr, 10);
     const body = await req.json();
     const data = associateSchema.partial().parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.associate.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Associate not found' }, { status: 404 });
     const associate = await prisma.associate.update({ where: { id }, data });
     return successResponse(toAssociateDTO(associate));
   } catch (error) {
@@ -81,6 +86,9 @@ export const DELETE = requirePermission(Permissions.ASSOCIATE_DELETE)(async (req
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.associate.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Associate not found' }, { status: 404 });
     await prisma.associate.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

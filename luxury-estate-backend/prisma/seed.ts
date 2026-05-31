@@ -4,36 +4,76 @@ config({ path: process.env.DOTENV_CONFIG_PATH || '.env' });
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+const DEFAULT_TENANT_ID = 1;
 
 async function main() {
     console.log('🌱 Starting database seed...\n');
+
+    console.log('🏢 Seeding tenant...');
+    const tenant = await prisma.tenant.upsert({
+        where: { id: DEFAULT_TENANT_ID },
+        update: { name: 'Luxury Homes Inc.', slug: 'luxury-homes' },
+        create: {
+            id: DEFAULT_TENANT_ID,
+            name: 'Luxury Homes Inc.',
+            slug: 'luxury-homes',
+            domain: null,
+            isActive: true,
+            settings: {
+                create: {
+                    companyName: 'Luxury Homes Inc.',
+                    tagline: 'Your Gateway to Luxury Living',
+                    contactEmail: 'info@luxuryhomes.com',
+                    contactPhone: '+1-555-0100',
+                }
+            }
+        },
+        include: { settings: true }
+    });
+    console.log(`  ✅ Tenant: ${tenant.name} (ID: ${tenant.id})`);
 
     console.log('📋 Seeding lookup tables...');
 
     const personTypes = await Promise.all(
         ['CLIENT', 'AGENT', 'BROKER', 'REALTOR', 'VP', 'OWNER', 'EXTERNAL_AGENT'].map(name =>
-            prisma.personType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` } })
+            prisma.personType.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.replace(/_/g, ' ').toLowerCase()} type` }
+            })
         )
     );
     const [clientType, agentType, externalAgentType] = personTypes;
 
     const associateTypes = await Promise.all(
         ['AGENT', 'BROKER', 'REALTOR', 'VP', 'MANAGER', 'ADMIN'].map(name =>
-            prisma.associateType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name} role` } })
+            prisma.associateType.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name} role` }
+            })
         )
     );
     const [assocAgentType] = associateTypes;
 
     const propertyTypes = await Promise.all(
         ['house', 'condo', 'villa', 'townhouse', 'penthouse', 'land'].map(name =>
-            prisma.propertyType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name} property type` } })
+            prisma.propertyType.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name} property type` }
+            })
         )
     );
     const [houseType, condoType] = propertyTypes;
 
     const propertyStatuses = await Promise.all(
         ['for_sale', 'for_rent', 'sold', 'pending'].map(name =>
-            prisma.propertyStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.replace(/_/g, ' ')} property status` } })
+            prisma.propertyStatus.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.replace(/_/g, ' ')} property status` }
+            })
         )
     );
     const [forSale, forRent] = propertyStatuses;
@@ -46,7 +86,11 @@ async function main() {
             'POSTPONED (NURTURE)'
         ].map(name => {
             const code = name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-            return prisma.disqualificationStatus.upsert({ where: { code }, update: {}, create: { code, name } });
+            return prisma.disqualificationStatus.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code, name }
+            });
         })
     );
 
@@ -64,9 +108,10 @@ async function main() {
 
     for (const r of dqReasonsData) {
         await prisma.disqualificationReason.upsert({
-            where: { reason: r.reason },
+            where: { tenantId_reason: { tenantId: DEFAULT_TENANT_ID, reason: r.reason } },
             update: {},
             create: {
+                tenantId: DEFAULT_TENANT_ID,
                 statusId: dqStatuses[r.statusIdx].id,
                 reason: r.reason,
                 description: r.desc
@@ -82,7 +127,11 @@ async function main() {
         { code: 'TELEGRAM', name: 'Telegram', description: 'Telegram messaging' },
         { code: 'PORTAL', name: 'Portal', description: 'Client portal' },
     ].map(cm =>
-        prisma.contactMethod.upsert({ where: { code: cm.code }, update: {}, create: cm })
+        prisma.contactMethod.upsert({
+            where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: cm.code } },
+            update: {},
+            create: { tenantId: DEFAULT_TENANT_ID, ...cm }
+        })
     ));
 
     console.log(`  ✅ ${contactMethods.length} contact methods`);
@@ -104,19 +153,26 @@ async function main() {
         { code: 'YOUTUBE', name: 'YouTube', description: 'YouTube channel or ads' },
         { code: 'OTHER', name: 'Other', description: 'Other source' },
     ].map(ls =>
-        prisma.leadSource.upsert({ where: { code: ls.code }, update: {}, create: ls })
+        prisma.leadSource.upsert({
+            where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: ls.code } },
+            update: {},
+            create: { tenantId: DEFAULT_TENANT_ID, ...ls }
+        })
     ));
 
     console.log(`  ✅ ${leadSources.length} lead sources`);
 
     const moderationStatuses = await Promise.all(
         ['PENDING', 'APPROVED', 'REJECTED', 'FLAGGED'].map(name =>
-            prisma.reviewModerationStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} moderation status` } })
+            prisma.reviewModerationStatus.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.toLowerCase()} moderation status` }
+            })
         )
     );
 
     console.log(`  ✅ ${moderationStatuses.length} review moderation statuses`);
-
     console.log('  ✅ Person types, property types, statuses, etc.');
 
     const tourTypes = await Promise.all([
@@ -129,28 +185,44 @@ async function main() {
         { code: 'new_construction', name: 'New Construction Tour', description: 'New Construction Tour' },
         { code: 'investment', name: 'Investment Property Tour', description: 'Investment Property Tour' },
     ].map(tt =>
-        prisma.tourType.upsert({ where: { code: tt.code }, update: {}, create: tt })
+        prisma.tourType.upsert({
+            where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: tt.code } },
+            update: {},
+            create: { tenantId: DEFAULT_TENANT_ID, ...tt }
+        })
     ));
 
     console.log(`  ✅ ${tourTypes.length} tour types`);
 
     const tourStatuses = await Promise.all(
         ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'].map(name =>
-            prisma.tourStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase().replace(/_/g, ' ')} tour status` } })
+            prisma.tourStatus.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.toLowerCase().replace(/_/g, ' ')} tour status` }
+            })
         )
     );
     console.log(`  ✅ ${tourStatuses.length} tour statuses`);
 
     const requestTypes = await Promise.all(
         ['GENERAL', 'SALES', 'SUPPORT', 'PARTNERSHIP'].map(name =>
-            prisma.requestType.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} request type` } })
+            prisma.requestType.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.toLowerCase()} request type` }
+            })
         )
     );
     console.log(`  ✅ ${requestTypes.length} request types`);
 
     const requestStatuses = await Promise.all(
         ['NEW', 'OPEN', 'HOLD', 'CLOSED'].map(name =>
-            prisma.requestStatus.upsert({ where: { code: name }, update: {}, create: { code: name, name, description: `${name.toLowerCase()} request status` } })
+            prisma.requestStatus.upsert({
+                where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: name } },
+                update: {},
+                create: { tenantId: DEFAULT_TENANT_ID, code: name, name, description: `${name.toLowerCase()} request status` }
+            })
         )
     );
     console.log(`  ✅ ${requestStatuses.length} request statuses`);
@@ -169,9 +241,9 @@ async function main() {
 
     for (const r of ROLES) {
       await prisma.role.upsert({
-        where: { code: r.code },
+        where: { tenantId_code: { tenantId: DEFAULT_TENANT_ID, code: r.code } },
         update: { name: r.name, isSystem: r.isSystem, sortOrder: r.sortOrder },
-        create: { code: r.code, name: r.name, description: `${r.name} role`, isSystem: r.isSystem, sortOrder: r.sortOrder },
+        create: { tenantId: DEFAULT_TENANT_ID, code: r.code, name: r.name, description: `${r.name} role`, isSystem: r.isSystem, sortOrder: r.sortOrder },
       });
     }
 
@@ -322,7 +394,6 @@ async function main() {
 
     console.log('📍 Seeding addresses...');
 
-    // Look up geographic references
     const us = await prisma.country.findUniqueOrThrow({ where: { code002: 'US' } });
     const flState = await prisma.state.findFirstOrThrow({ where: { countryId: us.id, stateCode: 'FL' } });
 
@@ -337,6 +408,7 @@ async function main() {
 
     const officeAddress = await prisma.address.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             organization: 'Luxury Estate Realty HQ',
             addressStreet: '1234 Pacific Coast Highway, Suite 500',
             addressCityId: malibuCity.id,
@@ -350,6 +422,7 @@ async function main() {
 
     const propertyAddress1 = await prisma.address.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             addressStreet: '1234 Ocean Blvd',
             addressCityId: malibuCity.id,
             addressRegionId: caState.id,
@@ -362,6 +435,7 @@ async function main() {
 
     const propertyAddress2 = await prisma.address.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             addressStreet: '5678 Collins Ave, Penthouse A',
             addressCityId: miamiCity.id,
             addressRegionId: flState.id,
@@ -376,6 +450,7 @@ async function main() {
 
     const internalAgent = await prisma.person.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             firstName: 'Sarah',
             lastName: 'Johnson',
             phone: '+1-555-0198',
@@ -388,6 +463,7 @@ async function main() {
             address: { connect: { id: officeAddress.id } },
             associate: {
                 create: {
+                    tenantId: DEFAULT_TENANT_ID,
                     associateType: { connect: { id: assocAgentType.id } },
                     department: 'Luxury Sales',
                     fbHandle: 'https://facebook.com/sarahjrealty',
@@ -400,6 +476,7 @@ async function main() {
 
     const externalAgent = await prisma.person.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             firstName: 'Michael',
             lastName: 'Torres',
             phone: '+1-555-0287',
@@ -414,6 +491,7 @@ async function main() {
 
     const client = await prisma.person.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             firstName: 'Marcus',
             lastName: 'Chen',
             phone: '+1-555-0345',
@@ -496,6 +574,7 @@ async function main() {
 
     const property1 = await prisma.property.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             name: 'Modern Coastal Villa',
             description: 'Stunning oceanfront property with panoramic Pacific views, smart home automation, infinity pool, and private beach access.',
             summary: 'Luxury 4BR beachfront home with smart tech',
@@ -526,9 +605,9 @@ async function main() {
             bannerImage: { connect: { id: propImg1.id } },
             propertyImages: {
                 create: [
-                    { image: { connect: { id: propImg1.id } }, isBanner: true },
-                    { image: { connect: { id: propImg2.id } }, isBanner: false },
-                    { image: { connect: { id: propImg3.id } }, isBanner: false }
+                    { tenantId: DEFAULT_TENANT_ID, image: { connect: { id: propImg1.id } }, isBanner: true },
+                    { tenantId: DEFAULT_TENANT_ID, image: { connect: { id: propImg2.id } }, isBanner: false },
+                    { tenantId: DEFAULT_TENANT_ID, image: { connect: { id: propImg3.id } }, isBanner: false }
                 ]
             },
             propertyVideos: {
@@ -539,6 +618,7 @@ async function main() {
 
     const property2 = await prisma.property.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             name: 'Skyline Penthouse',
             description: 'Breathtaking penthouse in the heart of Miami Beach with 360-degree views of the ocean and city skyline.',
             summary: 'Ultra-luxury 3BR penthouse with ocean views',
@@ -571,6 +651,7 @@ async function main() {
 
     const property3 = await prisma.property.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             name: 'Desert Oasis Villa',
             description: 'Exclusive desert villa in Cabo San Lucas with private pool, outdoor kitchen, and stunning Sea of Cortez views.',
             summary: '5BR villa with pool & ocean views',

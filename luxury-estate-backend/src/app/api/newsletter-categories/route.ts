@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toNewsletterCategoryDTO, toNewsletterCategoryDTOList } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -28,9 +29,10 @@ import { Permissions } from '@/lib/rbac';
  *       201: { description: Category created }
  *       401: { description: Unauthorized }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const categories = await prisma.newsletterCategory.findMany({ orderBy: { name: 'asc' } });
+    const tenantId = getTenantId(req)!;
+    const categories = await prisma.newsletterCategory.findMany({ where: { tenantId }, orderBy: { name: 'asc' } });
     return successResponse(toNewsletterCategoryDTOList(categories));
   } catch (error) { return handlePrismaError(error); }
 }
@@ -39,7 +41,8 @@ export const POST = requirePermission(Permissions.REVIEW_MODERATE)(async (req: N
   try {
     const body = await req.json();
     const data = newsletterCategorySchema.parse(body);
-    const category = await prisma.newsletterCategory.create({ data });
+    const tenantId = getTenantId(req)!;
+    const category = await prisma.newsletterCategory.create({ data: { tenantId, ...data } });
     return successResponse(toNewsletterCategoryDTO(category), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);

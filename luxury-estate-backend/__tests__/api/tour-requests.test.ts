@@ -3,7 +3,7 @@ import { GET as listTours, POST as createTour } from '@/app/api/tour-requests/ro
 import { GET as getTour, PATCH as updateTour, DELETE as deleteTour } from '@/app/api/tour-requests/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestProperty, lookupAssociateTypeId, lookupPersonTypeId } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, createTestProperty, lookupAssociateTypeId } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -20,19 +20,28 @@ describe('Tour Requests API', () => {
   let adminPersonId: number;
   let adminAssociateId: number;
   let propertyId: number;
+  let inPersonTourTypeId: number;
+  let pendingTourStatusId: number;
+  let confirmedTourStatusId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
     const prop = await createTestProperty();
     propertyId = prop.id;
 
     const associateTypeId = await lookupAssociateTypeId('AGENT');
     const assoc = await prisma.associate.create({
-      data: { personId: adminPersonId, associateTypeId },
+      data: { personId: adminPersonId, associateTypeId, tenantId: 1 },
     });
     adminAssociateId = assoc.id;
+
+    const tourType = await prisma.tourType.findFirstOrThrow({ where: { tenantId: 1, code: 'in_person' } });
+    inPersonTourTypeId = tourType.id;
+    const tourStatus = await prisma.tourStatus.findFirstOrThrow({ where: { tenantId: 1, code: 'PENDING' } });
+    pendingTourStatusId = tourStatus.id;
+    const confirmedStatus = await prisma.tourStatus.findFirstOrThrow({ where: { tenantId: 1, code: 'CONFIRMED' } });
+    confirmedTourStatusId = confirmedStatus.id;
   });
 
   describe('GET /api/tour-requests', () => {
@@ -51,9 +60,10 @@ describe('Tour Requests API', () => {
           clientLastName: 'Doe',
           clientEmail: 'jane@test.com',
           primaryAssociateId: adminAssociateId,
-          tourTypeId: 1,
-          tourStatusId: 1,
+          tourTypeId: inPersonTourTypeId,
+          tourStatusId: pendingTourStatusId,
           scheduledDate: new Date(futureDate()),
+          tenantId: 1,
         },
       });
       const req = createMockRequest(undefined, 'http://localhost/api/tour-requests?propertyId=' + propertyId, 'GET');
@@ -72,12 +82,12 @@ describe('Tour Requests API', () => {
         clientLastName: 'Smith',
         clientEmail: 'john@test.com',
         primaryAssociateId: adminAssociateId,
-        tourTypeId: 1,
-        tourStatusId: 1,
+        tourTypeId: inPersonTourTypeId,
+        tourStatusId: pendingTourStatusId,
         scheduledDate: futureDate(),
         clientMessage: 'Looking forward to seeing this property!',
       };
-      const req = createMockRequest(payload, 'http://localhost/api/tour-requests', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/tour-requests', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createTour(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -105,28 +115,28 @@ describe('Tour Requests API', () => {
       const req = createMockRequest(
         { propertyId },
         'http://localhost/api/tour-requests', 'POST',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await createTour(req);
       expect(res.status).toBe(400);
     });
 
     it('should create tour request with contactMethodId and leadSourceId', async () => {
-      const cm = await prisma.contactMethod.findUniqueOrThrow({ where: { code: 'PHONE' } });
-      const ls = await prisma.leadSource.findUniqueOrThrow({ where: { code: 'PHONE_INQUIRY' } });
+      const cm = await prisma.contactMethod.findFirstOrThrow({ where: { tenantId: 1, code: 'PHONE' } });
+      const ls = await prisma.leadSource.findFirstOrThrow({ where: { tenantId: 1, code: 'PHONE_INQUIRY' } });
       const payload = {
         propertyId,
         clientFirstName: 'Carol',
         clientLastName: 'Davis',
         clientEmail: 'carol@test.com',
         primaryAssociateId: adminAssociateId,
-        tourTypeId: 1,
-        tourStatusId: 1,
+        tourTypeId: inPersonTourTypeId,
+        tourStatusId: pendingTourStatusId,
         scheduledDate: futureDate(),
         contactMethodId: cm.id,
         leadSourceId: ls.id,
       };
-      const req = createMockRequest(payload, 'http://localhost/api/tour-requests', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/tour-requests', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createTour(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -148,9 +158,10 @@ describe('Tour Requests API', () => {
           clientLastName: 'Brown',
           clientEmail: 'alice@test.com',
           primaryAssociateId: adminAssociateId,
-          tourTypeId: 1,
-          tourStatusId: 1,
+          tourTypeId: inPersonTourTypeId,
+          tourStatusId: pendingTourStatusId,
           scheduledDate: new Date(futureDate()),
+          tenantId: 1,
         },
       });
       const res = await getTour(createMockRequest(), params(String(tour.id)));
@@ -174,20 +185,21 @@ describe('Tour Requests API', () => {
           clientLastName: 'Lee',
           clientEmail: 'bob@test.com',
           primaryAssociateId: adminAssociateId,
-          tourTypeId: 1,
-          tourStatusId: 1,
+          tourTypeId: inPersonTourTypeId,
+          tourStatusId: pendingTourStatusId,
           scheduledDate: new Date(futureDate()),
+          tenantId: 1,
         },
       });
       const req = createMockRequest(
-        { tourStatusId: 2, associateNotes: 'Confirmed with client' },
+        { tourStatusId: confirmedTourStatusId, associateNotes: 'Confirmed with client' },
         'http://localhost/api/tour-requests/' + tour.id, 'PATCH',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateTour(req, params(String(tour.id)));
       const json = await res.json();
       expect(res.status).toBe(200);
-      expect(json.data.tourStatusId).toBe(2);
+      expect(json.data.tourStatusId).toBe(confirmedTourStatusId);
       expect(json.data.associateNotes).toBe('Confirmed with client');
     });
 
@@ -199,19 +211,20 @@ describe('Tour Requests API', () => {
           clientLastName: 'Davis',
           clientEmail: 'carol@test.com',
           primaryAssociateId: adminAssociateId,
-          tourTypeId: 1,
-          tourStatusId: 1,
+          tourTypeId: inPersonTourTypeId,
+          tourStatusId: pendingTourStatusId,
           scheduledDate: new Date(futureDate()),
+          tenantId: 1,
         },
       });
-      const clientPersonType = await prisma.personType.findUnique({ where: { code: 'CLIENT' } });
+      const clientPersonType = await prisma.personType.findFirst({ where: { tenantId: 1, code: 'CLIENT' } });
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientPersonType!.id },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientPersonType!.id, tenantId: 1 },
       });
       const req = createMockRequest(
         { tourStatusId: 2 },
         'http://localhost/api/tour-requests/' + tour.id, 'PATCH',
-        { 'x-user-id': String(unauthPerson.id) }
+        { 'x-user-id': String(unauthPerson.id), 'x-tenant-id': '1' }
       );
       const res = await updateTour(req, params(String(tour.id)));
       expect(res.status).toBe(403);
@@ -227,12 +240,13 @@ describe('Tour Requests API', () => {
           clientLastName: 'Wilson',
           clientEmail: 'dave@test.com',
           primaryAssociateId: adminAssociateId,
-          tourTypeId: 1,
-          tourStatusId: 1,
+          tourTypeId: inPersonTourTypeId,
+          tourStatusId: pendingTourStatusId,
           scheduledDate: new Date(futureDate()),
+          tenantId: 1,
         },
       });
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await deleteTour(req, params(String(tour.id)));
       expect(res.status).toBe(200);
 
@@ -248,22 +262,23 @@ describe('Tour Requests API', () => {
           clientLastName: 'Adams',
           clientEmail: 'eve@test.com',
           primaryAssociateId: adminAssociateId,
-          tourTypeId: 1,
-          tourStatusId: 1,
+          tourTypeId: inPersonTourTypeId,
+          tourStatusId: pendingTourStatusId,
           scheduledDate: new Date(futureDate()),
+          tenantId: 1,
         },
       });
-      const clientPersonType = await prisma.personType.findUnique({ where: { code: 'CLIENT' } });
+      const clientPersonType = await prisma.personType.findFirst({ where: { tenantId: 1, code: 'CLIENT' } });
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientPersonType!.id },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientPersonType!.id, tenantId: 1 },
       });
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(unauthPerson.id) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(unauthPerson.id), 'x-tenant-id': '1' });
       const res = await deleteTour(req, params(String(tour.id)));
       expect(res.status).toBe(403);
     });
 
     it('should return 404 for non-existent id', async () => {
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await deleteTour(req, params('99999'));
       expect(res.status).toBe(404);
     });

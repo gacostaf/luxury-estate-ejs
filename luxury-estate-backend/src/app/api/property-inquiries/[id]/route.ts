@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyInquiryDTO } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const inquiryIncludes = {
   property: true,
@@ -65,8 +66,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const inquiry = await prisma.propertyInquiry.findUnique({
-      where: { id },
+    const tenantId = getTenantId(req)!;
+    const inquiry = await prisma.propertyInquiry.findFirst({
+      where: { id, tenantId },
       include: inquiryIncludes,
     });
     if (!inquiry) return NextResponse.json({ error: 'Property inquiry not found' }, { status: 404 });
@@ -80,6 +82,9 @@ export const PATCH = requirePermission(Permissions.REVIEW_MODERATE)(async (req: 
     const id = parseInt(idStr, 10);
     const body = await req.json();
     const data = propertyInquirySchema.partial().parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.propertyInquiry.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Property inquiry not found' }, { status: 404 });
     const inquiry = await prisma.propertyInquiry.update({
       where: { id },
       data,
@@ -97,6 +102,9 @@ export const DELETE = requirePermission(Permissions.REVIEW_DELETE)(async (req: N
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.propertyInquiry.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Property inquiry not found' }, { status: 404 });
     await prisma.propertyInquiry.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

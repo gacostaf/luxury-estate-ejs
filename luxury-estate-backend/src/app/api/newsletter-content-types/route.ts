@@ -1,6 +1,8 @@
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handlePrismaError, successResponse } from '@/lib/api-helpers';
 import { toNewsletterContentTypeDTOList } from '@/lib/dtos';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -11,9 +13,10 @@ import { toNewsletterContentTypeDTOList } from '@/lib/dtos';
  *     responses:
  *       200: { description: List of content types }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const types = await prisma.newsletterContentType.findMany({ orderBy: { name: 'asc' } });
+    const tenantId = getTenantId(req)!;
+    const types = await prisma.newsletterContentType.findMany({ where: { tenantId }, orderBy: { name: 'asc' } });
     return successResponse(toNewsletterContentTypeDTOList(types));
   } catch (error) { return handlePrismaError(error); }
 }

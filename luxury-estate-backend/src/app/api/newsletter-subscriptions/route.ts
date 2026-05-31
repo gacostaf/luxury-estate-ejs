@@ -4,6 +4,7 @@ import { newsletterSubscriptionSchema } from '@/lib/validation';
 import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-helpers';
 import { toNewsletterSubscriptionDTO, toNewsletterSubscriptionDTOList } from '@/lib/dtos';
 import { requireAuth } from '@/lib/auth/middleware';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const subscriptionIncludes = {
   person: true,
@@ -41,7 +42,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const isSubscribed = searchParams.get('isSubscribed');
-    const where: any = {};
+    const tenantId = getTenantId(req)!;
+    const where: any = { tenantId };
     if (isSubscribed !== null) where.isSubscribed = isSubscribed === 'true';
     const subs = await prisma.newsletterSubscription.findMany({
       where,
@@ -57,10 +59,11 @@ export const POST = requireAuth()(async (req: NextRequest) => {
     const body = await req.json();
     const data = newsletterSubscriptionSchema.parse(body);
     const { categoryIds, ...subData } = data;
+    const tenantId = getTenantId(req)!;
     const sub = await prisma.newsletterSubscription.upsert({
       where: { personId: subData.personId },
-      update: { isSubscribed: subData.isSubscribed, source: subData.source, leadSourceId: subData.leadSourceId },
-      create: { personId: subData.personId, isSubscribed: subData.isSubscribed, source: subData.source, leadSourceId: subData.leadSourceId },
+      update: { tenantId, isSubscribed: subData.isSubscribed, source: subData.source, leadSourceId: subData.leadSourceId },
+      create: { tenantId, personId: subData.personId, isSubscribed: subData.isSubscribed, source: subData.source, leadSourceId: subData.leadSourceId },
       include: subscriptionIncludes,
     });
     if (categoryIds && categoryIds.length > 0) {

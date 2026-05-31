@@ -3,18 +3,18 @@ import { GET as listRequests, POST as createRequest } from '@/app/api/contact-re
 import { GET as getRequest, PATCH as updateRequest, DELETE as deleteRequest } from '@/app/api/contact-requests/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, lookupAssociateTypeId } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, lookupAssociateTypeId } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
 }
 
 async function lookupRequestTypeId(code: string): Promise<number> {
-  return (await prisma.requestType.findUniqueOrThrow({ where: { code } })).id;
+  return (await prisma.requestType.findFirstOrThrow({ where: { tenantId: 1, code } })).id;
 }
 
 async function lookupRequestStatusId(code: string): Promise<number> {
-  return (await prisma.requestStatus.findUniqueOrThrow({ where: { code } })).id;
+  return (await prisma.requestStatus.findFirstOrThrow({ where: { tenantId: 1, code } })).id;
 }
 
 describe('Contact Requests API', () => {
@@ -26,13 +26,12 @@ describe('Contact Requests API', () => {
   let openStatusId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
 
     const associateTypeId = await lookupAssociateTypeId('AGENT');
     const assoc = await prisma.associate.create({
-      data: { personId: adminPersonId, associateTypeId },
+      data: { personId: adminPersonId, associateTypeId, tenantId: 1 },
     });
     adminAssociateId = assoc.id;
 
@@ -59,6 +58,7 @@ describe('Contact Requests API', () => {
           requestType: { connect: { id: generalTypeId } },
           requestStatus: { connect: { id: newStatusId } },
           message: 'Hello',
+          tenant: { connect: { id: 1 } },
         },
       });
       await prisma.contactRequest.create({
@@ -69,6 +69,7 @@ describe('Contact Requests API', () => {
           requestType: { connect: { id: generalTypeId } },
           requestStatus: { connect: { id: newStatusId } },
           message: 'Hi',
+          tenant: { connect: { id: 1 } },
         },
       });
       const req = createMockRequest(undefined, 'http://localhost/api/contact-requests?email=jane@test.com', 'GET');
@@ -88,6 +89,7 @@ describe('Contact Requests API', () => {
           requestType: { connect: { id: salesTypeId } },
           requestStatus: { connect: { id: newStatusId } },
           message: 'Sales inquiry',
+          tenant: { connect: { id: 1 } },
         },
       });
       const req = createMockRequest(undefined, `http://localhost/api/contact-requests?requestTypeId=${salesTypeId}`, 'GET');
@@ -119,8 +121,8 @@ describe('Contact Requests API', () => {
     });
 
     it('should create with contactMethodId and leadSourceId', async () => {
-      const cm = await prisma.contactMethod.findUniqueOrThrow({ where: { code: 'EMAIL' } });
-      const ls = await prisma.leadSource.findUniqueOrThrow({ where: { code: 'REFERRAL' } });
+      const cm = await prisma.contactMethod.findFirstOrThrow({ where: { tenantId: 1, code: 'EMAIL' } });
+      const ls = await prisma.leadSource.findFirstOrThrow({ where: { tenantId: 1, code: 'REFERRAL' } });
       const payload = {
         firstName: 'Carol',
         lastName: 'Davis',
@@ -175,6 +177,7 @@ describe('Contact Requests API', () => {
           requestType: { connect: { id: generalTypeId } },
           requestStatus: { connect: { id: newStatusId } },
           message: 'Test message',
+          tenant: { connect: { id: 1 } },
         },
       });
       const res = await getRequest(createMockRequest(), params(String(cr.id)));
@@ -200,12 +203,13 @@ describe('Contact Requests API', () => {
           requestType: { connect: { id: generalTypeId } },
           requestStatus: { connect: { id: newStatusId } },
           message: 'Original message',
+          tenant: { connect: { id: 1 } },
         },
       });
       const req = createMockRequest(
         { message: 'Updated message', requestStatusId: openStatusId },
         `http://localhost/api/contact-requests/${cr.id}`, 'PATCH',
-        { 'x-user-id': String(adminPersonId) },
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' },
       );
       const res = await updateRequest(req, params(String(cr.id)));
       const json = await res.json();
@@ -224,16 +228,17 @@ describe('Contact Requests API', () => {
           requestType: { connect: { id: generalTypeId } },
           requestStatus: { connect: { id: newStatusId } },
           message: 'Test',
+          tenant: { connect: { id: 1 } },
         },
       });
-      const clientPersonType = await prisma.personType.findUnique({ where: { code: 'CLIENT' } });
+      const clientPersonType = await prisma.personType.findFirst({ where: { tenantId: 1, code: 'CLIENT' } });
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientPersonType!.id },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientPersonType!.id, tenantId: 1 },
       });
       const req = createMockRequest(
         { message: 'Hacked' },
         `http://localhost/api/contact-requests/${cr.id}`, 'PATCH',
-        { 'x-user-id': String(unauthPerson.id) },
+        { 'x-user-id': String(unauthPerson.id), 'x-tenant-id': '1' },
       );
       const res = await updateRequest(req, params(String(cr.id)));
       expect(res.status).toBe(403);
@@ -250,9 +255,10 @@ describe('Contact Requests API', () => {
           requestType: { connect: { id: generalTypeId } },
           requestStatus: { connect: { id: newStatusId } },
           message: 'Delete me',
+          tenant: { connect: { id: 1 } },
         },
       });
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await deleteRequest(req, params(String(cr.id)));
       expect(res.status).toBe(200);
 
@@ -269,19 +275,20 @@ describe('Contact Requests API', () => {
           requestType: { connect: { id: generalTypeId } },
           requestStatus: { connect: { id: newStatusId } },
           message: 'Test',
+          tenant: { connect: { id: 1 } },
         },
       });
-      const clientPersonType = await prisma.personType.findUnique({ where: { code: 'CLIENT' } });
+      const clientPersonType = await prisma.personType.findFirst({ where: { tenantId: 1, code: 'CLIENT' } });
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientPersonType!.id },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientPersonType!.id, tenantId: 1 },
       });
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(unauthPerson.id) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(unauthPerson.id), 'x-tenant-id': '1' });
       const res = await deleteRequest(req, params(String(cr.id)));
       expect(res.status).toBe(403);
     });
 
     it('should return 404 for non-existent id', async () => {
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await deleteRequest(req, params('99999'));
       expect(res.status).toBe(404);
     });

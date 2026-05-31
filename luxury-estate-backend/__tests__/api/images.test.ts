@@ -3,7 +3,7 @@ import { GET as listImages, POST as createImage } from '@/app/api/images/route';
 import { GET as getImage, PUT as updateImage, DELETE as deleteImage } from '@/app/api/images/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestImage } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, createTestImage } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -13,8 +13,7 @@ describe('Images API', () => {
   let adminPersonId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
   });
 

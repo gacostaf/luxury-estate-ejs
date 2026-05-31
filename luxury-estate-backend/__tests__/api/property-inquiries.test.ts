@@ -3,7 +3,7 @@ import { GET as listInquiries, POST as createInquiry } from '@/app/api/property-
 import { GET as getInquiry, PATCH as updateInquiry, DELETE as deleteInquiry } from '@/app/api/property-inquiries/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser, createTestProperty, lookupAssociateTypeId, lookupPersonTypeId } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser, createTestProperty, lookupAssociateTypeId, lookupPersonTypeId } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -15,15 +15,14 @@ describe('Property Inquiries API', () => {
   let propertyId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
     const prop = await createTestProperty();
     propertyId = prop.id;
 
     const associateTypeId = await lookupAssociateTypeId('AGENT');
     const assoc = await prisma.associate.create({
-      data: { personId: adminPersonId, associateTypeId },
+      data: { personId: adminPersonId, associateTypeId, tenantId: 1 },
     });
     adminAssociateId = assoc.id;
   });
@@ -44,6 +43,7 @@ describe('Property Inquiries API', () => {
           firstName: 'Jane',
           lastName: 'Doe',
           email: 'jane@test.com',
+          tenantId: 1,
         },
       });
       const req = createMockRequest(undefined, `http://localhost/api/property-inquiries?propertyId=${propertyId}`, 'GET');
@@ -62,6 +62,7 @@ describe('Property Inquiries API', () => {
           firstName: 'John',
           lastName: 'Smith',
           email: 'john@test.com',
+          tenantId: 1,
         },
       });
       const req = createMockRequest(undefined, `http://localhost/api/property-inquiries?associateId=${adminAssociateId}`, 'GET');
@@ -83,7 +84,7 @@ describe('Property Inquiries API', () => {
         phone: '555-0100',
         message: 'I am interested in this property.',
       };
-      const req = createMockRequest(payload, 'http://localhost/api/property-inquiries', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/property-inquiries', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createInquiry(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -111,7 +112,7 @@ describe('Property Inquiries API', () => {
       const req = createMockRequest(
         { propertyId },
         'http://localhost/api/property-inquiries', 'POST',
-        { 'x-user-id': String(adminPersonId) },
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' },
       );
       const res = await createInquiry(req);
       expect(res.status).toBe(400);
@@ -125,14 +126,14 @@ describe('Property Inquiries API', () => {
         lastName: 'Davis',
         email: 'not-an-email',
       };
-      const req = createMockRequest(payload, 'http://localhost/api/property-inquiries', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/property-inquiries', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createInquiry(req);
       expect(res.status).toBe(400);
     });
 
     it('should create inquiry with contactMethodId and leadSourceId', async () => {
-      const cm = await prisma.contactMethod.findUniqueOrThrow({ where: { code: 'EMAIL' } });
-      const ls = await prisma.leadSource.findUniqueOrThrow({ where: { code: 'SOCIAL_MEDIA' } });
+      const cm = await prisma.contactMethod.findFirstOrThrow({ where: { tenantId: 1, code: 'EMAIL' } });
+      const ls = await prisma.leadSource.findFirstOrThrow({ where: { tenantId: 1, code: 'SOCIAL_MEDIA' } });
       const payload = {
         propertyId,
         associateId: adminAssociateId,
@@ -142,7 +143,7 @@ describe('Property Inquiries API', () => {
         contactMethodId: cm.id,
         leadSourceId: ls.id,
       };
-      const req = createMockRequest(payload, 'http://localhost/api/property-inquiries', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/property-inquiries', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createInquiry(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -164,6 +165,7 @@ describe('Property Inquiries API', () => {
           firstName: 'Dave',
           lastName: 'Wilson',
           email: 'dave@test.com',
+          tenantId: 1,
         },
       });
       const res = await getInquiry(createMockRequest(), params(String(inquiry.id)));
@@ -189,12 +191,13 @@ describe('Property Inquiries API', () => {
           lastName: 'Adams',
           email: 'eve@test.com',
           message: 'Original message',
+          tenantId: 1,
         },
       });
       const req = createMockRequest(
         { message: 'Updated message' },
         `http://localhost/api/property-inquiries/${inquiry.id}`, 'PATCH',
-        { 'x-user-id': String(adminPersonId) },
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' },
       );
       const res = await updateInquiry(req, params(String(inquiry.id)));
       const json = await res.json();
@@ -211,16 +214,17 @@ describe('Property Inquiries API', () => {
           firstName: 'Frank',
           lastName: 'Green',
           email: 'frank@test.com',
+          tenantId: 1,
         },
       });
-      const clientPersonType = await prisma.personType.findUnique({ where: { code: 'CLIENT' } });
+      const clientPersonType = await prisma.personType.findFirst({ where: { tenantId: 1, code: 'CLIENT' } });
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientPersonType!.id },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientPersonType!.id, tenantId: 1 },
       });
       const req = createMockRequest(
         { message: 'Hacked' },
         `http://localhost/api/property-inquiries/${inquiry.id}`, 'PATCH',
-        { 'x-user-id': String(unauthPerson.id) },
+        { 'x-user-id': String(unauthPerson.id), 'x-tenant-id': '1' },
       );
       const res = await updateInquiry(req, params(String(inquiry.id)));
       expect(res.status).toBe(403);
@@ -236,9 +240,10 @@ describe('Property Inquiries API', () => {
           firstName: 'Grace',
           lastName: 'Hall',
           email: 'grace@test.com',
+          tenantId: 1,
         },
       });
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await deleteInquiry(req, params(String(inquiry.id)));
       expect(res.status).toBe(200);
 
@@ -254,19 +259,20 @@ describe('Property Inquiries API', () => {
           firstName: 'Henry',
           lastName: 'Irving',
           email: 'henry@test.com',
+          tenantId: 1,
         },
       });
-      const clientPersonType = await prisma.personType.findUnique({ where: { code: 'CLIENT' } });
+      const clientPersonType = await prisma.personType.findFirst({ where: { tenantId: 1, code: 'CLIENT' } });
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientPersonType!.id },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientPersonType!.id, tenantId: 1 },
       });
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(unauthPerson.id) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(unauthPerson.id), 'x-tenant-id': '1' });
       const res = await deleteInquiry(req, params(String(inquiry.id)));
       expect(res.status).toBe(403);
     });
 
     it('should return 404 for non-existent id', async () => {
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await deleteInquiry(req, params('99999'));
       expect(res.status).toBe(404);
     });

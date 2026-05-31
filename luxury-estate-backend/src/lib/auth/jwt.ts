@@ -10,6 +10,7 @@ const AUDIENCE = 'luxury-estate-api';
 export interface JwtPayload {
   personId: number;
   email: string;
+  tenantId: number;
 }
 
 export async function signToken(payload: JwtPayload, expiresIn = '24h'): Promise<string> {
@@ -31,6 +32,7 @@ export async function verifyToken(token: string): Promise<JwtPayload | null> {
     return {
       personId: payload.personId as number,
       email: payload.email as string,
+      tenantId: payload.tenantId as number,
     };
   } catch {
     return null;

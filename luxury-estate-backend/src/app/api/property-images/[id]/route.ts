@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyImageDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -52,8 +53,9 @@ import { Permissions } from '@/lib/rbac';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const relation = await prisma.propertyImage.findUnique({
-      where: { id: parseInt(id) },
+    const tenantId = getTenantId(req)!;
+    const relation = await prisma.propertyImage.findFirst({
+      where: { id: parseInt(id), property: { tenantId } },
       include: { property: { select: { name: true } }, image: true },
     });
     if (!relation) return handlePrismaError({ code: 'P2025' });
@@ -66,20 +68,20 @@ export const PUT = requirePermission(Permissions.IMAGE_UPDATE)(async (req: NextR
     const { id } = await params;
     const body = await req.json();
     const data = propertyImageSchema.parse(body);
+    const tenantId = getTenantId(req)!;
     
     // Handle banner logic
+    const existing = await prisma.propertyImage.findFirst({ where: { id: parseInt(id), property: { tenantId } } });
+    if (!existing) return handlePrismaError({ code: 'P2025' });
     if (data.isBanner) {
-      const existing = await prisma.propertyImage.findUnique({ where: { id: parseInt(id) } });
-      if (existing) {
-        await prisma.propertyImage.updateMany({
-          where: { propertyId: existing.propertyId, isBanner: true, id: { not: parseInt(id) } },
-          data: { isBanner: false },
-        });
-      }
+      await prisma.propertyImage.updateMany({
+        where: { propertyId: existing.propertyId, isBanner: true, id: { not: existing.id } },
+        data: { isBanner: false },
+      });
     }
     
     const relation = await prisma.propertyImage.update({
-      where: { id: parseInt(id) },
+      where: { id: existing.id },
       data,
       include: { image: true },
     });
@@ -93,6 +95,9 @@ export const PUT = requirePermission(Permissions.IMAGE_UPDATE)(async (req: NextR
 export const DELETE = requirePermission(Permissions.IMAGE_DELETE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.propertyImage.findFirst({ where: { id: parseInt(id), property: { tenantId } } });
+    if (!existing) return handlePrismaError({ code: 'P2025' });
     await prisma.propertyImage.delete({ where: { id: parseInt(id) } });
     return new Response(null, { status: 204 });
   } catch (error) { return handlePrismaError(error); }

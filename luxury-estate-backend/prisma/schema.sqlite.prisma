@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -11,12 +11,12 @@ generator client {
 
 model Tenant {
   id              Int      @id @default(autoincrement()) @map("ID")
-  name            String   @unique @map("NAME") @db.VarChar(100)
-  slug            String   @unique @map("SLUG") @db.VarChar(100)
-  domain          String?  @unique @map("DOMAIN") @db.VarChar(255)
-  logoUrl         String?  @map("LOGO_URL") @db.VarChar(2048)
-  faviconUrl      String?  @map("FAVICON_URL") @db.VarChar(2048)
-  primaryColor    String?  @default("#1a365d") @map("PRIMARY_COLOR") @db.VarChar(7)
+  name            String   @unique @map("NAME")
+  slug            String   @unique @map("SLUG")
+  domain          String?  @unique @map("DOMAIN")
+  logoUrl         String?  @map("LOGO_URL")
+  faviconUrl      String?  @map("FAVICON_URL")
+  primaryColor    String?  @default("#1a365d") @map("PRIMARY_COLOR")
   isActive        Boolean  @default(true) @map("IS_ACTIVE")
   createdAt       DateTime @default(now()) @map("CREATED_AT")
   updatedAt       DateTime @updatedAt @map("UPDATED_AT")
@@ -63,20 +63,20 @@ model Tenant {
 model TenantSettings {
   id                   Int     @id @default(autoincrement()) @map("ID")
   tenantId             Int     @unique @map("TENANT_ID")
-  companyName          String? @map("COMPANY_NAME") @db.VarChar(200)
-  tagline              String? @map("TAGLINE") @db.VarChar(500)
-  contactEmail         String? @map("CONTACT_EMAIL") @db.VarChar(254)
-  contactPhone         String? @map("CONTACT_PHONE") @db.VarChar(50)
-  address              String? @map("ADDRESS") @db.VarChar(500)
-  socialFacebook       String? @map("SOCIAL_FACEBOOK") @db.VarChar(2048)
-  socialInstagram      String? @map("SOCIAL_INSTAGRAM") @db.VarChar(2048)
-  socialLinkedin       String? @map("SOCIAL_LINKEDIN") @db.VarChar(2048)
-  socialTwitter        String? @map("SOCIAL_TWITTER") @db.VarChar(2048)
-  googleAnalyticsId    String? @map("GOOGLE_ANALYTICS_ID") @db.VarChar(50)
-  metaTitle            String? @map("META_TITLE") @db.VarChar(255)
-  metaDescription      String? @map("META_DESCRIPTION") @db.Text
-  customCss            String? @map("CUSTOM_CSS") @db.Text
-  customJs             String? @map("CUSTOM_JS") @db.Text
+  companyName          String? @map("COMPANY_NAME")
+  tagline              String? @map("TAGLINE")
+  contactEmail         String? @map("CONTACT_EMAIL")
+  contactPhone         String? @map("CONTACT_PHONE")
+  address              String? @map("ADDRESS")
+  socialFacebook       String? @map("SOCIAL_FACEBOOK")
+  socialInstagram      String? @map("SOCIAL_INSTAGRAM")
+  socialLinkedin       String? @map("SOCIAL_LINKEDIN")
+  socialTwitter        String? @map("SOCIAL_TWITTER")
+  googleAnalyticsId    String? @map("GOOGLE_ANALYTICS_ID")
+  metaTitle            String? @map("META_TITLE")
+  metaDescription      String? @map("META_DESCRIPTION")
+  customCss            String? @map("CUSTOM_CSS")
+  customJs             String? @map("CUSTOM_JS")
   createdAt            DateTime @default(now()) @map("CREATED_AT")
   updatedAt            DateTime @updatedAt @map("UPDATED_AT")
 
@@ -92,7 +92,7 @@ model PersonType {
   tenantId    Int      @map("TENANT_ID")
   code        String   @map("CODE")
   name        String   @map("NAME")
-  description String?  @map("DESCRIPTION") @db.Text
+  description String?  @map("DESCRIPTION")
   isActive    Boolean  @default(true) @map("IS_ACTIVE")
   sortOrder   Int      @default(0) @map("SORT_ORDER")
   createdAt   DateTime @default(now()) @map("CREATED_AT")
@@ -110,7 +110,7 @@ model PropertyType {
   tenantId    Int        @map("TENANT_ID")
   code        String     @map("CODE")
   name        String     @map("NAME")
-  description String?    @map("DESCRIPTION") @db.Text
+  description String?    @map("DESCRIPTION")
   isActive    Boolean    @default(true) @map("IS_ACTIVE")
   sortOrder   Int        @default(0) @map("SORT_ORDER")
   createdAt   DateTime   @default(now()) @map("CREATED_AT")
@@ -128,7 +128,7 @@ model PropertyStatus {
   tenantId    Int        @map("TENANT_ID")
   code        String     @map("CODE")
   name        String     @map("NAME")
-  description String?    @map("DESCRIPTION") @db.Text
+  description String?    @map("DESCRIPTION")
   isActive    Boolean    @default(true) @map("IS_ACTIVE")
   sortOrder   Int        @default(0) @map("SORT_ORDER")
   createdAt   DateTime   @default(now()) @map("CREATED_AT")
@@ -145,7 +145,7 @@ model DisqualificationStatus {
   id        Int                      @id @default(autoincrement()) @map("ID")
   tenantId  Int                      @map("TENANT_ID")
   code      String                   @map("CODE")
-  name      String                   @map("NAME") @db.VarChar(50)
+  name      String                   @map("NAME")
   isActive  Boolean                  @default(true) @map("IS_ACTIVE")
   sortOrder Int                      @default(0) @map("SORT_ORDER")
   createdAt DateTime                 @default(now()) @map("CREATED_AT")
@@ -163,8 +163,8 @@ model DisqualificationReason {
   id          Int                    @id @default(autoincrement()) @map("ID")
   tenantId    Int                    @map("TENANT_ID")
   statusId    Int                    @map("ID_DISQUALIFYING_STATUS")
-  reason      String                 @map("REASON") @db.VarChar(100)
-  description String?                @map("DESCRIPTION") @db.Text
+  reason      String                 @map("REASON")
+  description String?                @map("DESCRIPTION")
 
   tenant Tenant                    @relation(fields: [tenantId], references: [id])
   status DisqualificationStatus @relation(fields: [statusId], references: [id])
@@ -178,9 +178,9 @@ model DisqualificationReason {
 model Country {
   id        Int       @id @default(autoincrement()) @map("ID")
   name      String    @unique @map("NAME")
-  code002   String    @unique @map("CODE002") @db.Char(2)
-  code003   String    @unique @map("CODE003") @db.Char(3)
-  codenum   String    @unique @map("CODENUM") @db.Char(3)
+  code002   String    @unique @map("CODE002")
+  code003   String    @unique @map("CODE003")
+  codenum   String    @unique @map("CODENUM")
   tld       String    @unique @map("TLD")
   states    State[]
   cities    City[]
@@ -192,8 +192,8 @@ model Country {
 model State {
   id        Int       @id @default(autoincrement()) @map("ID")
   countryId Int       @map("COUNTRY_ID")
-  stateCode String    @map("STATE_CODE") @db.VarChar(10)
-  territory String    @map("TERRITORY") @db.VarChar(30)
+  stateCode String    @map("STATE_CODE")
+  territory String    @map("TERRITORY")
   country   Country   @relation(fields: [countryId], references: [id])
   cities    City[]
   addresses Address[]
@@ -207,7 +207,7 @@ model City {
   id        Int       @id @default(autoincrement()) @map("ID")
   countryId Int       @map("COUNTRY_ID")
   stateId   Int       @map("STATE_ID")
-  cityName  String    @map("CITY_NAME") @db.VarChar(200)
+  cityName  String    @map("CITY_NAME")
   country   Country   @relation(fields: [countryId], references: [id])
   state     State     @relation(fields: [stateId], references: [id])
   addresses Address[]
@@ -221,15 +221,15 @@ model City {
 model Address {
   id               Int      @unique @id @default(autoincrement()) @map("ID")
   tenantId         Int      @map("TENANT_ID")
-  recipient        String?  @map("RECIPIENT") @db.VarChar(255)
-  organization     String?  @map("ORGANIZATION") @db.VarChar(255)
-  addressStreet    String   @map("ADDRESS_STREET") @db.VarChar(500)
+  recipient        String?  @map("RECIPIENT")
+  organization     String?  @map("ORGANIZATION")
+  addressStreet    String   @map("ADDRESS_STREET")
   addressCityId    Int      @map("ADDRESS_CITY_ID")
   addressRegionId  Int      @map("ADDRESS_REGION_ID")
-  postalCode       String   @map("POSTAL_CODE") @db.VarChar(20)
+  postalCode       String   @map("POSTAL_CODE")
   addressCountryId Int      @map("ADDRESS_COUNTRY_ID")
-  latitude         Decimal? @map("LATITUDE") @db.Decimal(9, 6)
-  longitude        Decimal? @map("LONGITUDE") @db.Decimal(9, 6)
+  latitude         Decimal? @map("LATITUDE")
+  longitude        Decimal? @map("LONGITUDE")
   createdAt        DateTime @default(now()) @map("CREATED_AT")
   updatedAt        DateTime @updatedAt @map("UPDATED_AT")
 
@@ -263,8 +263,8 @@ model Person {
   firstName                String? @map("FIRST_NAME")
   lastName                 String? @map("LAST_NAME")
   phone                    String? @map("PHONE")
-  email                    String? @unique @map("EMAIL") @db.VarChar(254)
-  notes                    String? @map("NOTES") @db.Text
+  email                    String? @unique @map("EMAIL")
+  notes                    String? @map("NOTES")
   isLead                   Boolean @default(false) @map("IS_LEAD")
   isClient                 Boolean @default(false) @map("IS_CLIENT")
   isDisqualified           Boolean @default(false) @map("IS_DISQUALIFIED")
@@ -329,8 +329,8 @@ model AuthAccount {
   id                  Int       @id @default(autoincrement()) @map("ID")
   tenantId            Int       @map("TENANT_ID")
   personId            Int       @unique @map("PERSON_ID")
-  email               String    @unique @map("EMAIL") @db.VarChar(254)
-  passwordHash        String?   @map("PASSWORD_HASH") @db.VarChar(255)
+  email               String    @unique @map("EMAIL")
+  passwordHash        String?   @map("PASSWORD_HASH")
   emailVerified       Boolean   @default(false) @map("EMAIL_VERIFIED")
   failedLoginAttempts Int       @default(0) @map("FAILED_LOGIN_ATTEMPTS")
   lockedUntil         DateTime? @map("LOCKED_UNTIL")
@@ -353,15 +353,15 @@ model Agency {
   tenantId      Int     @map("TENANT_ID")
   name          String  @map("NAME")
   slug          String  @map("SLUG")
-  description   String? @map("DESCRIPTION") @db.Text
+  description   String? @map("DESCRIPTION")
   logoImageId   Int?    @map("LOGO_IMAGE_ID")
   bannerImageId Int?    @map("BANNER_IMAGE_ID")
   phone         String? @map("PHONE")
-  email         String? @map("EMAIL") @db.VarChar(254)
-  websiteUrl    String? @map("WEBSITE_URL") @db.VarChar(2048)
-  facebookUrl   String? @map("FACEBOOK_URL") @db.VarChar(2048)
-  instagramUrl  String? @map("INSTAGRAM_URL") @db.VarChar(2048)
-  linkedinUrl   String? @map("LINKEDIN_URL") @db.VarChar(2048)
+  email         String? @map("EMAIL")
+  websiteUrl    String? @map("WEBSITE_URL")
+  facebookUrl   String? @map("FACEBOOK_URL")
+  instagramUrl  String? @map("INSTAGRAM_URL")
+  linkedinUrl   String? @map("LINKEDIN_URL")
 
   addressId Int?   @unique @map("ADDRESS_ID")
   address Address? @relation("AgencyAddress", fields: [addressId], references: [id])
@@ -421,15 +421,15 @@ model Associate {
   supervisor       Associate?     @relation("AssociateSupervisor", fields: [supervisorId], references: [id])
   subordinates     Associate[]    @relation("AssociateSupervisor")
   commissionPlanId Int?           @map("COMMISION_PLAN_ID")
-  bio              String?        @map("BIO") @db.Text
+  bio              String?        @map("BIO")
   isPublicProfile  Boolean        @default(true) @map("IS_PUBLIC_PROFILE")
   contactMethodId  Int?           @map("CONTACT_METHOD_ID")
   contactMethod    ContactMethod? @relation(fields: [contactMethodId], references: [id])
   photoId          Int?           @unique @map("PHOTO_ID")
   videoId          Int?           @unique @map("VIDEO_ID")
-  fbHandle         String?        @map("FB_HANDLE") @db.VarChar(2048)
-  igHandle         String?        @map("IG_HANDLE") @db.VarChar(2048)
-  linkedinHandle   String?        @map("LINKEDIN_HANDLE") @db.VarChar(2048)
+  fbHandle         String?        @map("FB_HANDLE")
+  igHandle         String?        @map("IG_HANDLE")
+  linkedinHandle   String?        @map("LINKEDIN_HANDLE")
   photo            Image?         @relation("AssociatePhoto", fields: [photoId], references: [id], onDelete: Restrict)
   video            Video?         @relation("AssociateVideo", fields: [videoId], references: [id], onDelete: Restrict)
 
@@ -448,9 +448,9 @@ model Associate {
 model Role {
   id          Int      @id @default(autoincrement()) @map("ID")
   tenantId    Int      @map("TENANT_ID")
-  code        String   @db.VarChar(50) @map("CODE")
-  name        String   @db.VarChar(100) @map("NAME")
-  description String?  @db.Text @map("DESCRIPTION")
+  code        String   @map("CODE")
+  name        String   @map("NAME")
+  description String?  @map("DESCRIPTION")
   isActive    Boolean  @default(true) @map("IS_ACTIVE")
   isSystem    Boolean  @default(false) @map("IS_SYSTEM")
   sortOrder   Int      @default(0) @map("SORT_ORDER")
@@ -468,10 +468,10 @@ model Role {
 
 model Permission {
   id                Int                @id @default(autoincrement()) @map("ID")
-  code              String             @unique @db.VarChar(100) @map("CODE")
-  name              String             @db.VarChar(150) @map("NAME")
-  description       String?            @db.Text @map("DESCRIPTION")
-  category          String?            @db.VarChar(100) @map("CATEGORY")
+  code              String             @unique @map("CODE")
+  name              String             @map("NAME")
+  description       String?            @map("DESCRIPTION")
+  category          String?            @map("CATEGORY")
   isActive          Boolean            @default(true) @map("IS_ACTIVE")
   isSystem          Boolean            @default(false) @map("IS_SYSTEM")
   sortOrder         Int                @default(0) @map("SORT_ORDER")
@@ -531,7 +531,7 @@ model AssociateType {
   tenantId    Int         @map("TENANT_ID")
   code        String      @map("CODE")
   name        String      @map("NAME")
-  description String?     @map("DESCRIPTION") @db.Text
+  description String?     @map("DESCRIPTION")
   isActive    Boolean     @default(true) @map("IS_ACTIVE")
   sortOrder   Int         @default(0) @map("SORT_ORDER")
   createdAt   DateTime    @default(now()) @map("CREATED_AT")
@@ -570,7 +570,7 @@ model Office {
 
 model Image {
   id                 Int             @id @default(autoincrement()) @map("ID")
-  uri                String          @map("URI") @db.VarChar(2048)
+  uri                String          @map("URI")
   isPersonal         Boolean         @default(false) @map("IS_PERSONAL")
   propertyImages     PropertyImage[]
   bannerProperties   Property[]      @relation("BannerImage")
@@ -615,7 +615,7 @@ model PropertyImage {
 
 model Video {
   id             Int             @id @default(autoincrement()) @map("ID")
-  uri            String          @map("URI") @db.VarChar(2048)
+  uri            String          @map("URI")
   isPersonal     Boolean         @default(false) @map("IS_PERSONAL")
   propertyVideos PropertyVideo[]
   associateVideo Associate?      @relation("AssociateVideo")
@@ -651,35 +651,35 @@ model Property {
   id                Int       @id @default(autoincrement()) @map("ID")
   tenantId          Int       @map("TENANT_ID")
   name              String    @map("NAME")
-  description       String    @map("DESCRIPTION") @db.Text
+  description       String    @map("DESCRIPTION")
   summary           String?   @map("SUMMARY")
   bannerImageId     Int?      @map("BANNER_IMAGE_ID")
-  seoUrl            String?   @unique @map("SEO_URL") @db.VarChar(255)
+  seoUrl            String?   @unique @map("SEO_URL")
   publishDate       DateTime? @map("PUBLISH_DATE")
-  price             Decimal?  @map("PRICE") @db.Decimal(12, 2)
+  price             Decimal?  @map("PRICE")
   bedrooms          Int?      @map("BEDROOMS")
   bathrooms         Int?      @map("BATHROOMS")
-  areaSqft          Decimal?  @map("AREA_SQFT") @db.Decimal(8, 2)
-  streetAddress     String?   @map("STREET_ADDRESS") @db.VarChar(500)
-  addressLocality   String?   @map("ADDRESS_LOCALITY") @db.VarChar(200)
-  addressRegion     String?   @map("ADDRESS_REGION") @db.VarChar(100)
-  postalCode        String?   @map("POSTAL_CODE") @db.VarChar(20)
-  addressCountry    String?   @map("ADDRESS_COUNTRY") @db.Char(2)
+  areaSqft          Decimal?  @map("AREA_SQFT")
+  streetAddress     String?   @map("STREET_ADDRESS")
+  addressLocality   String?   @map("ADDRESS_LOCALITY")
+  addressRegion     String?   @map("ADDRESS_REGION")
+  postalCode        String?   @map("POSTAL_CODE")
+  addressCountry    String?   @map("ADDRESS_COUNTRY")
   garageSpaces      Int?      @map("GARAGE_SPACES")
   builtYear         Int?      @map("BUILT_YEAR")
   propertyTypeId    Int       @map("PROPERTY_TYPE_ID")
   propertyStatusId  Int       @map("PROPERTY_STATUS_ID")
-  lotSize           Decimal?  @map("LOT_SIZE") @db.Decimal(10, 2)
-  hoaFees           Decimal?  @map("HOA_FEES") @db.Decimal(8, 2)
+  lotSize           Decimal?  @map("LOT_SIZE")
+  hoaFees           Decimal?  @map("HOA_FEES")
   mlsId             String?   @map("MLS_ID")
-  latitude          Decimal?  @map("LATITUDE") @db.Decimal(9, 6)
-  longitude         Decimal?  @map("LONGITUDE") @db.Decimal(9, 6)
+  latitude          Decimal?  @map("LATITUDE")
+  longitude         Decimal?  @map("LONGITUDE")
   isFeatured        Boolean   @default(false) @map("IS_FEATURED")
   isPublished       Boolean   @default(false) @map("IS_PUBLISHED")
-  virtualTourUrl    String?   @map("VIRTUAL_TOUR_URL") @db.VarChar(2048)
-  videoTourUrl      String?   @map("VIDEO_TOUR_URL") @db.VarChar(2048)
-  metaTitle         String?   @map("META_TITLE") @db.VarChar(255)
-  metaDescription   String?   @map("META_DESCRIPTION") @db.Text
+  virtualTourUrl    String?   @map("VIRTUAL_TOUR_URL")
+  videoTourUrl      String?   @map("VIDEO_TOUR_URL")
+  metaTitle         String?   @map("META_TITLE")
+  metaDescription   String?   @map("META_DESCRIPTION")
   agencyId          Int?      @map("AGENCY_ID")
   addressId         Int?      @map("ADDRESS_ID")
   
@@ -728,8 +728,8 @@ model BlogPost {
   tenantId          Int      @map("TENANT_ID")
   title             String   @map("TITLE")
   slug              String   @map("SLUG")
-  excerpt           String?  @map("EXCERPT") @db.Text
-  content           String   @map("CONTENT") @db.Text
+  excerpt           String?  @map("EXCERPT")
+  content           String   @map("CONTENT")
   published         Boolean  @default(false) @map("PUBLISHED")
   
   featuredImageId   Int?     @map("FEATURED_IMAGE_ID")
@@ -760,7 +760,7 @@ model ReviewModerationStatus {
   tenantId  Int              @map("TENANT_ID")
   code      String           @map("CODE")
   name        String           @map("NAME")
-  description String?          @map("DESCRIPTION") @db.Text
+  description String?          @map("DESCRIPTION")
   isActive    Boolean          @default(true) @map("IS_ACTIVE")
   sortOrder   Int              @default(0) @map("SORT_ORDER")
   createdAt   DateTime         @default(now()) @map("CREATED_AT")
@@ -781,12 +781,12 @@ model PropertyReview {
   associateId         Int?                   @map("ASSOCIATE_ID")
   moderationStatusId  Int?                   @map("MODERATION_STATUS_ID")
   rating              Int                    @map("RATING")
-  title               String?                @map("TITLE") @db.VarChar(255)
-  comment             String?                @map("COMMENT") @db.Text
+  title               String?                @map("TITLE")
+  comment             String?                @map("COMMENT")
   isVerified          Boolean                @default(false) @map("IS_VERIFIED")
   isPublished         Boolean                @default(false) @map("IS_PUBLISHED")
   helpfulCount        Int                    @default(0) @map("HELPFUL_COUNT")
-  moderationNote      String?                @map("MODERATION_NOTE") @db.Text
+  moderationNote      String?                @map("MODERATION_NOTE")
   moderatedById       Int?                   @map("MODERATED_BY_ID")
   moderatedAt         DateTime?              @map("MODERATED_AT")
   createdAt           DateTime               @default(now()) @map("CREATED_AT")
@@ -810,7 +810,7 @@ model ContactMethod {
   tenantId   Int         @map("TENANT_ID")
   code       String      @map("CODE")
   name       String      @map("NAME")
-  description String?    @map("DESCRIPTION") @db.Text
+  description String?    @map("DESCRIPTION")
   isActive   Boolean     @default(true) @map("IS_ACTIVE")
   sortOrder  Int         @default(0) @map("SORT_ORDER")
   createdAt  DateTime    @default(now()) @map("CREATED_AT")
@@ -831,7 +831,7 @@ model LeadSource {
   tenantId  Int       @map("TENANT_ID")
   code      String    @map("CODE")
   name      String    @map("NAME")
-  description String? @map("DESCRIPTION") @db.Text
+  description String? @map("DESCRIPTION")
   isActive  Boolean   @default(true) @map("IS_ACTIVE")
   sortOrder Int       @default(0) @map("SORT_ORDER")
   createdAt DateTime  @default(now()) @map("CREATED_AT")
@@ -852,32 +852,32 @@ model LeadSource {
 model ContactRequest {
   id          Int     @id @default(autoincrement()) @map("ID")
   tenantId    Int     @map("TENANT_ID")
-  firstName   String  @map("FIRST_NAME") @db.VarChar(100)
-  lastName    String  @map("LAST_NAME") @db.VarChar(100)
-  email       String  @map("EMAIL") @db.VarChar(255)
-  phone       String? @map("PHONE_NUMBER") @db.VarChar(50)
-  companyName String? @map("COMPANY_NAME") @db.VarChar(150)
-  jobTitle    String? @map("JOB_TITLE") @db.VarChar(100)
+  firstName   String  @map("FIRST_NAME")
+  lastName    String  @map("LAST_NAME")
+  email       String  @map("EMAIL")
+  phone       String? @map("PHONE_NUMBER")
+  companyName String? @map("COMPANY_NAME")
+  jobTitle    String? @map("JOB_TITLE")
 
   requestTypeId Int     @map("REQUEST_TYPE_ID")
-  subject       String? @map("SUBJECT") @db.VarChar(255)
-  message       String  @map("MESSAGE") @db.Text
+  subject       String? @map("SUBJECT")
+  message       String  @map("MESSAGE")
   contactMethodId Int? @map("CONTACT_METHOD_ID")
   contactMethod   ContactMethod? @relation(fields: [contactMethodId], references: [id])
 
   // Marketing Attribution (UTMs)
-  utmSource      String? @map("UTM_SOURCE") @db.VarChar(100)
-  utmMedium      String? @map("UTM_MEDIUM") @db.VarChar(100)
-  utmCampaign    String? @map("UTM_CAMPAIGN") @db.VarChar(100)
-  referrerUrl    String? @map("REFERRER_URL") @db.Text
-  landingPageUrl String? @map("LANDING_PAGE_URL") @db.Text
+  utmSource      String? @map("UTM_SOURCE")
+  utmMedium      String? @map("UTM_MEDIUM")
+  utmCampaign    String? @map("UTM_CAMPAIGN")
+  referrerUrl    String? @map("REFERRER_URL")
+  landingPageUrl String? @map("LANDING_PAGE_URL")
 
   leadSourceId Int? @map("LEAD_SOURCE_ID")
   leadSource   LeadSource? @relation(fields: [leadSourceId], references: [id])
 
   requestStatusId Int     @map("REQUEST_STATUS_ID")
   marketingConsent       Boolean @default(false) @map("MARKETING_CONSENT")
-  ipAddress        String?       @map("IP_ADDRESS") @db.VarChar(45)
+  ipAddress        String?       @map("IP_ADDRESS")
 
   requestType     RequestType  @relation(fields: [requestTypeId], references: [id])
   requestStatus   RequestStatus @relation(fields: [requestStatusId], references: [id])
@@ -913,11 +913,11 @@ model PropertyInquiry {
   propertyId  Int      @map("PROPERTY_ID")
   associateId Int      @map("ASSOCIATE_ID")
   personId    Int?     @map("PERSON_ID")
-  firstName   String   @map("FIRST_NAME") @db.VarChar(100)
-  lastName    String   @map("LAST_NAME") @db.VarChar(100)
-  email       String   @map("EMAIL") @db.VarChar(255)
-  phone       String?  @map("PHONE_NUMBER") @db.VarChar(50)
-  message     String?  @map("MESSAGE") @db.Text
+  firstName   String   @map("FIRST_NAME")
+  lastName    String   @map("LAST_NAME")
+  email       String   @map("EMAIL")
+  phone       String?  @map("PHONE_NUMBER")
+  message     String?  @map("MESSAGE")
   contactMethodId Int? @map("CONTACT_METHOD_ID")
   contactMethod   ContactMethod? @relation(fields: [contactMethodId], references: [id])
   leadSourceId Int? @map("LEAD_SOURCE_ID")
@@ -952,7 +952,7 @@ model TourType {
   tenantId     Int          @map("TENANT_ID")
   code         String       @map("CODE")
   name         String       @map("NAME")
-  description  String?      @map("DESCRIPTION") @db.Text
+  description  String?      @map("DESCRIPTION")
   isActive     Boolean      @default(true) @map("IS_ACTIVE")
   sortOrder    Int          @default(0) @map("SORT_ORDER")
   createdAt    DateTime     @default(now()) @map("CREATED_AT")
@@ -970,16 +970,16 @@ model TourRequest {
   tenantId            Int        @map("TENANT_ID")
   propertyId          Int        @map("PROPERTY_ID")
   clientPersonId      Int?       @map("CLIENT_PERSON_ID")
-  clientFirstName     String     @map("CLIENT_FIRST_NAME") @db.VarChar(100)
-  clientLastName      String     @map("CLIENT_LAST_NAME") @db.VarChar(100)
-  clientEmail         String     @map("CLIENT_EMAIL") @db.VarChar(255)
-  clientPhone         String?    @map("CLIENT_PHONE") @db.VarChar(50)
+  clientFirstName     String     @map("CLIENT_FIRST_NAME")
+  clientLastName      String     @map("CLIENT_LAST_NAME")
+  clientEmail         String     @map("CLIENT_EMAIL")
+  clientPhone         String?    @map("CLIENT_PHONE")
   primaryAssociateId  Int        @map("PRIMARY_ASSOCIATE_ID")
   secondaryAssociateId Int?      @map("SECONDARY_ASSOCIATE_ID")
   tourTypeId          Int        @map("TOUR_TYPE_ID")
   scheduledDate       DateTime   @map("SCHEDULED_DATE")
-  clientMessage       String?    @map("CLIENT_MESSAGE") @db.Text
-  associateNotes      String?    @map("ASSOCIATE_NOTES") @db.Text
+  clientMessage       String?    @map("CLIENT_MESSAGE")
+  associateNotes      String?    @map("ASSOCIATE_NOTES")
   tourStatusId        Int        @map("TOUR_STATUS_ID")
   contactMethodId Int? @map("CONTACT_METHOD_ID")
   contactMethod   ContactMethod? @relation(fields: [contactMethodId], references: [id])
@@ -1012,10 +1012,10 @@ model TourRequest {
 model NewsletterIssue {
   id            Int       @id @default(autoincrement()) @map("ID")
   tenantId      Int       @map("TENANT_ID")
-  title         String    @map("TITLE") @db.VarChar(255)
-  slug          String    @map("SLUG") @db.VarChar(255)
+  title         String    @map("TITLE")
+  slug          String    @map("SLUG")
   issueNumber   Int?      @map("ISSUE_NUMBER")
-  summary       String?   @map("SUMMARY") @db.Text
+  summary       String?   @map("SUMMARY")
 
   coverImageId  Int?      @map("COVER_IMAGE_ID")
 
@@ -1046,10 +1046,10 @@ model NewsletterSection {
   id                 Int              @id @default(autoincrement()) @map("ID")
   newsletterIssueId  Int              @map("NEWSLETTER_ISSUE_ID")
 
-  title              String           @map("TITLE") @db.VarChar(255)
+  title              String           @map("TITLE")
   sortOrder          Int              @default(0) @map("SORT_ORDER")
 
-  content            String?          @map("CONTENT") @db.Text
+  content            String?          @map("CONTENT")
 
   newsletterIssue    NewsletterIssue  @relation(fields: [newsletterIssueId], references: [id], onDelete: Cascade)
 
@@ -1083,8 +1083,8 @@ model NewsletterContentType {
   id                  Int                  @id @default(autoincrement()) @map("ID")
   tenantId            Int                  @map("TENANT_ID")
   code                String               @map("CODE")
-  name                String               @map("NAME") @db.VarChar(100)
-  description         String?              @map("DESCRIPTION") @db.Text
+  name                String               @map("NAME")
+  description         String?              @map("DESCRIPTION")
   isActive            Boolean              @default(true) @map("IS_ACTIVE")
   sortOrder           Int                  @default(0) @map("SORT_ORDER")
   createdAt           DateTime             @default(now()) @map("CREATED_AT")
@@ -1134,7 +1134,7 @@ model NewsletterSubscription {
   subscribedAt     DateTime  @default(now()) @map("SUBSCRIBED_AT")
   unsubscribedAt   DateTime? @map("UNSUBSCRIBED_AT")
 
-  source           String?   @map("SOURCE") @db.VarChar(100)
+  source           String?   @map("SOURCE")
   leadSourceId Int? @map("LEAD_SOURCE_ID")
   leadSource   LeadSource? @relation(fields: [leadSourceId], references: [id])
 
@@ -1153,7 +1153,7 @@ model NewsletterCategory {
   id              Int                                @id @default(autoincrement()) @map("ID")
   tenantId        Int                                @map("TENANT_ID")
   code            String                             @map("CODE")
-  name            String                             @map("NAME") @db.VarChar(100)
+  name            String                             @map("NAME")
   isActive        Boolean                            @default(true) @map("IS_ACTIVE")
   sortOrder       Int                                @default(0) @map("SORT_ORDER")
   createdAt       DateTime                           @default(now()) @map("CREATED_AT")
@@ -1189,7 +1189,7 @@ model RequestType {
   tenantId        Int              @map("TENANT_ID")
   code            String           @map("CODE")
   name            String           @map("NAME")
-  description     String?          @map("DESCRIPTION") @db.Text
+  description     String?          @map("DESCRIPTION")
   isActive        Boolean          @default(true) @map("IS_ACTIVE")
   sortOrder       Int              @default(0) @map("SORT_ORDER")
   createdAt       DateTime         @default(now()) @map("CREATED_AT")
@@ -1207,7 +1207,7 @@ model RequestStatus {
   tenantId        Int              @map("TENANT_ID")
   code            String           @map("CODE")
   name            String           @map("NAME")
-  description     String?          @map("DESCRIPTION") @db.Text
+  description     String?          @map("DESCRIPTION")
   isActive        Boolean          @default(true) @map("IS_ACTIVE")
   sortOrder       Int              @default(0) @map("SORT_ORDER")
   createdAt       DateTime         @default(now()) @map("CREATED_AT")
@@ -1225,7 +1225,7 @@ model TourStatus {
   tenantId     Int           @map("TENANT_ID")
   code         String        @map("CODE")
   name         String        @map("NAME")
-  description  String?       @map("DESCRIPTION") @db.Text
+  description  String?       @map("DESCRIPTION")
   isActive     Boolean       @default(true) @map("IS_ACTIVE")
   sortOrder    Int           @default(0) @map("SORT_ORDER")
   createdAt    DateTime      @default(now()) @map("CREATED_AT")

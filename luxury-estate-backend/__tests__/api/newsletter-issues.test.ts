@@ -3,7 +3,7 @@ import { GET as listIssues, POST as createIssue } from '@/app/api/newsletter-iss
 import { GET as getIssue, PATCH as updateIssue, DELETE as deleteIssue } from '@/app/api/newsletter-issues/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { createMockRequest } from '../utils/mock-request';
-import { clearTestDatabase, seedLookupTables, seedAdminUser } from '../utils/test-helpers';
+import { clearTransactionalData, seedAdminUser } from '../utils/test-helpers';
 
 function params(id: string) {
   return { params: Promise.resolve({ id }) };
@@ -17,8 +17,7 @@ describe('Newsletter Issues API', () => {
   let adminPersonId: number;
 
   beforeEach(async () => {
-    await clearTestDatabase();
-    await seedLookupTables();
+    await clearTransactionalData();
     adminPersonId = await seedAdminUser();
   });
 
@@ -32,7 +31,7 @@ describe('Newsletter Issues API', () => {
 
     it('should return list of issues', async () => {
       await prisma.newsletterIssue.create({
-        data: { title: 'Test Issue', slug: slug('test-issue'), createdById: adminPersonId },
+        data: { title: 'Test Issue', slug: slug('test-issue'), createdById: adminPersonId, tenantId: 1 },
       });
       const res = await listIssues(createMockRequest());
       const json = await res.json();
@@ -43,10 +42,10 @@ describe('Newsletter Issues API', () => {
 
     it('should filter by isPublished', async () => {
       await prisma.newsletterIssue.create({
-        data: { title: 'Published', slug: slug('published'), isPublished: true, createdById: adminPersonId },
+        data: { title: 'Published', slug: slug('published'), isPublished: true, createdById: adminPersonId, tenantId: 1 },
       });
       await prisma.newsletterIssue.create({
-        data: { title: 'Draft', slug: slug('draft'), isPublished: false, createdById: adminPersonId },
+        data: { title: 'Draft', slug: slug('draft'), isPublished: false, createdById: adminPersonId, tenantId: 1 },
       });
       const req = createMockRequest(undefined, 'http://localhost/api/newsletter-issues?isPublished=true', 'GET');
       const res = await listIssues(req);
@@ -66,7 +65,7 @@ describe('Newsletter Issues API', () => {
         isPublished: false,
         createdById: adminPersonId,
       };
-      const req = createMockRequest(payload, undefined, 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, undefined, 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createIssue(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -82,7 +81,7 @@ describe('Newsletter Issues API', () => {
     });
 
     it('should return 400 for missing required fields', async () => {
-      const req = createMockRequest({ title: 'No slug' }, undefined, 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest({ title: 'No slug' }, undefined, 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createIssue(req);
       expect(res.status).toBe(400);
     });
@@ -91,7 +90,7 @@ describe('Newsletter Issues API', () => {
   describe('GET /api/newsletter-issues/[id]', () => {
     it('should return issue by id', async () => {
       const issue = await prisma.newsletterIssue.create({
-        data: { title: 'Test', slug: slug('test'), createdById: adminPersonId },
+        data: { title: 'Test', slug: slug('test'), createdById: adminPersonId, tenantId: 1 },
       });
       const res = await getIssue(createMockRequest(), params(String(issue.id)));
       const json = await res.json();
@@ -108,12 +107,12 @@ describe('Newsletter Issues API', () => {
   describe('PATCH /api/newsletter-issues/[id]', () => {
     it('should update an issue', async () => {
       const issue = await prisma.newsletterIssue.create({
-        data: { title: 'Old Title', slug: slug('old-title'), createdById: adminPersonId },
+        data: { title: 'Old Title', slug: slug('old-title'), createdById: adminPersonId, tenantId: 1 },
       });
       const req = createMockRequest(
         { title: 'New Title' },
         undefined, 'PATCH',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateIssue(req, params(String(issue.id)));
       const json = await res.json();
@@ -125,9 +124,9 @@ describe('Newsletter Issues API', () => {
   describe('DELETE /api/newsletter-issues/[id]', () => {
     it('should delete an issue', async () => {
       const issue = await prisma.newsletterIssue.create({
-        data: { title: 'To Delete', slug: slug('to-delete'), createdById: adminPersonId },
+        data: { title: 'To Delete', slug: slug('to-delete'), createdById: adminPersonId, tenantId: 1 },
       });
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await deleteIssue(req, params(String(issue.id)));
       expect(res.status).toBe(200);
       const deleted = await prisma.newsletterIssue.findUnique({ where: { id: issue.id } });
@@ -135,7 +134,7 @@ describe('Newsletter Issues API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await deleteIssue(req, params('99999'));
       expect(res.status).toBe(404);
     });

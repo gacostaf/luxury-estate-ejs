@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toTourRequestDTO } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const tourIncludes = {
   property: true,
@@ -66,8 +67,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const tour = await prisma.tourRequest.findUnique({
-      where: { id },
+    const tenantId = getTenantId(req)!;
+    const tour = await prisma.tourRequest.findFirst({
+      where: { id, tenantId },
       include: tourIncludes,
     });
     if (!tour) return NextResponse.json({ error: 'Tour request not found' }, { status: 404 });
@@ -83,6 +85,9 @@ export const PATCH = requirePermission(Permissions.REVIEW_MODERATE)(async (req: 
     const data = tourRequestSchema.partial().parse(body);
     const updateData: any = { ...data };
     if (data.scheduledDate) updateData.scheduledDate = new Date(data.scheduledDate);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.tourRequest.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Tour request not found' }, { status: 404 });
     const tour = await prisma.tourRequest.update({
       where: { id },
       data: updateData,
@@ -100,6 +105,9 @@ export const DELETE = requirePermission(Permissions.REVIEW_DELETE)(async (req: N
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.tourRequest.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Tour request not found' }, { status: 404 });
     await prisma.tourRequest.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

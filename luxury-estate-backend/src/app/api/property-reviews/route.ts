@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyReviewDTO, toPropertyReviewDTOList } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const reviewIncludes = {
   person: true,
@@ -41,7 +42,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const propertyId = searchParams.get('propertyId');
-    const where = propertyId ? { propertyId: parseInt(propertyId) } : {};
+    const tenantId = getTenantId(req)!;
+    const where: any = { tenantId };
+    if (propertyId) where.propertyId = parseInt(propertyId);
     const reviews = await prisma.propertyReview.findMany({
       where,
       include: reviewIncludes,
@@ -55,8 +58,9 @@ export const POST = requireAuth()(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const data = propertyReviewSchema.parse(body);
+    const tenantId = getTenantId(req)!;
     const review = await prisma.propertyReview.create({
-      data,
+      data: { tenantId, ...data },
       include: reviewIncludes,
     });
     return successResponse(toPropertyReviewDTO(review), 201);

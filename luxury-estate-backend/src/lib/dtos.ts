@@ -1,7 +1,36 @@
 // ===================== INTERFACES =====================
 
+export interface TenantDTO {
+  id: number;
+  name: string;
+  slug: string;
+  domain: string | null;
+  logoUrl: string | null;
+  faviconUrl: string | null;
+  primaryColor: string | null;
+  isActive: boolean;
+}
+
+export interface TenantSettingsDTO {
+  id: number;
+  tenantId: number;
+  companyName: string | null;
+  tagline: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  address: string | null;
+  socialFacebook: string | null;
+  socialInstagram: string | null;
+  socialLinkedin: string | null;
+  socialTwitter: string | null;
+  googleAnalyticsId: string | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+}
+
 export interface PersonDTO {
   id: number;
+  tenantId: number;
   personTypeId: number;
   personType?: PersonTypeDTO;
   fullName: string;
@@ -26,6 +55,7 @@ export interface PersonDTO {
 
 export interface AddressDTO {
   id: number;
+  tenantId: number;
   recipient: string | null;
   organization: string | null;
   addressStreet: string;
@@ -64,6 +94,7 @@ export interface VideoDTO {
 
 export interface PropertyImageDTO {
   id: number;
+  tenantId: number;
   propertyId: number;
   imageId: number;
   isBanner: boolean;
@@ -79,6 +110,7 @@ export interface PropertyVideoDTO {
 
 export interface PropertyDTO {
   id: number;
+  tenantId: number;
   name: string;
   title: string;
   description: string;
@@ -129,6 +161,7 @@ export interface PropertyDTO {
 
 export interface AssociateDTO {
   id: number;
+  tenantId: number;
   associateTypeId: number;
   associateType?: AssociateTypeDTO;
   personId: number;
@@ -161,6 +194,7 @@ export interface AssociateDTO {
 
 export interface AgencyDTO {
   id: number;
+  tenantId: number;
   name: string;
   slug: string;
   description: string | null;
@@ -186,6 +220,7 @@ export interface AgencyDTO {
 
 export interface BlogPostDTO {
   id: number;
+  tenantId: number;
   title: string;
   slug: string;
   excerpt: string | null;
@@ -201,6 +236,7 @@ export interface BlogPostDTO {
 
 export interface AuthAccountDTO {
   id: number;
+  tenantId: number;
   personId: number;
   email: string;
   emailVerified: boolean;
@@ -212,6 +248,7 @@ export interface AuthAccountDTO {
 
 export interface PropertyReviewDTO {
   id: number;
+  tenantId: number;
   propertyId: number;
   personId: number;
   associateId: number | null;
@@ -238,6 +275,7 @@ export interface ReviewModerationStatusesDTO {
 
 export interface ContactMethodDTO {
   id: number;
+  tenantId: number;
   code: string;
   name: string;
   description: string | null;
@@ -245,6 +283,7 @@ export interface ContactMethodDTO {
 
 export interface LeadSourceDTO {
   id: number;
+  tenantId: number;
   code: string;
   name: string;
   description: string | null;
@@ -254,6 +293,7 @@ export interface LeadSourceDTO {
 
 export interface ContactRequestDTO {
   id: number;
+  tenantId: number;
   firstName: string;
   lastName: string;
   email: string;
@@ -286,6 +326,7 @@ export interface ContactRequestDTO {
 
 export interface PersonTypeDTO {
   id: number;
+  tenantId: number;
   name: string;
   code?: string;
   description: string | null;
@@ -293,6 +334,7 @@ export interface PersonTypeDTO {
 
 export interface PropertyTypeDTO {
   id: number;
+  tenantId: number;
   name: string;
   code?: string;
   description: string | null;
@@ -300,6 +342,7 @@ export interface PropertyTypeDTO {
 
 export interface PropertyStatusDTO {
   id: number;
+  tenantId: number;
   name: string;
   code?: string;
   description: string | null;
@@ -307,17 +350,20 @@ export interface PropertyStatusDTO {
 
 export interface AssociateTypeDTO {
   id: number;
+  tenantId: number;
   name: string;
   description: string | null;
 }
 
 export interface DisqualificationStatusDTO {
   id: number;
+  tenantId: number;
   name: string;
 }
 
 export interface DisqualificationReasonDTO {
   id: number;
+  tenantId: number;
   reason: string;
   description: string | null;
   statusId: number;
@@ -326,6 +372,7 @@ export interface DisqualificationReasonDTO {
 
 export interface RoleDTO {
   id: number;
+  tenantId: number;
   code: string;
   name: string;
   description: string | null;
@@ -347,6 +394,7 @@ export interface PermissionDTO {
 
 export interface PersonRoleDTO {
   id: number;
+  tenantId: number;
   personId: number;
   roleId: number;
   role?: RoleDTO;
@@ -808,6 +856,7 @@ export function toPersonPermissionDTO(pp: any): PersonPermissionDTO {
 
 export interface TourRequestDTO {
   id: number;
+  tenantId: number;
   propertyId: number;
   clientPersonId: number | null;
   clientFirstName: string;
@@ -872,6 +921,7 @@ export function toTourRequestDTOList(items: any[]): TourRequestDTO[] {
 
 export interface PropertyInquiryDTO {
   id: number;
+  tenantId: number;
   propertyId: number;
   associateId: number;
   personId: number | null;
@@ -922,6 +972,7 @@ export function toPropertyInquiryDTOList(items: any[]): PropertyInquiryDTO[] {
 
 export interface NewsletterIssueDTO {
   id: number;
+  tenantId: number;
   title: string;
   slug: string;
   issueNumber: number | null;
@@ -958,12 +1009,14 @@ export interface NewsletterContentDTO {
 
 export interface NewsletterContentTypeDTO {
   id: number;
+  tenantId: number;
   name: string;
   description: string | null;
 }
 
 export interface NewsletterCampaignDTO {
   id: number;
+  tenantId: number;
   newsletterIssueId: number;
   sentAt: string | null;
   recipientsCount: number;
@@ -974,6 +1027,7 @@ export interface NewsletterCampaignDTO {
 
 export interface NewsletterSubscriptionDTO {
   id: number;
+  tenantId: number;
   personId: number;
   isSubscribed: boolean;
   subscribedAt: string;
@@ -987,6 +1041,7 @@ export interface NewsletterSubscriptionDTO {
 
 export interface NewsletterCategoryDTO {
   id: number;
+  tenantId: number;
   name: string;
 }
 
@@ -1104,4 +1159,38 @@ export function toNewsletterCategoryDTOList(items: any[]): NewsletterCategoryDTO
 
 export function toNewsletterContentTypeDTOList(items: any[]): NewsletterContentTypeDTO[] {
   return items.map(toNewsletterContentTypeDTO);
+}
+
+// ===================== TENANT MAPPER =====================
+
+export function toTenantDTO(t: any): TenantDTO {
+  return {
+    id: t.id,
+    name: t.name,
+    slug: t.slug,
+    domain: t.domain ?? null,
+    logoUrl: t.logoUrl ?? null,
+    faviconUrl: t.faviconUrl ?? null,
+    primaryColor: t.primaryColor ?? null,
+    isActive: t.isActive ?? true,
+  };
+}
+
+export function toTenantSettingsDTO(ts: any): TenantSettingsDTO {
+  return {
+    id: ts.id,
+    tenantId: ts.tenantId,
+    companyName: ts.companyName ?? null,
+    tagline: ts.tagline ?? null,
+    contactEmail: ts.contactEmail ?? null,
+    contactPhone: ts.contactPhone ?? null,
+    address: ts.address ?? null,
+    socialFacebook: ts.socialFacebook ?? null,
+    socialInstagram: ts.socialInstagram ?? null,
+    socialLinkedin: ts.socialLinkedin ?? null,
+    socialTwitter: ts.socialTwitter ?? null,
+    googleAnalyticsId: ts.googleAnalyticsId ?? null,
+    metaTitle: ts.metaTitle ?? null,
+    metaDescription: ts.metaDescription ?? null,
+  };
 }

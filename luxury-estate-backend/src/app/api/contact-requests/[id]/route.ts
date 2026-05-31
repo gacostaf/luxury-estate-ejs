@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toContactRequestDTO } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const contactRequestIncludes = {
   requestType: true,
@@ -18,8 +19,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const contactReq = await prisma.contactRequest.findUnique({
-      where: { id },
+    const tenantId = getTenantId(req)!;
+    const contactReq = await prisma.contactRequest.findFirst({
+      where: { id, tenantId },
       include: contactRequestIncludes,
     });
     if (!contactReq) return NextResponse.json({ error: 'Contact request not found' }, { status: 404 });
@@ -33,6 +35,9 @@ export const PATCH = requirePermission(Permissions.REVIEW_MODERATE)(async (req: 
     const id = parseInt(idStr, 10);
     const body = await req.json();
     const data = contactRequestSchema.partial().parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.contactRequest.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Contact request not found' }, { status: 404 });
     const contactReq = await prisma.contactRequest.update({
       where: { id },
       data,
@@ -50,6 +55,9 @@ export const DELETE = requirePermission(Permissions.REVIEW_DELETE)(async (req: N
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.contactRequest.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Contact request not found' }, { status: 404 });
     await prisma.contactRequest.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

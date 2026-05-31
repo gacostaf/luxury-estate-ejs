@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toAddressDTO, toAddressDTOList } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -26,9 +27,11 @@ import { Permissions } from '@/lib/rbac';
  *       401: { description: Unauthorized }
  *       403: { description: Forbidden }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const tenantId = getTenantId(req)!;
     const addresses = await prisma.address.findMany({
+      where: { tenantId },
       include: { city: true, region: true, country: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -40,8 +43,9 @@ export const POST = requireAuth()(async (req: NextRequest) => {
   try {
     const body = await req.json();
     const data = addressSchema.parse(body);
+    const tenantId = getTenantId(req)!;
     const address = await prisma.address.create({
-      data,
+      data: { tenantId, ...data },
       include: { city: true, region: true, country: true },
     });
     return successResponse(toAddressDTO(address), 201);
