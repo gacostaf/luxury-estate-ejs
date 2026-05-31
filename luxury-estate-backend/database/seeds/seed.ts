@@ -400,7 +400,7 @@ async function main() {
     const getOrCreateCity = async (stateId: number, cityName: string) => {
         const existing = await prisma.city.findFirst({ where: { stateId, cityName } });
         if (existing) return existing;
-        return prisma.city.create({ data: { countryId: us.id, stateId, cityName } });
+        return prisma.city.create({ data: { country: { connect: { id: us.id } }, state: { connect: { id: stateId } }, cityName } });
     };
 
     const malibuCity = await getOrCreateCity(caState.id, 'Malibu');
@@ -408,12 +408,12 @@ async function main() {
 
     const officeAddress = await prisma.address.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             organization: 'Luxury Estate Realty HQ',
             addressStreet: '1234 Pacific Coast Highway, Suite 500',
-            addressCityId: malibuCity.id,
-            addressRegionId: caState.id,
-            addressCountryId: us.id,
+            city: { connect: { id: malibuCity.id } },
+            region: { connect: { id: caState.id } },
+            country: { connect: { id: us.id } },
             postalCode: '90265',
             latitude: 34.0259,
             longitude: -118.7798
@@ -422,11 +422,11 @@ async function main() {
 
     const propertyAddress1 = await prisma.address.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             addressStreet: '1234 Ocean Blvd',
-            addressCityId: malibuCity.id,
-            addressRegionId: caState.id,
-            addressCountryId: us.id,
+            city: { connect: { id: malibuCity.id } },
+            region: { connect: { id: caState.id } },
+            country: { connect: { id: us.id } },
             postalCode: '90265',
             latitude: 34.035000,
             longitude: -118.678000
@@ -435,11 +435,11 @@ async function main() {
 
     const propertyAddress2 = await prisma.address.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             addressStreet: '5678 Collins Ave, Penthouse A',
-            addressCityId: miamiCity.id,
-            addressRegionId: flState.id,
-            addressCountryId: us.id,
+            city: { connect: { id: miamiCity.id } },
+            region: { connect: { id: flState.id } },
+            country: { connect: { id: us.id } },
             postalCode: '33140',
             latitude: 25.815000,
             longitude: -80.125000
@@ -450,7 +450,7 @@ async function main() {
 
     const internalAgent = await prisma.person.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             firstName: 'Sarah',
             lastName: 'Johnson',
             phone: '+1-555-0198',
@@ -464,8 +464,9 @@ async function main() {
             address: { connect: { id: officeAddress.id } },
             associate: {
                 create: {
-                    tenantId: DEFAULT_TENANT_ID,
+                    tenant: { connect: { id: DEFAULT_TENANT_ID } },
                     associateType: { connect: { id: assocAgentType.id } },
+                    slug: 'sarah-johnson',
                     department: 'Luxury Sales',
                     fbHandle: 'https://facebook.com/sarahjrealty',
                     igHandle: 'https://instagram.com/sarahjrealty',
@@ -477,7 +478,7 @@ async function main() {
 
     const externalAgent = await prisma.person.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             firstName: 'Michael',
             lastName: 'Torres',
             phone: '+1-555-0287',
@@ -493,7 +494,7 @@ async function main() {
 
     const client = await prisma.person.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             firstName: 'Marcus',
             lastName: 'Chen',
             phone: '+1-555-0345',
@@ -511,6 +512,7 @@ async function main() {
 
     const propImg1 = await prisma.image.create({
         data: {
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             uri: 'https://images.unsplash.com/photo-1600596542815-2495db98dada?auto=format&fit=crop&w=2000',
             isPersonal: false
         }
@@ -518,6 +520,7 @@ async function main() {
 
     const propImg2 = await prisma.image.create({
         data: {
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             uri: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2000',
             isPersonal: false
         }
@@ -525,6 +528,7 @@ async function main() {
 
     const propImg3 = await prisma.image.create({
         data: {
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             uri: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=2000',
             isPersonal: false
         }
@@ -532,6 +536,7 @@ async function main() {
 
     const propVid1 = await prisma.video.create({
         data: {
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             uri: 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4',
             isPersonal: false
         }
@@ -539,6 +544,7 @@ async function main() {
 
     const empPhoto = await prisma.image.create({
         data: {
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400',
             isPersonal: true
         }
@@ -546,6 +552,7 @@ async function main() {
 
     const empVideo = await prisma.video.create({
         data: {
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             uri: 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4',
             isPersonal: true
         }
@@ -563,7 +570,7 @@ async function main() {
 
     const mainOffice = await prisma.office.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             phone: '+1-310-555-0100',
             name: 'Luxury Estate Realty HQ',
             slug: 'luxury-estate-realty-hq',
@@ -580,7 +587,7 @@ async function main() {
 
     const property1 = await prisma.property.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             name: 'Modern Coastal Villa',
             description: 'Stunning oceanfront property with panoramic Pacific views, smart home automation, infinity pool, and private beach access.',
             summary: 'Luxury 4BR beachfront home with smart tech',
@@ -611,20 +618,20 @@ async function main() {
             bannerImage: { connect: { id: propImg1.id } },
             propertyImages: {
                 create: [
-                    { tenantId: DEFAULT_TENANT_ID, image: { connect: { id: propImg1.id } }, isBanner: true },
-                    { tenantId: DEFAULT_TENANT_ID, image: { connect: { id: propImg2.id } }, isBanner: false },
-                    { tenantId: DEFAULT_TENANT_ID, image: { connect: { id: propImg3.id } }, isBanner: false }
+                    { tenant: { connect: { id: DEFAULT_TENANT_ID } }, image: { connect: { id: propImg1.id } }, isBanner: true },
+                    { tenant: { connect: { id: DEFAULT_TENANT_ID } }, image: { connect: { id: propImg2.id } }, isBanner: false },
+                    { tenant: { connect: { id: DEFAULT_TENANT_ID } }, image: { connect: { id: propImg3.id } }, isBanner: false }
                 ]
             },
             propertyVideos: {
-                create: [{ video: { connect: { id: propVid1.id } } }]
+                create: [{ tenant: { connect: { id: DEFAULT_TENANT_ID } }, video: { connect: { id: propVid1.id } } }]
             }
         }
     });
 
     const property2 = await prisma.property.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             name: 'Skyline Penthouse',
             description: 'Breathtaking penthouse in the heart of Miami Beach with 360-degree views of the ocean and city skyline.',
             summary: 'Ultra-luxury 3BR penthouse with ocean views',
@@ -657,7 +664,7 @@ async function main() {
 
     const property3 = await prisma.property.create({
         data: {
-            tenantId: DEFAULT_TENANT_ID,
+            tenant: { connect: { id: DEFAULT_TENANT_ID } },
             name: 'Desert Oasis Villa',
             description: 'Exclusive desert villa in Cabo San Lucas with private pool, outdoor kitchen, and stunning Sea of Cortez views.',
             summary: '5BR villa with pool & ocean views',
