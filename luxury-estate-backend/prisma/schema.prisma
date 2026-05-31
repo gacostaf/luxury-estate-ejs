@@ -182,7 +182,7 @@ model DisqualificationStatus {
 model DisqualificationReason {
   id          Int                    @id @default(autoincrement()) @map("ID")
   tenantId    Int                    @map("TENANT_ID")
-  statusId    Int                    @map("ID_DISQUALIFYING_STATUS")
+  statusId    Int                    @map("DISQUALIFICATION_STATUS_ID")
   reason      String                 @map("REASON") @db.VarChar(100)
   description String?                @map("DESCRIPTION") @db.Text
 
@@ -349,6 +349,9 @@ model Person {
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
   @@index([personTypeId, isLead], name: "idx_person_type_lead")
+  @@index([disqualificationStatusId], name: "idx_person_dq_status")
+  @@index([disqualificationReasonId], name: "idx_person_dq_reason")
+  @@index([addressId], name: "idx_person_address")
   @@index([tenantId], name: "idx_person_tenant")
   @@map("PERSONS")
 }
@@ -423,6 +426,11 @@ model Agency {
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, name])
   @@unique([tenantId, slug])
+  @@index([logoImageId], name: "idx_agency_logo_image")
+  @@index([bannerImageId], name: "idx_agency_banner_image")
+  @@index([managerAssociateId], name: "idx_agency_manager")
+  @@index([createdByPersonId], name: "idx_agency_created_by")
+  @@index([updatedByPersonId], name: "idx_agency_updated_by")
   @@index([isFeatured], name: "idx_agency_featured")
   @@index([isVerified], name: "idx_agency_verified")
   @@index([name], name: "idx_agency_name")
@@ -452,7 +460,7 @@ model Associate {
   supervisorId     Int?           @map("SUPERVISOR_ID")
   supervisor       Associate?     @relation("AssociateSupervisor", fields: [supervisorId], references: [id])
   subordinates     Associate[]    @relation("AssociateSupervisor")
-  commissionPlanId Int?           @map("COMMISION_PLAN_ID")
+  commissionPlanId Int?           @map("COMMISSION_PLAN_ID")
   bio              String?        @map("BIO") @db.Text
   isPublicProfile  Boolean        @default(true) @map("IS_PUBLIC_PROFILE")
   contactMethodId  Int?           @map("CONTACT_METHOD_ID")
@@ -475,7 +483,12 @@ model Associate {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
+  @@index([associateTypeId], name: "idx_associate_type")
+  @@index([personRoleId], name: "idx_associate_person_role")
+  @@index([agencyId], name: "idx_associate_agency")
   @@index([officeId, department], name: "idx_associate_office_dept")
+  @@index([supervisorId], name: "idx_associate_supervisor")
+  @@index([contactMethodId], name: "idx_associate_contact_method")
   @@index([tenantId], name: "idx_associate_tenant")
   @@map("ASSOCIATES")
 }
@@ -619,6 +632,10 @@ model Office {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
+  @@index([addressId], name: "idx_office_address")
+  @@index([managerAssociateId], name: "idx_office_manager")
+  @@index([createdByPersonId], name: "idx_office_created_by")
+  @@index([updatedByPersonId], name: "idx_office_updated_by")
   @@index([tenantId], name: "idx_office_tenant")
   @@map("OFFICES")
 }
@@ -655,6 +672,8 @@ model Image {
 
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
+  @@index([createdByPersonId], name: "idx_image_created_by")
+  @@index([updatedByPersonId], name: "idx_image_updated_by")
   @@index([tenantId], name: "idx_image_tenant")
   @@map("IMAGES")
 }
@@ -700,6 +719,8 @@ model Video {
 
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
+  @@index([createdByPersonId], name: "idx_video_created_by")
+  @@index([updatedByPersonId], name: "idx_video_updated_by")
   @@index([tenantId], name: "idx_video_tenant")
   @@map("VIDEOS")
 }
@@ -795,6 +816,13 @@ model Property {
   @@index([mlsId], name: "idx_mls_id")
   @@index([publishDate], name: "idx_publish_date")
   @@index([latitude, longitude], name: "idx_coordinates")
+  @@index([bannerImageId], name: "idx_property_banner_image")
+  @@index([propertyTypeId], name: "idx_property_type")
+  @@index([agencyId], name: "idx_property_agency")
+  @@index([addressId], name: "idx_property_address")
+  @@index([agentId], name: "idx_property_agent")
+  @@index([createdByPersonId], name: "idx_property_created_by")
+  @@index([updatedByPersonId], name: "idx_property_updated_by")
   @@index([propertyStatusId, price, publishDate], name: "idx_active_listings")
   @@index([addressLocality, addressRegion, addressCountry], name: "idx_location_schema_org")
   @@index([postalCode], name: "idx_postal_code")
@@ -832,6 +860,10 @@ model BlogPost {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
+  @@index([featuredImageId], name: "idx_blog_featured_image")
+  @@index([authorPersonId], name: "idx_blog_author")
+  @@index([createdByPersonId], name: "idx_blog_created_by")
+  @@index([updatedByPersonId], name: "idx_blog_updated_by")
   @@index([published, createdAt], name: "idx_blog_published_date")
   @@index([tenantId], name: "idx_blog_tenant")
   @@map("BLOG_POSTS")
@@ -887,6 +919,9 @@ model PropertyReview {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([propertyId, rating], name: "idx_review_rating")
+  @@index([associateId], name: "idx_review_associate")
+  @@index([moderationStatusId], name: "idx_review_moderation_status")
+  @@index([moderatedById], name: "idx_review_moderated_by")
   @@index([personId], name: "idx_review_person")
   @@index([tenantId], name: "idx_review_tenant")
   @@map("PROPERTY_REVIEWS")
@@ -995,9 +1030,14 @@ model ContactRequest {
   // Indexes for faster lookups in the CRM dashboard
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
-  @@index([email])
-  @@index([requestStatusId])
-  @@index([assignedAssociateId])
+  @@index([email], name: "idx_cr_email")
+  @@index([requestTypeId], name: "idx_cr_request_type")
+  @@index([requestStatusId], name: "idx_cr_request_status")
+  @@index([assignedAssociateId], name: "idx_cr_assigned_associate")
+  @@index([contactMethodId], name: "idx_cr_contact_method")
+  @@index([leadSourceId], name: "idx_cr_lead_source")
+  @@index([createdByPersonId], name: "idx_cr_created_by")
+  @@index([updatedByPersonId], name: "idx_cr_updated_by")
   @@index([tenantId], name: "idx_cr_tenant")
   @@map("CONTACT_REQUESTS")
 }
@@ -1029,6 +1069,9 @@ model PropertyInquiry {
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([propertyId], name: "idx_property_inquiries_property_id")
   @@index([associateId], name: "idx_property_inquiries_associate_id")
+  @@index([personId], name: "idx_property_inquiries_person_id")
+  @@index([contactMethodId], name: "idx_property_inquiries_contact_method")
+  @@index([leadSourceId], name: "idx_property_inquiries_lead_source")
   @@index([tenantId], name: "idx_property_inquiries_tenant")
   @@map("PROPERTY_INQUIRIES")
 }
@@ -1098,11 +1141,14 @@ model TourRequest {
 
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
-  @@index([propertyId])
-  @@index([primaryAssociateId])
-  @@index([secondaryAssociateId])
-  @@index([tourTypeId])
-  @@index([tourStatusId])
+  @@index([propertyId], name: "idx_tr_property")
+  @@index([primaryAssociateId], name: "idx_tr_primary_associate")
+  @@index([secondaryAssociateId], name: "idx_tr_secondary_associate")
+  @@index([tourTypeId], name: "idx_tr_tour_type")
+  @@index([tourStatusId], name: "idx_tr_tour_status")
+  @@index([clientPersonId], name: "idx_tr_client_person")
+  @@index([contactMethodId], name: "idx_tr_contact_method")
+  @@index([leadSourceId], name: "idx_tr_lead_source")
   @@index([tenantId], name: "idx_tr_tenant")
   @@map("TOUR_REQUESTS")
 }
@@ -1140,6 +1186,8 @@ model NewsletterIssue {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, slug])
+  @@index([coverImageId], name: "idx_newsletter_cover_image")
+  @@index([createdById], name: "idx_newsletter_created_by")
   @@index([publishedAt], name: "idx_newsletter_published")
   @@index([isPublished], name: "idx_newsletter_status")
   @@index([tenantId], name: "idx_ni_tenant")
@@ -1265,6 +1313,7 @@ model NewsletterSubscription {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@index([isSubscribed], name: "idx_newsletter_subscribed")
+  @@index([leadSourceId], name: "idx_sub_lead_source")
   @@index([tenantId], name: "idx_sub_tenant")
 
   @@map("NEWSLETTER_SUBSCRIPTIONS")
