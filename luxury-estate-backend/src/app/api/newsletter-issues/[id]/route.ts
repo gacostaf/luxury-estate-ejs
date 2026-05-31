@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toNewsletterIssueDTO } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const issueIncludes = {
   coverImage: true,
@@ -64,8 +65,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const issue = await prisma.newsletterIssue.findUnique({
-      where: { id },
+    const tenantId = getTenantId(req)!;
+    const issue = await prisma.newsletterIssue.findFirst({
+      where: { id, tenantId },
       include: issueIncludes,
     });
     if (!issue) return NextResponse.json({ error: 'Newsletter issue not found' }, { status: 404 });
@@ -81,6 +83,9 @@ export const PATCH = requirePermission(Permissions.REVIEW_MODERATE)(async (req: 
     const data = newsletterIssueSchema.partial().parse(body);
     const updateData: any = { ...data };
     if (data.publishedAt) updateData.publishedAt = new Date(data.publishedAt);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.newsletterIssue.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Newsletter issue not found' }, { status: 404 });
     const issue = await prisma.newsletterIssue.update({
       where: { id },
       data: updateData,
@@ -98,6 +103,9 @@ export const DELETE = requirePermission(Permissions.REVIEW_DELETE)(async (req: N
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.newsletterIssue.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Newsletter issue not found' }, { status: 404 });
     await prisma.newsletterIssue.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

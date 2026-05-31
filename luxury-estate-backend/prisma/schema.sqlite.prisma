@@ -194,6 +194,7 @@ model DisqualificationReason {
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, reason])
   @@index([statusId, reason], name: "idx_dq_status_reason")
+  @@index([tenantId], name: "idx_dq_reason_tenant")
   @@map("DISQUALIFICATION_REASONS")
 }
 
@@ -590,6 +591,7 @@ model AssociateType {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_assoc_type_tenant")
   @@map("ASSOCIATE_TYPES")
 }
 
@@ -854,6 +856,7 @@ model ReviewModerationStatus {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_review_mod_status_tenant")
   @@map("REVIEW_MODERATION_STATUSES")
 }
 
@@ -911,6 +914,7 @@ model ContactMethod {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_contact_method_tenant")
   @@map("CONTACT_METHODS")
 }
 
@@ -934,6 +938,7 @@ model LeadSource {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_lead_source_tenant")
   @@map("LEAD_SOURCES")
 }
 
@@ -1058,6 +1063,7 @@ model TourType {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_tour_type_tenant")
   @@map("TOUR_TYPES")
 }
 
@@ -1206,6 +1212,7 @@ model NewsletterContentType {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_nl_content_type_tenant")
   @@map("NEWSLETTER_CONTENT_TYPES")
 }
 
@@ -1281,6 +1288,7 @@ model NewsletterCategory {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_nl_category_tenant")
   @@map("NEWSLETTER_CATEGORIES")
 }
 
@@ -1324,6 +1332,7 @@ model RequestType {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_request_type_tenant")
   @@map("REQUEST_TYPES")
 }
 
@@ -1344,6 +1353,7 @@ model RequestStatus {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_request_status_tenant")
   @@map("REQUEST_STATUSES")
 }
 
@@ -1364,5 +1374,6 @@ model TourStatus {
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
   @@unique([tenantId, code])
+  @@index([tenantId], name: "idx_tour_status_tenant")
   @@map("TOUR_STATUSES")
 }

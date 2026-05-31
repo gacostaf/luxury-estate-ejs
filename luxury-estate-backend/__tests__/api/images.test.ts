@@ -55,14 +55,14 @@ describe('Images API', () => {
   describe('GET /api/images/[id]', () => {
     it('should return image by id', async () => {
       const img = await createTestImage();
-      const res = await getImage(createMockRequest(), params(String(img.id)));
+      const res = await getImage(createMockRequest(undefined, undefined, undefined, { 'x-tenant-id': '1' }), params(String(img.id)));
       const json = await res.json();
       expect(res.status).toBe(200);
       expect(json.data.id).toBe(img.id);
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await getImage(createMockRequest(), params('99999'));
+      const res = await getImage(createMockRequest(undefined, undefined, undefined, { 'x-tenant-id': '1' }), params('99999'));
       expect(res.status).toBe(404);
     });
   });
@@ -74,7 +74,7 @@ describe('Images API', () => {
         { uri: 'https://example.com/updated.jpg', isPersonal: true },
         'http://localhost/api/images/1',
         'PUT',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateImage(req, params(String(img.id)));
       const json = await res.json();
@@ -88,7 +88,7 @@ describe('Images API', () => {
         { uri: 'https://example.com/x.jpg', isPersonal: false },
         'http://localhost/api/images/99999',
         'PUT',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateImage(req, params('99999'));
       expect(res.status).toBe(404);
@@ -98,7 +98,7 @@ describe('Images API', () => {
   describe('DELETE /api/images/[id]', () => {
     it('should delete an image', async () => {
       const img = await createTestImage();
-      const res = await deleteImage(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(img.id)));
+      const res = await deleteImage(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }), params(String(img.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.image.findUnique({ where: { id: img.id } });
@@ -106,7 +106,7 @@ describe('Images API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteImage(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
+      const res = await deleteImage(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }), params('99999'));
       expect(res.status).toBe(404);
     });
   });

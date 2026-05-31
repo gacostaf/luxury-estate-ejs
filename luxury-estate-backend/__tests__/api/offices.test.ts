@@ -40,7 +40,7 @@ describe('Offices API', () => {
   describe('POST /api/offices', () => {
     it('should create a new office', async () => {
       const payload = { phone: '555-0000', name: 'Test Office', slug: 'test-office' };
-      const req = createMockRequest(payload, 'http://localhost/api/offices', 'POST', { 'x-user-id': String(adminPersonId) });
+      const req = createMockRequest(payload, 'http://localhost/api/offices', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await createOffice(req);
       const json = await res.json();
       expect(res.status).toBe(201);
@@ -70,7 +70,7 @@ describe('Offices API', () => {
         { phone: '555-9999', name: 'Updated Office', slug: 'updated-office' },
         'http://localhost/api/offices/1',
         'PATCH',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateOffice(req, params(String(office.id)));
       const json = await res.json();
@@ -83,7 +83,7 @@ describe('Offices API', () => {
         { phone: '555-0000', name: 'Ghost Office', slug: 'ghost-office' },
         'http://localhost/api/offices/99999',
         'PATCH',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateOffice(req, params('99999'));
       expect(res.status).toBe(404);

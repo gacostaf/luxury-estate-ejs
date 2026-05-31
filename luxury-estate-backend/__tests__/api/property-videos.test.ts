@@ -66,14 +66,14 @@ describe('Property-Videos API', () => {
       const prop = await createTestProperty();
       const vid = await createTestVideo();
       const rel = await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid.id, tenantId: 1 } });
-      const res = await getRelation(createMockRequest(), params(String(rel.id)));
+      const res = await getRelation(createMockRequest(undefined, undefined, undefined, { 'x-tenant-id': '1' }), params(String(rel.id)));
       const json = await res.json();
       expect(res.status).toBe(200);
       expect(json.data.id).toBe(rel.id);
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await getRelation(createMockRequest(), params('99999'));
+      const res = await getRelation(createMockRequest(undefined, undefined, undefined, { 'x-tenant-id': '1' }), params('99999'));
       expect(res.status).toBe(404);
     });
   });
@@ -88,7 +88,7 @@ describe('Property-Videos API', () => {
         { propertyId: prop.id, videoId: vid2.id },
         'http://localhost/api/property-videos/1',
         'PUT',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateRelation(req, params(String(rel.id)));
       const json = await res.json();
@@ -103,7 +103,7 @@ describe('Property-Videos API', () => {
         { propertyId: prop.id, videoId: vid.id },
         'http://localhost/api/property-videos/99999',
         'PUT',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateRelation(req, params('99999'));
       expect(res.status).toBe(404);
@@ -115,7 +115,7 @@ describe('Property-Videos API', () => {
       const prop = await createTestProperty();
       const vid = await createTestVideo();
       const rel = await prisma.propertyVideo.create({ data: { propertyId: prop.id, videoId: vid.id, tenantId: 1 } });
-      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(rel.id)));
+      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }), params(String(rel.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.propertyVideo.findUnique({ where: { id: rel.id } });
@@ -123,7 +123,7 @@ describe('Property-Videos API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
+      const res = await deleteRelation(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }), params('99999'));
       expect(res.status).toBe(404);
     });
   });

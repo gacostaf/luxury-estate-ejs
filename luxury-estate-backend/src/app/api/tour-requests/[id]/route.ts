@@ -11,6 +11,7 @@ const tourIncludes = {
   property: true,
   clientPerson: true,
   tourStatus: true,
+  tourType: true,
   primaryAssociate: { include: { person: true } },
   secondaryAssociate: { include: { person: true } },
   contactMethod: true,

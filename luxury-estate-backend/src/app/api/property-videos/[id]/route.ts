@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toPropertyVideoDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -52,8 +53,9 @@ import { Permissions } from '@/lib/rbac';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const relation = await prisma.propertyVideo.findUnique({
-      where: { id: parseInt(id) },
+    const tenantId = getTenantId(req)!;
+    const relation = await prisma.propertyVideo.findFirst({
+      where: { id: parseInt(id), tenantId },
       include: { property: { select: { name: true } }, video: true },
     });
     if (!relation) return handlePrismaError({ code: 'P2025' });
@@ -66,7 +68,9 @@ export const PUT = requirePermission(Permissions.VIDEO_UPDATE)(async (req: NextR
     const { id } = await params;
     const body = await req.json();
     const data = propertyVideoSchema.parse(body);
-    
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.propertyVideo.findFirst({ where: { id: parseInt(id), tenantId } });
+    if (!existing) return handlePrismaError({ code: 'P2025' });
     const relation = await prisma.propertyVideo.update({
       where: { id: parseInt(id) },
       data,
@@ -82,6 +86,9 @@ export const PUT = requirePermission(Permissions.VIDEO_UPDATE)(async (req: NextR
 export const DELETE = requirePermission(Permissions.VIDEO_DELETE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.propertyVideo.findFirst({ where: { id: parseInt(id), tenantId } });
+    if (!existing) return handlePrismaError({ code: 'P2025' });
     await prisma.propertyVideo.delete({ where: { id: parseInt(id) } });
     return new Response(null, { status: 204 });
   } catch (error) { return handlePrismaError(error); }

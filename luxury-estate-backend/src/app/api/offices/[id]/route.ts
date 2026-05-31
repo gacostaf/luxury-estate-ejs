@@ -72,7 +72,7 @@ export const PATCH = requirePermission(Permissions.OFFICE_UPDATE)(async (req: Ne
   try {
     const { id } = await params;
     const body = await req.json();
-    const data = officeSchema.parse(body);
+    const data = officeSchema.partial().parse(body);
     const tenantId = getTenantId(req)!;
     const existing = await prisma.office.findFirst({ where: { id: parseInt(id), tenantId } });
     if (!existing) return NextResponse.json({ error: 'Office not found' }, { status: 404 });

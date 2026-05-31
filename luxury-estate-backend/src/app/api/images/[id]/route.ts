@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toImageDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -53,7 +54,8 @@ import { Permissions } from '@/lib/rbac';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const image = await prisma.image.findUnique({ where: { id: parseInt(id) } });
+    const tenantId = getTenantId(req)!;
+    const image = await prisma.image.findFirst({ where: { id: parseInt(id), tenantId } });
     if (!image) return handlePrismaError({ code: 'P2025' });
     return successResponse(toImageDTO(image));
   } catch (error) { return handlePrismaError(error); }
@@ -64,6 +66,9 @@ export const PUT = requirePermission(Permissions.IMAGE_UPDATE)(async (req: NextR
     const { id } = await params;
     const body = await req.json();
     const data = imageSchema.parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.image.findFirst({ where: { id: parseInt(id), tenantId } });
+    if (!existing) return handlePrismaError({ code: 'P2025' });
     const image = await prisma.image.update({
       where: { id: parseInt(id) },
       data,
@@ -78,6 +83,9 @@ export const PUT = requirePermission(Permissions.IMAGE_UPDATE)(async (req: NextR
 export const DELETE = requirePermission(Permissions.IMAGE_DELETE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.image.findFirst({ where: { id: parseInt(id), tenantId } });
+    if (!existing) return handlePrismaError({ code: 'P2025' });
     // onDelete: Restrict in schema prevents deletion if referenced
     await prisma.image.delete({ where: { id: parseInt(id) } });
     return new Response(null, { status: 204 });

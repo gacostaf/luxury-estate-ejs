@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toNewsletterSubscriptionDTO } from '@/lib/dtos';
 import { requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 const subscriptionIncludes = {
   person: true,
@@ -55,8 +56,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
-    const sub = await prisma.newsletterSubscription.findUnique({
-      where: { id },
+    const tenantId = getTenantId(req)!;
+    const sub = await prisma.newsletterSubscription.findFirst({
+      where: { id, tenantId },
       include: subscriptionIncludes,
     });
     if (!sub) return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
@@ -71,6 +73,9 @@ export const PATCH = requirePermission(Permissions.REVIEW_MODERATE)(async (req: 
     const body = await req.json();
     const data = newsletterSubscriptionSchema.partial().parse(body);
     const { categoryIds, ...subData } = data;
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.newsletterSubscription.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     const sub = await prisma.newsletterSubscription.update({
       where: { id },
       data: subData,
@@ -103,6 +108,9 @@ export const DELETE = requirePermission(Permissions.REVIEW_DELETE)(async (req: N
   try {
     const { id: idStr } = await params;
     const id = parseInt(idStr, 10);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.newsletterSubscription.findFirst({ where: { id, tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     await prisma.newsletterSubscription.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) { return handlePrismaError(error); }

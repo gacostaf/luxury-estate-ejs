@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toVideoDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -53,7 +54,8 @@ import { Permissions } from '@/lib/rbac';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const video = await prisma.video.findUnique({ where: { id: parseInt(id) } });
+    const tenantId = getTenantId(req)!;
+    const video = await prisma.video.findFirst({ where: { id: parseInt(id), tenantId } });
     if (!video) return handlePrismaError({ code: 'P2025' });
     return successResponse(toVideoDTO(video));
   } catch (error) { return handlePrismaError(error); }
@@ -64,6 +66,9 @@ export const PUT = requirePermission(Permissions.VIDEO_UPDATE)(async (req: NextR
     const { id } = await params;
     const body = await req.json();
     const data = videoSchema.parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.video.findFirst({ where: { id: parseInt(id), tenantId } });
+    if (!existing) return handlePrismaError({ code: 'P2025' });
     const video = await prisma.video.update({
       where: { id: parseInt(id) },
       data,
@@ -78,6 +83,9 @@ export const PUT = requirePermission(Permissions.VIDEO_UPDATE)(async (req: NextR
 export const DELETE = requirePermission(Permissions.VIDEO_DELETE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.video.findFirst({ where: { id: parseInt(id), tenantId } });
+    if (!existing) return handlePrismaError({ code: 'P2025' });
     await prisma.video.delete({ where: { id: parseInt(id) } });
     return new Response(null, { status: 204 });
   } catch (error: any) {

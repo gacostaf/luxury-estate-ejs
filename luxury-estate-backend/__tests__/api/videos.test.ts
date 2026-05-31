@@ -55,14 +55,14 @@ describe('Videos API', () => {
   describe('GET /api/videos/[id]', () => {
     it('should return video by id', async () => {
       const vid = await createTestVideo();
-      const res = await getVideo(createMockRequest(), params(String(vid.id)));
+      const res = await getVideo(createMockRequest(undefined, undefined, undefined, { 'x-tenant-id': '1' }), params(String(vid.id)));
       const json = await res.json();
       expect(res.status).toBe(200);
       expect(json.data.id).toBe(vid.id);
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await getVideo(createMockRequest(), params('99999'));
+      const res = await getVideo(createMockRequest(undefined, undefined, undefined, { 'x-tenant-id': '1' }), params('99999'));
       expect(res.status).toBe(404);
     });
   });
@@ -74,7 +74,7 @@ describe('Videos API', () => {
         { uri: 'https://example.com/updated.mp4', isPersonal: true },
         'http://localhost/api/videos/1',
         'PUT',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateVideo(req, params(String(vid.id)));
       const json = await res.json();
@@ -88,7 +88,7 @@ describe('Videos API', () => {
         { uri: 'https://example.com/x.mp4', isPersonal: false },
         'http://localhost/api/videos/99999',
         'PUT',
-        { 'x-user-id': String(adminPersonId) }
+        { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }
       );
       const res = await updateVideo(req, params('99999'));
       expect(res.status).toBe(404);
@@ -98,7 +98,7 @@ describe('Videos API', () => {
   describe('DELETE /api/videos/[id]', () => {
     it('should delete a video', async () => {
       const vid = await createTestVideo();
-      const res = await deleteVideo(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params(String(vid.id)));
+      const res = await deleteVideo(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }), params(String(vid.id)));
       expect(res.status).toBe(204);
 
       const deleted = await prisma.video.findUnique({ where: { id: vid.id } });
@@ -106,7 +106,7 @@ describe('Videos API', () => {
     });
 
     it('should return 404 for non-existent id', async () => {
-      const res = await deleteVideo(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId) }), params('99999'));
+      const res = await deleteVideo(createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' }), params('99999'));
       expect(res.status).toBe(404);
     });
   });
