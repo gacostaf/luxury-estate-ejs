@@ -265,7 +265,6 @@ model Address {
   offices    Office[]   @relation("OfficeAddress")
 
   agency Agency? @relation("AgencyAddress")
-  agencies Agency[] @relation("AgencyAddresses")  
 
   persons Person[] @relation("PersonAddress")
 
@@ -417,7 +416,6 @@ model Agency {
   updatedPerson Person? @relation("AgencyUpdatedByRelation", fields: [updatedByPersonId], references: [id])
 
   associates Associate[]
-  addresses Address[] @relation("AgencyAddresses")
 
   properties Property[] @relation("AgencyProperties")
 
@@ -533,7 +531,7 @@ model RolePermission {
 
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
-  @@id([roleId, permissionId])
+  @@id([tenantId, roleId, permissionId])
   @@index([tenantId], name: "idx_rp_tenant")
   @@map("ROLE_PERMISSIONS")
 }
@@ -552,7 +550,7 @@ model PersonRole {
 
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
-  @@unique([personId, roleId])
+  @@unique([tenantId, personId, roleId])
   @@index([tenantId], name: "idx_pr_tenant")
   @@map("PERSON_ROLES")
 }
@@ -616,7 +614,7 @@ model Office {
 
   tenant             Tenant      @relation(fields: [tenantId], references: [id])
   createdAt          DateTime    @default(now()) @map("CREATED_AT")
-  updatedAt          DateTime    @default(now()) @map("UPDATED_AT")
+  updatedAt          DateTime    @updatedAt @map("UPDATED_AT")
 
 
   isDeleted          Boolean    @default(false) @map("IS_DELETED")
@@ -647,7 +645,7 @@ model Image {
   updatedPerson Person? @relation("ImageUpdatedByRelation", fields: [updatedByPersonId], references: [id])
 
   createdAt         DateTime @default(now()) @map("CREATED_AT")
-  updatedAt         DateTime @default(now()) @map("UPDATED_AT")
+  updatedAt         DateTime @updatedAt @map("UPDATED_AT")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
@@ -696,7 +694,7 @@ model Video {
   updatedPerson Person? @relation("VideoUpdatedByRelation", fields: [updatedByPersonId], references: [id])
 
   createdAt         DateTime @default(now()) @map("CREATED_AT")
-  updatedAt         DateTime @default(now()) @map("UPDATED_AT")
+  updatedAt         DateTime @updatedAt @map("UPDATED_AT")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
 
@@ -774,7 +772,7 @@ model Property {
   updatedPerson Person? @relation("PropertyUpdatedByRelation", fields: [updatedByPersonId], references: [id])
 
   createdAt DateTime @default(now()) @map("CREATED_AT")
-  updatedAt DateTime @default(now()) @map("UPDATED_AT")
+  updatedAt DateTime @updatedAt @map("UPDATED_AT")
 
   propertyType   PropertyType    @relation(fields: [propertyTypeId], references: [id])
   propertyStatus PropertyStatus  @relation(fields: [propertyStatusId], references: [id])

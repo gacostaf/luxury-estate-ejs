@@ -69,7 +69,7 @@ describe('RBAC End-to-End Enforcement', () => {
     for (const p of perms) {
       const perm = await prisma.permission.findUniqueOrThrow({ where: { code: p.code } });
       await prisma.rolePermission.upsert({
-        where: { roleId_permissionId: { roleId: adminRole.id, permissionId: perm.id } },
+        where: { tenantId_roleId_permissionId: { tenantId, roleId: adminRole.id, permissionId: perm.id } },
         update: {},
         create: { roleId: adminRole.id, permissionId: perm.id, tenantId },
       });
@@ -80,7 +80,7 @@ describe('RBAC End-to-End Enforcement', () => {
     for (const code of agentPerms) {
       const perm = await prisma.permission.findUniqueOrThrow({ where: { code } });
       await prisma.rolePermission.upsert({
-        where: { roleId_permissionId: { roleId: agentRole.id, permissionId: perm.id } },
+        where: { tenantId_roleId_permissionId: { tenantId, roleId: agentRole.id, permissionId: perm.id } },
         update: {},
         create: { roleId: agentRole.id, permissionId: perm.id, tenantId },
       });

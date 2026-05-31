@@ -282,7 +282,7 @@ export async function seedAdminUser(tenantId?: number) {
   for (const code of allPermCodes) {
     const perm = await prisma.permission.findUniqueOrThrow({ where: { code } });
     await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: adminRole.id, permissionId: perm.id } },
+      where: { tenantId_roleId_permissionId: { tenantId: tid, roleId: adminRole.id, permissionId: perm.id } },
       update: {},
       create: { roleId: adminRole.id, permissionId: perm.id, tenantId: tid },
     });
