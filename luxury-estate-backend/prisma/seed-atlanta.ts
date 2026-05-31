@@ -125,7 +125,7 @@ function randDecimal(min: number, max: number, decimals = 2): number {
   return parseFloat(val.toFixed(decimals));
 }
 
-function toSeoUrl(name: string, id: number): string {
+function toSlug(name: string, id: number): string {
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -183,6 +183,7 @@ async function main() {
         email: 'atlanta.agent@luxuryrealty.com',
         personTypeId: agentPersonType.id,
         isAssociate: true,
+        slug: 'atlanta-agent',
       },
     });
   } else {
@@ -308,7 +309,7 @@ async function main() {
         name: p.name,
         description: p.description,
         summary: p.summary,
-        seoUrl: toSeoUrl(p.name, mlsCounter + idx),
+        slug: toSlug(p.name, mlsCounter + idx),
         publishDate: new Date(now.getTime() - idx * 3600000),
         price: p.price,
         bedrooms: p.bedrooms,

@@ -38,6 +38,7 @@ export interface PersonDTO {
   lastName: string | null;
   phone: string | null;
   email: string | null;
+  slug: string;
   isLead: boolean;
   isClient: boolean;
   isAssociate: boolean;
@@ -75,6 +76,9 @@ export interface AddressDTO {
 export interface OfficeDTO {
   id: number;
   phone: string | null;
+  name: string;
+  slug: string;
+  tenantId: number;
   addressId: number | null;
   address?: AddressDTO;
   associates?: AssociateDTO[];
@@ -118,8 +122,7 @@ export interface PropertyDTO {
   bannerImageId: number | null;
   bannerImage?: ImageDTO;
   featuredImage: string | null;
-  seoUrl: string | null;
-  slug: string | null;
+  slug: string;
   publishDate: string | null;
   price: number | null;
   bedrooms: number | null;
@@ -166,6 +169,7 @@ export interface AssociateDTO {
   associateType?: AssociateTypeDTO;
   personId: number;
   person?: PersonDTO;
+  slug: string;
   personRoleId: number | null;
   personRole?: PersonRoleDTO;
   agencyId: number | null;
@@ -438,6 +442,7 @@ export function toPersonDTO(p: any): PersonDTO {
     lastName: p.lastName ?? null,
     phone: p.phone ?? null,
     email: p.email ?? null,
+    slug: p.slug,
     isLead: p.isLead ?? false,
     isClient: p.isClient ?? false,
     isAssociate: p.isAssociate ?? false,
@@ -486,6 +491,9 @@ export function toOfficeDTO(o: any): OfficeDTO {
   return {
     id: o.id,
     phone: o.phone ?? null,
+    name: o.name,
+    slug: o.slug,
+    tenantId: o.tenantId,
     addressId: o.addressId ?? null,
     address: o.address ? toAddressDTO(o.address) : undefined,
     associates: o.associates ? toAssociateDTOList(o.associates) : undefined,
@@ -541,8 +549,7 @@ export function toPropertyDTO(p: any): PropertyDTO {
     bannerImageId: p.bannerImageId ?? null,
     bannerImage: p.bannerImage ? toImageDTO(p.bannerImage) : undefined,
     featuredImage: p.bannerImage?.uri ?? null,
-    seoUrl: p.seoUrl ?? null,
-    slug: p.seoUrl ?? null,
+    slug: p.slug,
     publishDate: toIsoString(p.publishDate),
     price: toDecimal(p.price),
     bedrooms: p.bedrooms ?? null,
@@ -594,6 +601,7 @@ export function toAssociateDTO(a: any): AssociateDTO {
     associateType: a.associateType ? toAssociateTypeDTO(a.associateType) : undefined,
     personId: a.personId,
     person: a.person ? toPersonDTO(a.person) : undefined,
+    slug: a.slug,
     personRoleId: a.personRoleId ?? null,
     personRole: a.personRole ? toPersonRoleDTO(a.personRole) : undefined,
     agencyId: a.agencyId ?? null,

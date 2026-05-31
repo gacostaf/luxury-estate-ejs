@@ -92,13 +92,13 @@ describe('RBAC End-to-End Enforcement', () => {
 
     // Unauthenticated person (no roles)
     const unauthPerson = await prisma.person.create({
-      data: { firstName: 'Unauth', lastName: 'User', email: `unauth-${Date.now()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
+      data: { firstName: 'Unauth', lastName: 'User', email: `unauth-${Date.now()}@test.com`, personTypeId: clientTypeId, tenantId: 1, slug: `unauth-${Date.now()}` },
     });
     unauthPersonId = unauthPerson.id;
 
     // Admin person
     const adminPerson = await prisma.person.create({
-      data: { firstName: 'Admin', lastName: 'User', email: `admin-${Date.now()}-${Math.random()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
+      data: { firstName: 'Admin', lastName: 'User', email: `admin-${Date.now()}-${Math.random()}@test.com`, personTypeId: clientTypeId, tenantId: 1, slug: `admin-${Date.now()}` },
     });
     adminPersonId = adminPerson.id;
     const adminRole = await prisma.role.findUniqueOrThrow({ where: { tenantId_code: { tenantId: 1, code: 'ADMIN' } } });
@@ -107,7 +107,7 @@ describe('RBAC End-to-End Enforcement', () => {
 
     // Agent person (limited permissions)
     const agentPerson = await prisma.person.create({
-      data: { firstName: 'Agent', lastName: 'User', email: `agent-${Date.now()}-${Math.random()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
+      data: { firstName: 'Agent', lastName: 'User', email: `agent-${Date.now()}-${Math.random()}@test.com`, personTypeId: clientTypeId, tenantId: 1, slug: `agent-${Date.now()}` },
     });
     agentPersonId = agentPerson.id;
     const agentRole = await prisma.role.findUniqueOrThrow({ where: { tenantId_code: { tenantId: 1, code: 'AGENT' } } });
@@ -129,7 +129,7 @@ describe('RBAC End-to-End Enforcement', () => {
 
     it('should return 201 with valid auth', async () => {
       const req = createMockRequest(
-        { firstName: 'Test', lastName: 'User', personTypeId: clientTypeId },
+        { firstName: 'Test', lastName: 'User', personTypeId: clientTypeId, slug: `test-user-${Date.now()}` },
         'http://localhost/api/people', 'POST',
         { 'x-user-id': String(unauthPersonId) }
       );
@@ -164,7 +164,7 @@ describe('RBAC End-to-End Enforcement', () => {
   describe('POST /api/offices (OFFICE_CREATE)', () => {
     it('should return 403 for user without OFFICE_CREATE', async () => {
       const req = createMockRequest(
-        { phone: '555-1234' },
+        { phone: '555-1234', name: 'RBAC Office', slug: 'rbac-office' },
         'http://localhost/api/offices', 'POST',
         { 'x-user-id': String(agentPersonId) }
       );
@@ -174,7 +174,7 @@ describe('RBAC End-to-End Enforcement', () => {
 
     it('should return 201 for admin with OFFICE_CREATE', async () => {
       const req = createMockRequest(
-        { phone: '555-1234' },
+        { phone: '555-1234', name: 'RBAC Office', slug: 'rbac-office' },
         'http://localhost/api/offices', 'POST',
         { authorization: `Bearer ${adminToken}` }
       );
@@ -185,8 +185,9 @@ describe('RBAC End-to-End Enforcement', () => {
 
   describe('POST /api/associates (ASSOCIATE_CREATE)', () => {
     it('should return 403 for user without ASSOCIATE_CREATE', async () => {
+      const tag = Date.now();
       const req = createMockRequest(
-        { personId: unauthPersonId, associateTypeId },
+        { personId: unauthPersonId, associateTypeId, slug: `assoc-${tag}` },
         'http://localhost/api/associates', 'POST',
         { 'x-user-id': String(agentPersonId) }
       );
@@ -195,8 +196,9 @@ describe('RBAC End-to-End Enforcement', () => {
     });
 
     it('should return 201 for admin with ASSOCIATE_CREATE', async () => {
+      const tag = Date.now();
       const req = createMockRequest(
-        { personId: adminPersonId, associateTypeId },
+        { personId: adminPersonId, associateTypeId, slug: `assoc-${tag}` },
         'http://localhost/api/associates', 'POST',
         { authorization: `Bearer ${adminToken}` }
       );
@@ -278,7 +280,7 @@ describe('RBAC End-to-End Enforcement', () => {
   describe('POST /api/properties (PROPERTY_CREATE) — agent has this permission', () => {
     it('should return 201 for agent with PROPERTY_CREATE', async () => {
       const req = createMockRequest(
-        { name: 'Agent Property', description: 'Test', propertyTypeId: houseTypeId, propertyStatusId: forSaleStatusId },
+        { name: 'Agent Property', description: 'Test', slug: 'agent-property', propertyTypeId: houseTypeId, propertyStatusId: forSaleStatusId },
         'http://localhost/api/properties', 'POST',
         { 'x-user-id': String(agentPersonId) }
       );
@@ -288,7 +290,7 @@ describe('RBAC End-to-End Enforcement', () => {
 
     it('should return 201 for admin with PROPERTY_CREATE', async () => {
       const req = createMockRequest(
-        { name: 'Admin Property', description: 'Test', propertyTypeId: houseTypeId, propertyStatusId: forSaleStatusId },
+        { name: 'Admin Property', description: 'Test', slug: 'admin-property', propertyTypeId: houseTypeId, propertyStatusId: forSaleStatusId },
         'http://localhost/api/properties', 'POST',
         { authorization: `Bearer ${adminToken}` }
       );
@@ -313,7 +315,7 @@ describe('RBAC End-to-End Enforcement', () => {
     it('should return 201 for agent', async () => {
       // First create a property and image
       const prop = await prisma.property.create({
-        data: { name: 'PI Test', description: 'Test', tenant: { connect: { id: 1 } }, propertyType: { connect: { id: houseTypeId } }, propertyStatus: { connect: { id: forSaleStatusId } } },
+        data: { name: 'PI Test', description: 'Test', slug: 'pi-test', tenant: { connect: { id: 1 } }, propertyType: { connect: { id: houseTypeId } }, propertyStatus: { connect: { id: forSaleStatusId } } },
       });
       const img = await prisma.image.create({
         data: { uri: 'https://example.com/pi.jpg' },

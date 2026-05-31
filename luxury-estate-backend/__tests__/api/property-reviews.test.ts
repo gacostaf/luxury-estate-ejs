@@ -109,7 +109,7 @@ describe('Property Reviews API', () => {
       });
       const clientTypeId = await lookupPersonTypeId('CLIENT');
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientTypeId, tenantId: 1, slug: `noperms-${Date.now()}` },
       });
       const req = createMockRequest(
         { isPublished: true },
@@ -140,7 +140,7 @@ describe('Property Reviews API', () => {
       });
       const clientTypeId = await lookupPersonTypeId('CLIENT');
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientTypeId, tenantId: 1 },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientTypeId, tenantId: 1, slug: `noperms-${Date.now()}` },
       });
       const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(unauthPerson.id), 'x-tenant-id': '1' });
       const res = await deleteReview(req, params(String(rev.id)));

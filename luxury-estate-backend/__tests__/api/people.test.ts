@@ -52,6 +52,7 @@ describe('People API', () => {
         firstName: 'New',
         lastName: 'Person',
         email: 'new@example.com',
+        slug: 'new-person',
         personTypeId: clientTypeId,
         isLead: true,
       };
@@ -67,7 +68,7 @@ describe('People API', () => {
     });
 
     it('should return 400 for invalid email', async () => {
-      const payload = { firstName: 'Bad', lastName: 'Email', email: 'not-an-email', personTypeId: clientTypeId };
+      const payload = { firstName: 'Bad', lastName: 'Email', email: 'not-an-email', personTypeId: clientTypeId, slug: 'bad-email' };
       const req = createMockRequest(payload, 'http://localhost/api/people', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await POST(req);
 
@@ -77,7 +78,7 @@ describe('People API', () => {
     it('should return 409 for duplicate email', async () => {
       await createTestPerson({ email: 'duplicate@example.com' });
 
-      const payload = { firstName: 'Another', lastName: 'Person', email: 'duplicate@example.com', personTypeId: clientTypeId };
+      const payload = { firstName: 'Another', lastName: 'Person', email: 'duplicate@example.com', personTypeId: clientTypeId, slug: 'another-person' };
       const req = createMockRequest(payload, 'http://localhost/api/people', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
       const res = await POST(req);
 

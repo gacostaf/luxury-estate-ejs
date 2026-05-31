@@ -14,6 +14,8 @@ export const addressSchema = z.object({
 
 export const officeSchema = z.object({
   phone: z.string().optional(),
+  name: z.string().min(1),
+  slug: z.string().min(1),
   addressId: z.number().int().positive().optional(),
 });
 
@@ -43,6 +45,7 @@ export const personSchema = z.object({
   lastName: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
+  slug: z.string().min(1),
   personTypeId: z.number().int().positive(),
   isLead: z.boolean().optional().default(false),
   isClient: z.boolean().optional().default(false),
@@ -79,13 +82,14 @@ export const propertySchema = z.object({
   agencyId: z.number().int().positive().optional().nullable(),
   addressId: z.number().int().positive().optional().nullable(),
   bannerImageId: z.number().int().positive().optional().nullable(),
-  seoUrl: z.string().max(255).optional().nullable(),
+  slug: z.string().min(1).max(255),
   publishDate: z.string().datetime().optional().nullable(),
 });
 
 export const associateSchema = z.object({
   personId: z.number().int().positive(),
   associateTypeId: z.number().int().positive(),
+  slug: z.string().min(1),
   personRoleId: z.number().int().positive().optional().nullable(),
   agencyId: z.number().int().positive().optional().nullable(),
   officeId: z.number().int().positive().optional().nullable(),

@@ -76,7 +76,7 @@ describe('RBAC System', () => {
   beforeEach(async () => {
     const clientTypeId = await lookupPersonTypeId('CLIENT');
     const person = await prisma.person.create({
-      data: { firstName: 'RBAC', lastName: 'Test', email: `rbac-${Date.now()}@test.com`, personTypeId: clientTypeId, tenantId: 1 },
+      data: { firstName: 'RBAC', lastName: 'Test', email: `rbac-${Date.now()}@test.com`, personTypeId: clientTypeId, tenantId: 1, slug: `rbac-${Date.now()}` },
     });
     personId = person.id;
   });

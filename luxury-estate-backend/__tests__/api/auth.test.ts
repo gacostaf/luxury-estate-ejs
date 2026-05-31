@@ -22,7 +22,7 @@ describe('Auth API', () => {
     testEmail = `auth-${Date.now()}-${testSeq}@test.com`;
     const clientTypeId = await lookupPersonTypeId('CLIENT');
     const person = await prisma.person.create({
-      data: { firstName: 'Auth', lastName: 'Test', email: testEmail, personTypeId: clientTypeId, tenantId: 1 },
+      data: { firstName: 'Auth', lastName: 'Test', email: testEmail, personTypeId: clientTypeId, tenantId: 1, slug: 'auth-test' },
     });
     personId = person.id;
   });

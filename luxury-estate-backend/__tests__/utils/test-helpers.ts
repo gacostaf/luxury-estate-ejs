@@ -175,12 +175,14 @@ export async function createTestPerson(overrides = {}) {
   const tenantId = await getOrCreateDefaultTenant();
   await seedLookupTables(tenantId);
   const clientType = await prisma.personType.findFirst({ where: { tenantId, code: 'CLIENT' } });
+  const ts = Date.now();
   return prisma.person.create({
     data: {
       tenantId,
       firstName: 'Test',
       lastName: 'Person',
-      email: `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`,
+      email: `test-${ts}-${Math.random().toString(36).slice(2, 8)}@example.com`,
+      slug: `test-person-${ts}`,
       personTypeId: clientType!.id,
       ...overrides,
     },
@@ -229,9 +231,14 @@ export async function createTestVideo(overrides = {}) {
 }
 
 export async function createTestOffice(overrides = {}) {
+  const tenantId = await getOrCreateDefaultTenant();
+  const ts = Date.now();
   return prisma.office.create({
     data: {
+      tenantId,
       phone: '555-1234',
+      name: `Test Office ${ts}`,
+      slug: `test-office-${ts}`,
       ...overrides,
     },
   });
@@ -284,6 +291,7 @@ export async function seedAdminUser(tenantId?: number) {
       firstName: 'Admin',
       lastName: 'User',
       email: `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.com`,
+      slug: `admin-user-${Date.now()}`,
       personTypeId: clientTypeId,
     },
   });
@@ -300,12 +308,14 @@ export async function createTestProperty(overrides = {}) {
   await seedLookupTables(tenantId);
   const houseType = await prisma.propertyType.findFirst({ where: { tenantId, code: 'house' } });
   const forSaleStatus = await prisma.propertyStatus.findFirst({ where: { tenantId, code: 'for_sale' } });
+  const ts = Date.now();
   return prisma.property.create({
     data: {
       tenantId,
       name: 'Test Property',
       description: 'Test description',
       summary: 'Test summary',
+      slug: `test-property-${ts}`,
       propertyTypeId: houseType!.id,
       propertyStatusId: forSaleStatus!.id,
       addressLocality: 'TestCity',

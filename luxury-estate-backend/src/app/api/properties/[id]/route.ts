@@ -12,7 +12,7 @@ export async function GET(
     const { id } = await params;
     const numId = parseInt(id, 10);
     const tenantId = getTenantId(req)!;
-    const where = Number.isNaN(numId) ? { seoUrl: id, tenantId } : { id: numId, tenantId };
+    const where = Number.isNaN(numId) ? { slug: id, tenantId } : { id: numId, tenantId };
 
     const property = await prisma.property.findFirst({
       where,

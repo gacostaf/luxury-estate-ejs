@@ -32,7 +32,7 @@ describe('Tour Requests API', () => {
 
     const associateTypeId = await lookupAssociateTypeId('AGENT');
     const assoc = await prisma.associate.create({
-      data: { personId: adminPersonId, associateTypeId, tenantId: 1 },
+      data: { personId: adminPersonId, associateTypeId, tenantId: 1, slug: 'admin-assoc' },
     });
     adminAssociateId = assoc.id;
 
@@ -219,7 +219,7 @@ describe('Tour Requests API', () => {
       });
       const clientPersonType = await prisma.personType.findFirst({ where: { tenantId: 1, code: 'CLIENT' } });
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientPersonType!.id, tenantId: 1 },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}@test.com`, personTypeId: clientPersonType!.id, tenantId: 1, slug: `noperms-${Date.now()}` },
       });
       const req = createMockRequest(
         { tourStatusId: 2 },
@@ -270,7 +270,7 @@ describe('Tour Requests API', () => {
       });
       const clientPersonType = await prisma.personType.findFirst({ where: { tenantId: 1, code: 'CLIENT' } });
       const unauthPerson = await prisma.person.create({
-        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientPersonType!.id, tenantId: 1 },
+        data: { firstName: 'No', lastName: 'Perms', email: `noperms-${Date.now()}-del@test.com`, personTypeId: clientPersonType!.id, tenantId: 1, slug: `noperms-${Date.now()}` },
       });
       const req = createMockRequest(undefined, undefined, undefined, { 'x-user-id': String(unauthPerson.id), 'x-tenant-id': '1' });
       const res = await deleteTour(req, params(String(tour.id)));

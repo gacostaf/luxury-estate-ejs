@@ -45,6 +45,7 @@ model Tenant {
   authAccounts            AuthAccount[]
   agencies                Agency[]
   associates              Associate[]
+  offices                 Office[]
   properties              Property[]
   propertyImages          PropertyImage[]
   propertyReviews         PropertyReview[]
@@ -264,6 +265,7 @@ model Person {
   lastName                 String? @map("LAST_NAME")
   phone                    String? @map("PHONE")
   email                    String? @unique @map("EMAIL") @db.VarChar(254)
+  slug                     String  @map("SLUG") @db.VarChar(255)
   notes                    String? @map("NOTES") @db.Text
   isLead                   Boolean @default(false) @map("IS_LEAD")
   isClient                 Boolean @default(false) @map("IS_CLIENT")
@@ -320,6 +322,7 @@ model Person {
   newsletterSubscription  NewsletterSubscription?
   propertyInquiries  PropertyInquiry[] @relation("PropertyInquiryPersonRelation")
 
+  @@unique([tenantId, slug])
   @@index([personTypeId, isLead], name: "idx_person_type_lead")
   @@index([tenantId], name: "idx_person_tenant")
   @@map("PERSONS")
@@ -407,6 +410,7 @@ model Associate {
   associateType    AssociateType  @relation(fields: [associateTypeId], references: [id])
   personId         Int            @unique @map("PERSON_ID")
   person           Person         @relation(fields: [personId], references: [id])
+  slug             String         @map("SLUG") @db.VarChar(255)
   personRoleId     Int?           @map("PERSON_ROLE_ID")
   personRole       PersonRole?    @relation(fields: [personRoleId], references: [id])
   agencyId         Int?           @map("AGENCY_ID")
@@ -440,6 +444,7 @@ model Associate {
   secondaryTours   TourRequest[] @relation("SecondaryAssociateTourRelation")
   inquiries        PropertyInquiry[] @relation("AssociateInquiries")
 
+  @@unique([tenantId, slug])
   @@index([officeId, department], name: "idx_associate_office_dept")
   @@index([tenantId], name: "idx_associate_tenant")
   @@map("ASSOCIATES")
@@ -546,7 +551,10 @@ model AssociateType {
 
 model Office {
   id                 Int         @id @default(autoincrement()) @map("ID")
+  tenantId           Int         @map("TENANT_ID")
   phone              String?     @map("PHONE")
+  name               String      @map("NAME") @db.VarChar(200)
+  slug               String      @map("SLUG") @db.VarChar(255)
   addressId          Int?        @map("ADDRESS_ID")
   address            Address?    @relation("OfficeAddress", fields: [addressId], references: [id], onDelete: SetNull)
   associates         Associate[]
@@ -560,9 +568,12 @@ model Office {
 
   updatedPerson Person? @relation("OfficeUpdatedByRelation", fields: [updatedByPersonId], references: [id])
 
+  tenant             Tenant      @relation(fields: [tenantId], references: [id])
   createdAt          DateTime    @default(now()) @map("CREATED_AT")
   updatedAt          DateTime    @default(now()) @map("UPDATED_AT")
 
+  @@unique([tenantId, slug])
+  @@index([tenantId], name: "idx_office_tenant")
   @@map("OFFICES")
 }
 
@@ -654,7 +665,7 @@ model Property {
   description       String    @map("DESCRIPTION") @db.Text
   summary           String?   @map("SUMMARY")
   bannerImageId     Int?      @map("BANNER_IMAGE_ID")
-  seoUrl            String?   @unique @map("SEO_URL") @db.VarChar(255)
+  slug              String    @map("SLUG") @db.VarChar(255)
   publishDate       DateTime? @map("PUBLISH_DATE")
   price             Decimal?  @map("PRICE") @db.Decimal(12, 2)
   bedrooms          Int?      @map("BEDROOMS")
@@ -719,6 +730,7 @@ model Property {
   @@index([propertyStatusId, price, publishDate], name: "idx_active_listings")
   @@index([addressLocality, addressRegion, addressCountry], name: "idx_location_schema_org")
   @@index([postalCode], name: "idx_postal_code")
+  @@unique([tenantId, slug])
   @@index([tenantId], name: "idx_property_tenant")
   @@map("PROPERTIES")
 }

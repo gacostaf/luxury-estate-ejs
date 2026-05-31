@@ -455,6 +455,7 @@ async function main() {
             lastName: 'Johnson',
             phone: '+1-555-0198',
             email: 'sarah.j@luxuryrealty.com',
+            slug: 'sarah-johnson',
             personType: { connect: { id: agentType.id } },
             isLead: false,
             isClient: false,
@@ -481,6 +482,7 @@ async function main() {
             lastName: 'Torres',
             phone: '+1-555-0287',
             email: 'mtorres@partnerrealty.com',
+            slug: 'michael-torres',
             personType: { connect: { id: externalAgentType.id } },
             isLead: false,
             isClient: false,
@@ -496,6 +498,7 @@ async function main() {
             lastName: 'Chen',
             phone: '+1-555-0345',
             email: 'marcus.chen@email.com',
+            slug: 'marcus-chen',
             personType: { connect: { id: clientType.id } },
             isLead: true,
             isClient: true,
@@ -560,7 +563,10 @@ async function main() {
 
     const mainOffice = await prisma.office.create({
         data: {
+            tenantId: DEFAULT_TENANT_ID,
             phone: '+1-310-555-0100',
+            name: 'Luxury Estate Realty HQ',
+            slug: 'luxury-estate-realty-hq',
             address: { connect: { id: officeAddress.id } }
         }
     });
@@ -578,7 +584,7 @@ async function main() {
             name: 'Modern Coastal Villa',
             description: 'Stunning oceanfront property with panoramic Pacific views, smart home automation, infinity pool, and private beach access.',
             summary: 'Luxury 4BR beachfront home with smart tech',
-            seoUrl: 'modern-coastal-villa-malibu',
+            slug: 'modern-coastal-villa-malibu',
             publishDate: new Date(),
             price: 4500000.00,
             bedrooms: 4,
@@ -622,7 +628,7 @@ async function main() {
             name: 'Skyline Penthouse',
             description: 'Breathtaking penthouse in the heart of Miami Beach with 360-degree views of the ocean and city skyline.',
             summary: 'Ultra-luxury 3BR penthouse with ocean views',
-            seoUrl: 'skyline-penthouse-miami-beach',
+            slug: 'skyline-penthouse-miami-beach',
             publishDate: new Date(Date.now() - 86400000),
             price: 2850000.00,
             bedrooms: 3,
@@ -655,7 +661,7 @@ async function main() {
             name: 'Desert Oasis Villa',
             description: 'Exclusive desert villa in Cabo San Lucas with private pool, outdoor kitchen, and stunning Sea of Cortez views.',
             summary: '5BR villa with pool & ocean views',
-            seoUrl: 'desert-oasis-villa-cabo',
+            slug: 'desert-oasis-villa-cabo',
             publishDate: new Date(Date.now() - 172800000),
             price: 15000.00,
             bedrooms: 5,

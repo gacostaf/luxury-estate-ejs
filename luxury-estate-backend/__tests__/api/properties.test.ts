@@ -21,6 +21,7 @@ describe('Properties API', () => {
   it('should create and retrieve a property', async () => {
     const payload = {
       name: 'Test Villa',
+      slug: 'test-villa',
       description: 'Luxury test property',
       summary: 'Test summary',
       propertyTypeId: houseTypeId,
@@ -50,6 +51,7 @@ describe('Properties API', () => {
     await prisma.property.create({
       data: {
         name: 'Malibu Home',
+        slug: 'malibu-home',
         description: 'Beachfront luxury',
         propertyType: { connect: { id: houseTypeId } },
         propertyStatus: { connect: { id: forSaleStatusId } },
@@ -63,6 +65,7 @@ describe('Properties API', () => {
     await prisma.property.create({
       data: {
         name: 'Miami Condo',
+        slug: 'miami-condo',
         description: 'Ocean view condo',
         propertyType: { connect: { id: condoTypeId } },
         propertyStatus: { connect: { id: forSaleStatusId } },

@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toOfficeDTO } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -53,9 +54,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const numId = parseInt(id, 10);
+    const tenantId = getTenantId(req)!;
     if (isNaN(numId)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
-    const office = await prisma.office.findUnique({
-      where: { id: numId },
+    const office = await prisma.office.findFirst({
+      where: { id: numId, tenantId },
       include: { address: true, associates: { include: { person: true } } },
     });
     if (!office) return NextResponse.json({ error: 'Office not found' }, { status: 404 });
@@ -71,6 +73,9 @@ export const PATCH = requirePermission(Permissions.OFFICE_UPDATE)(async (req: Ne
     const { id } = await params;
     const body = await req.json();
     const data = officeSchema.parse(body);
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.office.findFirst({ where: { id: parseInt(id), tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Office not found' }, { status: 404 });
     const office = await prisma.office.update({
       where: { id: parseInt(id) },
       data,
@@ -86,6 +91,9 @@ export const PATCH = requirePermission(Permissions.OFFICE_UPDATE)(async (req: Ne
 export const DELETE = requirePermission(Permissions.OFFICE_DELETE)(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await params;
+    const tenantId = getTenantId(req)!;
+    const existing = await prisma.office.findFirst({ where: { id: parseInt(id), tenantId } });
+    if (!existing) return NextResponse.json({ error: 'Office not found' }, { status: 404 });
     await prisma.office.delete({ where: { id: parseInt(id) } });
     return new Response(null, { status: 204 });
   } catch (error) { return handlePrismaError(error); }

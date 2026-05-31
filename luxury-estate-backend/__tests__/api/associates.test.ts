@@ -25,12 +25,14 @@ describe('Associates API', () => {
   it('should create an associate for an existing person', async () => {
     const { agentTypeId, associateTypeId } = await resolveIds();
     const person = await prisma.person.create({
-      data: { firstName: 'Test', lastName: 'Agent', email: `agent-${Date.now()}@test.com`, personTypeId: agentTypeId, isAssociate: true, tenantId: 1 },
+      data: { firstName: 'Test', lastName: 'Agent', email: `agent-${Date.now()}@test.com`, personTypeId: agentTypeId, isAssociate: true, tenantId: 1, slug: `assoc-agent-${Date.now()}` },
     });
 
+    const tag = Date.now();
     const payload = {
       personId: person.id,
       associateTypeId,
+      slug: `assoc-${tag}`,
       department: 'Luxury Sales',
     };
 
@@ -46,7 +48,7 @@ describe('Associates API', () => {
 
   it('should return 404 if person not found', async () => {
     const { associateTypeId } = await resolveIds();
-    const payload = { personId: 99999, associateTypeId };
+    const payload = { personId: 99999, associateTypeId, slug: 'ghost-assoc' };
     const req = createMockRequest(payload, 'http://localhost/api/associates', 'POST', { 'x-user-id': String(adminPersonId), 'x-tenant-id': '1' });
     const res = await createAssociate(req);
 

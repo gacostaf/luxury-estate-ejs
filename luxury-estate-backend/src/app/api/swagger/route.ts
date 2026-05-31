@@ -23,21 +23,23 @@ export async function GET() {
         schemas: {
           // --- Input Schemas ---
           PersonInput: {
-            type: 'object', required: ['firstName', 'lastName', 'personTypeId'],
+            type: 'object', required: ['firstName', 'lastName', 'personTypeId', 'slug'],
             properties: {
               firstName: { type: 'string', example: 'John' },
               lastName: { type: 'string', example: 'Doe' },
               email: { type: 'string', format: 'email', example: 'john@example.com' },
               phone: { type: 'string', example: '+1-555-1234' },
               personTypeId: { type: 'integer', example: 1 },
+              slug: { type: 'string', example: 'john-doe' },
               isAssociate: { type: 'boolean', default: false },
             },
           },
           AssociateInput: {
-            type: 'object', required: ['personId', 'associateTypeId'],
+            type: 'object', required: ['personId', 'associateTypeId', 'slug'],
             properties: {
               personId: { type: 'integer', example: 1 },
               associateTypeId: { type: 'integer', example: 1 },
+              slug: { type: 'string', example: 'john-doe-agent' },
               agencyId: { type: 'integer', nullable: true },
               officeId: { type: 'integer', nullable: true },
               personRoleId: { type: 'integer', nullable: true },
@@ -98,9 +100,11 @@ export async function GET() {
             },
           },
           OfficeInput: {
-            type: 'object',
+            type: 'object', required: ['name', 'slug'],
             properties: {
               phone: { type: 'string', example: '555-0001' },
+              name: { type: 'string', example: 'Buckhead Office' },
+              slug: { type: 'string', example: 'buckhead-office' },
               addressId: { type: 'integer', nullable: true },
             },
           },
@@ -134,9 +138,10 @@ export async function GET() {
             },
           },
           PropertyInput: {
-            type: 'object', required: ['name', 'description', 'propertyTypeId', 'propertyStatusId'],
+            type: 'object', required: ['name', 'description', 'propertyTypeId', 'propertyStatusId', 'slug'],
             properties: {
               name: { type: 'string', example: 'Ocean View Villa' },
+              slug: { type: 'string', example: 'ocean-view-villa' },
               description: { type: 'string' },
               summary: { type: 'string' },
               price: { type: 'number', example: 2500000 },
@@ -283,6 +288,7 @@ export async function GET() {
               email: { type: 'string' },
               phone: { type: 'string' },
               personTypeId: { type: 'integer' },
+              slug: { type: 'string' },
               isAssociate: { type: 'boolean' },
             },
           },
@@ -294,6 +300,7 @@ export async function GET() {
               associateTypeId: { type: 'integer' },
               agencyId: { type: 'integer', nullable: true },
               officeId: { type: 'integer', nullable: true },
+              slug: { type: 'string' },
               department: { type: 'string' },
               title: { type: 'string' },
               licenseNumber: { type: 'string' },
@@ -341,6 +348,9 @@ export async function GET() {
             properties: {
               id: { type: 'integer' },
               phone: { type: 'string', nullable: true },
+              name: { type: 'string' },
+              slug: { type: 'string' },
+              tenantId: { type: 'integer' },
               addressId: { type: 'integer', nullable: true },
               address: { $ref: '#/components/schemas/AddressResponse' },
             },

@@ -5,6 +5,7 @@ import { handleZodError, handlePrismaError, successResponse } from '@/lib/api-he
 import { toOfficeDTO, toOfficeDTOList } from '@/lib/dtos';
 import { requireAuth, requirePermission } from '@/lib/auth/middleware';
 import { Permissions } from '@/lib/rbac';
+import { getTenantId } from '@/lib/auth/tenantContextMiddleware';
 
 /**
  * @swagger
@@ -26,9 +27,10 @@ import { Permissions } from '@/lib/rbac';
  *       401: { description: Unauthorized }
  *       403: { description: Forbidden }
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const offices = await prisma.office.findMany({ include: { address: true, associates: { include: { person: true } } } });
+    const tenantId = getTenantId(req)!;
+    const offices = await prisma.office.findMany({ where: { tenantId }, include: { address: true, associates: { include: { person: true } } } });
     return successResponse(toOfficeDTOList(offices));
   } catch (error) { return handlePrismaError(error); }
 }
@@ -37,7 +39,8 @@ export const POST = requirePermission(Permissions.OFFICE_CREATE)(async (req: Nex
   try {
     const body = await req.json();
     const data = officeSchema.parse(body);
-    const office = await prisma.office.create({ data, include: { address: true } });
+    const tenantId = getTenantId(req)!;
+    const office = await prisma.office.create({ data: { tenantId, ...data }, include: { address: true } });
     return successResponse(toOfficeDTO(office), 201);
   } catch (error) {
     if (error instanceof Error && error.name === 'ZodError') return handleZodError(error as any);
